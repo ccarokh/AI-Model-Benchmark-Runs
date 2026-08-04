@@ -1,0 +1,4 @@
+runtime	version	tg_per_s_low	tg_per_s_high	vram_mib	rss_total_mib	rss_supervisor_mib	rss_runner_mib
+ollama	0.32.5	167.9	176.8	5737	571	68	503
+llama.cpp	b10098	220.4	222.0	5651	524	0	524
+# llama-3.2-3b Q4_K_M, RX 7900 XTX, Vulkan, ctx 32768, same machine

@@ -1,0 +1,18 @@
+model	gpu	test	t_per_s	stddev
+llama-3.2-3b	rx-7900-xtx	pp512	5711.19	348.68
+llama-3.2-3b	rx-7900-xtx	pp4096	6136.92	63.47
+llama-3.2-3b	rx-7900-xtx	tg128	251.33	2.14
+llama-3.2-3b	rx-7900-xtx	pp4096+tg128	3360.32	19.86
+deepseek-r1-14b	rx-7900-xtx	pp512	1664.64	3.65
+deepseek-r1-14b	rx-7900-xtx	pp4096	1498.47	4.01
+deepseek-r1-14b	rx-7900-xtx	tg128	77.85	0.39
+deepseek-r1-14b	rx-7900-xtx	pp4096+tg128	929.03	3.07
+gpt-oss-20b	rx-7900-xtx	pp512	3625.51	85.75
+gpt-oss-20b	rx-7900-xtx	pp4096	3689.26	23.51
+gpt-oss-20b	rx-7900-xtx	tg128	212.61	1.71
+gpt-oss-20b	rx-7900-xtx	pp4096+tg128	2422.26	5.65
+llama-3.2-3b	rtx-2070	pp512	3410.84	75.64
+llama-3.2-3b	rtx-2070	pp4096	3284.46	11.06
+llama-3.2-3b	rtx-2070	tg128	125.74	0.46
+llama-3.2-3b	rtx-2070	pp4096+tg128	1596.88	22.06
+# llama-bench -n 128 -p 512,4096 -pg 4096,128 -ngl 99 -r 20 -sm none -mg <0|1>

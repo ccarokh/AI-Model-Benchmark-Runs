@@ -1,0 +1,6 @@
+model	gpu	samples	mean_w	median_w	peak_w	over_idle_w
+llama-3.2-3b	rx-7900-xtx	11	385.4	408.5	418.9	326.4
+deepseek-r1-14b	rx-7900-xtx	38	408.5	409.6	420.2	349.6
+gpt-oss-20b	rx-7900-xtx	17	348.5	401.2	422.4	289.5
+llama-3.2-3b	rtx-2070	21	251.5	260.7	303.5	192.6
+# idle 59.0 W; SONOFF Matter switch via Home Assistant, 5 s polling; whole machine

@@ -1,0 +1,15 @@
+model	commits	files	lines	longest_file	entry_point	runtime	status
+qwen3-coder-30b-a3b	3	17	1272	375	32	9m	delivered
+qwen3.6-27b	3	21	662	147	33	36m	delivered
+olympiccoder-32b	1	5	190	99	99	99m	delivered
+deepcoder-14b	3	5	120	34	20	3m	delivered
+mistral-small-3.2-24b	3	2	105	83		11m	delivered
+gemma-4-12b	2	6	77	25		13m	delivered
+qwen3.6-35b-a3b	3	3	63	42	42	7m	delivered
+deepseek-coder-v2-lite	1	3	0	0	0	9m	empty_files
+codestral-22b	0					22m	nothing
+devstral-2507	0					3m	nothing
+gemma-4-26b-a4b	0					49m	nothing
+qwen2.5-coder-14b	0					1m	nothing
+qwen2.5-coder-32b	0					107m	aborted
+yi-coder-9b	0					32m	nothing
