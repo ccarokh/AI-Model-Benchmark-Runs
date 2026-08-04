@@ -66,15 +66,16 @@ config block. Bash, driving `llama-bench`/`llama-server` over SSH.
 
 ## Authorship
 
-Measurements run on the operator's hardware, under the operator's direction.
-**Analysis, aggregation and all prose written by Claude (Anthropic). No full human
-review has happened yet** — corrections so far came from spot-checks during writing.
+**Most of this was done by Claude (Anthropic)** — designing the measurements, writing
+the harness scripts, running them, aggregating the results, and writing every word
+here. The operator supplied the hardware and the direction, and made the decisions.
 
-An AI writing up its own analysis produces confident prose whether or not the claim
-holds. It happened here: a mechanism was invented to explain a model's failure, and
-the source data said the opposite. Caught by the operator asking for the evidence.
-Hence: sample sizes named, measured facts kept separate from inference, and
-"not measured" written where that is the case.
+**No full human review has happened yet.** Corrections so far came from the operator
+spot-checking during the work — and there were several, including one result that was
+published and then withdrawn.
+
+Numbers are traceable to [`data/`](data/). The reasoning around them is not yet
+audited. Where something was not measured, it says so.
 
 ## Not a leaderboard
 
