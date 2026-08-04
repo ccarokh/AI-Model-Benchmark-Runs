@@ -47,11 +47,11 @@ Everything above that is untested — see [open](#open).
 
 | Item | Status |
 |---|---|
-| Models above ~24 GB — incl. GLM-4.5-Air, Hunyuan-A13B | never run; excluded on arithmetic before the second GPU existed |
-| `faster-whisper` on the RTX 2070 | planned — and now unblocked: Ollama ships a CUDA runtime that works here, so the missing toolkit was never the barrier |
+| Models above ~24 GB — incl. GLM-4.5-Air, Hunyuan-A13B | never run |
+| `faster-whisper` on the RTX 2070 | planned |
 | TTS | planned |
 | Home Assistant voice pipeline | planned |
-| Energy efficiency **per phase** — prefill and generation draw differently, so a whole-run figure blurs both. Tokens per Wh **and** Wh per completed task | planned |
+| Energy efficiency per phase — tokens per Wh **and** Wh per completed task | planned |
 | Varying the harness instead of the model | planned |
 | Re-running the System B results on System A | planned |
 | Below 159 W on the throttle curve | planned |
