@@ -9,6 +9,9 @@ file. They are published so the numbers can be checked — not as a polished too
 - `llama-bench` and `llama-server` from llama.cpp on a reachable host
 - passwordless SSH to that host (the scripts drive it remotely)
 - for the SWE-bench runs: Docker, and the official SWE-bench harness image
+- for `asr/faster_whisper_bench.py`: a Python venv with `faster-whisper`, plus
+  `nvidia-cublas-cu12` and `nvidia-cudnn-cu12` if you want the GPU. See the docstring
+  for the two environment variables it will not run without.
 
 ## What was removed
 
@@ -37,6 +40,7 @@ Two related habits are worth keeping from the originals:
 | `hardware/reference_bench.sh` | the portable reference point, upstream flags, with guards and a power trace |
 | `coding/swebench_run.sh` | one repository × model × mode × cache type, agent run plus evaluation |
 | `coding/night_chain.sh` | chains runs unattended with a deadline and a disk guard |
+| `asr/faster_whisper_bench.py` | one `faster-whisper` run, one device, one precision |
 
 ## A warning that applies to all of them
 

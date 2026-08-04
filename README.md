@@ -17,7 +17,7 @@ everything measured about one model across all topics.
 | RAG — German chat | [Language understanding](models/language-understanding.md) | 16 models; the 5.3 GB default was never beaten, not even by a model 3× its size |
 | RAG — retrieval | [Embedding](models/embedding.md) | A 9× larger model tied BGE-M3 exactly |
 | Coding | [Coding](models/coding.md) | 18 models; the ranking inverted once the harness stopped naming the file |
-| ASR — speech to text | [Transcription](models/transcription.md) | Qwen3-ASR-1.7B matches Whisper large-v3; a config fix was worth 30 points of WER |
+| ASR — speech to text | [Transcription](models/transcription.md) | Qwen3-ASR-1.7B matches Whisper large-v3; a config fix was worth 30 points of WER; Whisper runs at 27× real time on an 8 GB card with no CUDA toolkit installed |
 | VLM — image input | [Vision](models/vision.md) | Runs permanently alongside three other models: 15.1 of 24.5 GB |
 | Fine-tuning | [Fine-tuning](models/finetuning.md) | A third-party fine-tune lost 26.7 points against its own base and doubled the non-answers |
 | Power draw | [Power](hardware/power.md) | 7-point curve from 276 W down to 159 W — at half the core clock, generation still delivers 85 %. Idle costs more per year than throttling saves |
@@ -48,7 +48,6 @@ Everything above that is untested — see [open](#open).
 | Item | Status |
 |---|---|
 | Models above ~24 GB — incl. GLM-4.5-Air, Hunyuan-A13B | never run |
-| `faster-whisper` on the RTX 2070 | planned |
 | TTS | planned |
 | Home Assistant voice pipeline | planned |
 | Energy efficiency per phase — tokens per Wh **and** Wh per completed task | planned |

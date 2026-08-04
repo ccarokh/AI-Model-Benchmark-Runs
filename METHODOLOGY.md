@@ -234,6 +234,36 @@ One more, from profiling a vision encoder: **`ps pcpu` is the average since proc
 start**, useless as an instantaneous load reading. Use `/proc/<pid>/task/*/stat`
 deltas, and always run a control measurement alongside.
 
+## A hang is not evidence about the thing you changed
+
+A `faster-whisper` run on a freshly added GPU sat still for ten minutes. The obvious
+reading — a card, a driver or a CUDA library problem — was wrong twice, and the
+second time cost a round of package installs that changed nothing.
+
+What the process actually looked like:
+
+```
+State: S (sleeping)          0.2 % CPU, 85 MiB RSS
+GPU:   1 MiB, 0 %
+ss:    SYN-SENT  [2003:...]:45662 -> [2600:9000:...]:443
+```
+
+**85 MiB of RSS means the model was never loaded.** It had not reached the GPU at
+all. The socket was an outbound revision check to the model hub over IPv6, on a host
+where that route is black-holed — a TCP handshake with no timeout behind it. The
+weights were already cached; the network call was pure overhead. One environment
+variable removed it.
+
+Three things worth taking from it:
+
+- **Read the process state before changing anything.** `/proc/<pid>/status`, the open
+  sockets, the resident size and the GPU counters together said "network, before the
+  model" in under a minute. Two installs were done before anyone looked.
+- **Resident size tells you how far it got.** A stalled run holding tens of megabytes
+  has not touched the model; one holding gigabytes has.
+- **Cached weights do not mean offline.** Libraries that resolve a model by name will
+  still call home to check a revision unless told not to.
+
 ## Watch load outside the target GPU
 
 An evaluation was aborted with load average at 45 and RAM plus swap nearly

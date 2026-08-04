@@ -19,7 +19,7 @@ inversion explains several results that otherwise look arbitrary.
 | **OS** | Arch Linux | Garuda Linux (Arch-based) |
 | **Kernel** | 7.1.5-arch1-2 | 7.1.5-zen1-2-zen |
 | **AMD stack** | Mesa/RADV **26.1.5-arch1.1**, `vulkan-radeon 1:26.1.5-1`, Vulkan API 1.4.354 — carries all inference | — |
-| **NVIDIA stack** | `nvidia-utils` 610.43.03 for the RTX 2070 — **no CUDA toolkit installed** | `nvidia-open-dkms` 610.43.03 + CUDA 13.3.1 |
+| **NVIDIA stack** | `nvidia-utils` 610.43.03 for the RTX 2070 — **no CUDA toolkit installed**; CUDA compute works anyway, with cuBLAS/cuDNN as pip wheels inside a venv ([measured](models/transcription.md#part-3--faster-whisper-on-the-second-card)) | `nvidia-open-dkms` 610.43.03 + CUDA 13.3.1 |
 | **Compute** | ROCm 7.2.4 (`rocm-hip-runtime`), in a separate prefix | CUDA 13.3.1 |
 | **Inference** | llama.cpp **b10098** | llama.cpp **build 9614** |
 | **Python** | 3.14.6 | 3.14.6 |
@@ -79,6 +79,7 @@ lost their upstream repository and are marked as such.
 | [Multi-GPU](hardware/multi-gpu.md), before the slot change | **A v1.1** | quiet |
 | [Multi-GPU](hardware/multi-gpu.md), after the slot change | **A v1.2** | quiet |
 | [ROCm vs Vulkan](hardware/backends.md) | **A v1.3** | **performance** |
+| [`faster-whisper` on the RTX 2070](models/transcription.md#part-3--faster-whisper-on-the-second-card) | **A v1.3** | quiet |
 | GPU BIOS comparison ([power.md](hardware/power.md#the-cards-dual-bios-quiet-wins)) | **A v1.3** | both |
 | [Fine-tuning](models/finetuning.md) | **A v1.3** | quiet |
 

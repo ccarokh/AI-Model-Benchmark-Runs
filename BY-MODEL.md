@@ -157,5 +157,5 @@ Sixteen models between 33.3 % and 93.3 %, with the top seven inside four points.
 
 | Model | Micro-WER | Note |
 |---|---:|---|
-| Whisper large-v3 | 19.6 % | production; CUDA-only |
+| Whisper large-v3 | 19.6 % | production; CUDA-only — 27 × real time on the RTX 2070, 3 × on the i9-9900K |
 | Qwen3-ASR-1.7B | 20.3 % | runs on llama.cpp/Vulkan; three operational blockers |

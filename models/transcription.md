@@ -1,11 +1,13 @@
 # Transcription
 
-> Measured on **[System B](../SYSTEMS.md#system-b) v1.0**. ⚠️ The word error rates
-> carry a known bias described below: the ground truth itself has omissions baked in,
-> which inflates both models' scores by roughly the same amount.
+> Parts 1 and 2 measured on **[System B](../SYSTEMS.md#system-b) v1.0**, Part 3 on
+> **[System A](../SYSTEMS.md#system-a) v1.3**. ⚠️ The word error rates carry a known
+> bias described below: the ground truth itself has omissions baked in, which inflates
+> both models' scores by roughly the same amount.
 
-**Two separate results: a configuration fix worth 30 points of word error rate, and
-an open model that matches Whisper large-v3 on the same stack as everything else.**
+**Three separate results: a configuration fix worth 30 points of word error rate, an
+open model that matches Whisper large-v3 on the same stack as everything else, and
+Whisper's own throughput on the second card.**
 
 ## Part 1 — the configuration was the problem, not the model
 
@@ -72,10 +74,9 @@ hallucinations. Qualitatively it is production-ready.
 embeddings. `faster-whisper`/CTranslate2 is CUDA-only and cannot use the AMD card
 at all.
 
-System A has since gained an RTX 2070, so `faster-whisper` on that card is
-**untested** rather than ruled out. What remains true either way is the stack
-argument: Qwen3-ASR runs on the same runtime as everything else, on the fast card,
-while Whisper would need a second toolchain pinned to the slower one.
+The stack argument stands regardless of speed: Qwen3-ASR runs on the same runtime as
+everything else, on the fast card, while Whisper needs a second toolchain pinned to
+the slower one. What that costs is now measured — [Part 3](#part-3--faster-whisper-on-the-second-card).
 
 ### Three operational blockers — none of them quality
 
@@ -90,7 +91,56 @@ while Whisper would need a second toolchain pinned to the slower one.
 wrapper measured against *independent* ground truth rather than Whisper-seeded.
 Until then Whisper stays in production.
 
+## Part 3 — `faster-whisper` on the second card
+
+> Measured on **[System A](../SYSTEMS.md#system-a) v1.3**, RTX 2070, 2026-08-04.
+
+This card was called untested here for weeks. It is now measured.
+
+`large-v3`, one 63.72 s German domain clip, `beam_size=5`, `language="de"`, no VAD:
+
+| Device | `compute_type` | Transcribe | × real time | VRAM |
+|---|---|---|---:|---:|
+| **RTX 2070** | float16 | 2.29 / 2.29 / 2.42 / 2.42 s | **26.3 – 27.9 ×** | 4114 MiB |
+| RTX 2070 | int8_float16 | 2.36 s | 27.0 × | — |
+| i9-9900K, 16 threads | int8 | 20.15 / 20.28 / 21.32 s | 2.99 – 3.16 × | — |
+
+**The GPU is 8.8× the CPU.** Quantising to int8 on the GPU gained nothing —
+`float16` was equal or faster in every run, and loaded faster. Card at 94–96 %
+utilisation, 152–169 W on the card sensor. Model load: 1.4–1.8 s.
+
+The CPU rows were re-measured on a **verified idle machine** — no model resident on
+either card — and agreed with the first run to within 5 %, so the chat model that
+was live during the earlier runs did not distort them.
+
+**No CUDA toolkit is installed on this machine**, and none was needed. CTranslate2
+links against the driver; `nvidia-cublas-cu12` and `nvidia-cudnn-cu12` as pip wheels
+in the venv are enough.
+
+### What this does not say
+
+The 8 GB card is the *slow* one here. This measures Whisper where it can run, not
+Whisper against the alternatives — the Qwen3-ASR figures in Part 2 were taken under
+different conditions and are **not compared** with these.
+
 ## Gotcha
 
-Transcription needs `libcublas`/`libcudnn` on the `LD_LIBRARY_PATH` (the venv
-`nvidia` packages) or it OOMs or silently falls back to CPU.
+**Without cuBLAS on the `LD_LIBRARY_PATH` there is no fallback and no warning.** The
+model loads, decoding starts, and the first encoder call raises:
+
+```
+RuntimeError: Library libcublas.so.12 is not found or cannot be loaded
+```
+
+It fails at the encode step, not at construction — so a smoke test that only builds
+the model passes.
+
+**A hang here is more likely the model hub than the GPU.** With the weights already
+cached, a run sat still for 10 minutes at 0.2 % CPU and 0 % GPU. The cause was a
+revision check against the hub over IPv6, stuck in `SYN-SENT` with no timeout —
+see [METHODOLOGY](../METHODOLOGY.md#a-hang-is-not-evidence-about-the-thing-you-changed).
+`HF_HUB_OFFLINE=1` removes it.
+
+## Scripts
+
+[`scripts/asr/faster_whisper_bench.py`](../scripts/asr/faster_whisper_bench.py)

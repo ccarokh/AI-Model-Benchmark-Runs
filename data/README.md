@@ -17,6 +17,7 @@ paths, and add nothing a reader can check.
 | [`reference_bench.tsv`](reference_bench.tsv) | 4 runs | foreign benchmark, upstream flags, per card |
 | [`reference_power_socket.tsv`](reference_power_socket.tsv) | 4 runs | wall-socket power for the same runs |
 | [`ollama_vs_llamacpp.tsv`](ollama_vs_llamacpp.tsv) | 2 runtimes | same model, card, context and backend |
+| [`transcription_fasterwhisper.tsv`](transcription_fasterwhisper.tsv) | 8 runs | `large-v3` on one 63.72 s clip, GPU and CPU |
 
 ## Columns
 
@@ -54,6 +55,17 @@ iteration phase after the models' first delivery, so no model got its tests gree
 the code quality of the eight that delivered is compromised. The six that produced
 nothing failed *before* the first test run — that part stands. Empty cells mean the
 model produced nothing to measure.
+
+**`transcription_fasterwhisper.tsv`** — `device`, `compute_type`, `model`, `run`,
+`load_s`, `transcribe_s`, `audio_s`, `realtime_factor`, `segments`, `chars`,
+`host_idle`.
+
+- Rows are in **execution order**, one fresh process each.
+- `host_idle` is `verified` only where both cards were confirmed empty beforehand.
+  `not_verified` means exactly that — a chat model may have been resident on the
+  *other* card. The CPU rows exist in both states and agree to within 5 %.
+- `segments` and `chars` are there so a silent change in output can be spotted; they
+  are not a quality measure.
 
 ## A note on one filename
 
