@@ -273,6 +273,12 @@ model, and not at all with a CPU-offloaded MoE.
 
 **No downloads, hashing or builds on a benchmark host while a run is in progress.**
 
+**If the host also serves something, stop that service and verify the card is empty
+before you measure** — not "should be idle", but VRAM and utilisation read back at
+zero. This matters most for reference runs and anything drawing from a socket meter,
+where another process on the same card contaminates the number without changing
+anything you would notice in the output.
+
 ## Count the non-answers separately
 
 In agentic coding benchmarks, "did not solve it" and "produced no patch at all" are
