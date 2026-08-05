@@ -20,6 +20,7 @@ paths, and add nothing a reader can check.
 | [`transcription_fasterwhisper.tsv`](transcription_fasterwhisper.tsv) | 8 runs | `large-v3` on one 63.72 s clip, GPU and CPU |
 | [`chat_belebele_reasoning.tsv`](chat_belebele_reasoning.tsv) | 3 runs | belebele with the generate-and-extract harness, thinking on |
 | [`throughput_looped_transformer.tsv`](throughput_looped_transformer.tsv) | 8 rows | `llama-bench`, looped vs dense at the same scale |
+| [`coding_swebench_empty_causes.tsv`](coding_swebench_empty_causes.tsv) | 9 instances | why each empty patch was empty, one run |
 
 ## Columns
 
@@ -48,6 +49,15 @@ deleted, with the partial case count in `total_cases`.
 - Rows with `model = GOLD-PATCH` are **calibration**: the known-correct patch run
   through the same harness. `requests` resolves only 5 of 8 even with the gold patch,
   so three of its instances are unwinnable in this setup regardless of model.
+
+**`coding_swebench_empty_causes.tsv`** — `model`, `repo`, `mode`, `cache`,
+`instance`, `cause`, `attribution`.
+
+The `empty` column of `coding_swebench.tsv` counts non-answers but says nothing about
+why. This file opens one such run instance by instance, read out of the agent logs.
+`attribution` separates what the model did from what the scaffold did — **six of nine
+were the model's, three were not.** Only one run is broken down this way; the other
+`empty` counts in the repository are not.
 
 **`coding_real_task.tsv`** — `model`, `commits`, `files`, `lines`, `longest_file`,
 `entry_point`, `runtime`, `status`.

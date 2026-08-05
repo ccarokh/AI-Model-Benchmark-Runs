@@ -134,6 +134,7 @@ them turned out to be the actual result.
 | Qwen3-Coder-30B-A3B | 2/19 | 0/10 | 4/22 | 3/8 | 2/22 | **11/81 = 13.6 %** | **40/81 = 49.4 %** |
 | ornith-35b | 8/19 | 1/10 | — | — | — | 9/29 | 14/29 |
 | Qwen3.6-35B-A3B | 7/19 | 1/10 | — | — | — | 8/29 | 11/29 |
+| [Nanbeige4.2-3B](#a-4b-model-that-fails-on-format-not-on-diagnosis) | 4/19 | — | — | — | — | 4/19 | 9/19 |
 
 ### The finding
 
@@ -172,6 +173,44 @@ Per-repository differences of two or three instances sit **inside the noise band
 (see [METHODOLOGY.md](../METHODOLOGY.md#how-much-is-noise)). Only the totals carry
 weight, and only where the gap is large. The 31 vs 11 is large. The 9 vs 8 between
 ornith-35b and Qwen3.6-35B-A3B is not a result.
+
+### A 4B model that fails on format, not on diagnosis
+
+> [System A](../SYSTEMS.md#system-a) v1.4, llama.cpp b10273. Vendor table:
+> **SWE-bench Verified 63.6**, above Qwen3.5-9B and Gemma-4-12B. Measured here on
+> pytest, `repomap`, q8_0: **4 of 19 = 21.1 %**, against 10 of 19 for Qwen3.6-27B.
+
+That gap is worth taking apart rather than reporting, because **the non-answers do
+not all belong to the model.** Every empty patch was traced to a cause:
+
+| Cause | Count | Attributable to |
+|---|---:|---|
+| **Edit format not followed** — the filename is missing from the line before the fence | **4** | model |
+| aider input-token limit | 2 | harness |
+| `ModuleNotFoundError: numpy.char` during the repository scan | 1 | harness |
+| aider began scraping GitHub URLs the model had emitted | 1 | model, via harness behaviour |
+| model **asked for a file** instead of editing one | 1 | model |
+
+**Six of the nine are the model's, three are not.** Excluding the three still leaves
+4 of 16.
+
+**The four format failures are the interesting ones.** In `pytest-5631` the model
+diagnosed the bug correctly — `p.new in sentinels` returns an array rather than a
+boolean for array-like objects, so it must become an identity check — wrote the
+correct replacement, and lost the patch because the filename was not on its own line
+before the code fence. The fix existed and the scaffold could not read it.
+
+**So this measures the model in *our* aider scaffold, not its coding ability.** A
+vendor number produced with a scaffold tuned to the model and this number can both be
+true. What our harness shows is that a model has to be *fluent in the edit format* to
+score in it at all — which is the same lesson as
+[the harness variable](#three-findings-that-outlive-the-model-list), from the other
+side.
+
+One more observation, not a measurement: in `pytest-7982` the visible reasoning ran
+into the answer body ("Let me check… Actually, wait - I need to be careful"). With
+`--jinja` the think block does not appear to be separated cleanly. **Whether that
+costs patches was not tested.**
 
 ---
 
