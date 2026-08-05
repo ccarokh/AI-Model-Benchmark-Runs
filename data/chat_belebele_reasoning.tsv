@@ -1,0 +1,4 @@
+model	harness	thinking	correct	n	accuracy	tokens_total	tokens_median	tokens_mean	truncated_at_8192	no_answer
+nanbeige-4.2-3b	logprob	off	114	150	0.760	150	1	1	0	0
+nanbeige-4.2-3b	generate	on	133	150	0.887	543490	2796	3623	18	0
+qwen3.5-9b	generate	on	135	150	0.900	395466	1131	2636	28	0

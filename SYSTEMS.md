@@ -21,7 +21,7 @@ inversion explains several results that otherwise look arbitrary.
 | **AMD stack** | Mesa/RADV **26.1.5-arch1.1**, `vulkan-radeon 1:26.1.5-1`, Vulkan API 1.4.354 — carries all inference | — |
 | **NVIDIA stack** | `nvidia-utils` 610.43.03 for the RTX 2070 — **no CUDA toolkit installed**; CUDA compute works anyway, with cuBLAS/cuDNN as pip wheels inside a venv ([measured](models/transcription.md#part-3--faster-whisper-on-the-second-card)) | `nvidia-open-dkms` 610.43.03 + CUDA 13.3.1 |
 | **Compute** | ROCm 7.2.4 (`rocm-hip-runtime`), in a separate prefix | CUDA 13.3.1 |
-| **Inference** | llama.cpp **b10098** | llama.cpp **build 9614** |
+| **Inference** | llama.cpp **b10098** in `/opt/llama-cpp` (production), **b10273** in `/opt/llama-cpp-nb` alongside it | llama.cpp **build 9614** |
 | **Python** | 3.14.6 | 3.14.6 |
 
 **Read `b10098` from `/opt/llama-cpp/.built-version`, not from `--version`** — the
@@ -42,13 +42,25 @@ results stay attached to the state that produced them.
 | **A v1.0** | 2026-07-24 → 07-28 | single GPU (7900 XTX only) | kernel 7.1.4-arch1-1, llama.cpp b10098, Mesa 26.1.5 |
 | **A v1.1** | 2026-07-29 → 08-02 | **+ RTX 2070**, chipset slot at Gen 3 ×4 | kernel 7.1.5-arch1-2, otherwise unchanged |
 | **A v1.2** | 2026-08-03 | 2070 **moved to a CPU-direct slot**, both cards ×8 | unchanged |
-| **A v1.3** | from 2026-08-04 | **+ ROCm 7.2.4** in a separate prefix | unchanged; `/opt/llama-cpp` untouched |
+| **A v1.3** | 2026-08-04 | **+ ROCm 7.2.4** in a separate prefix | unchanged; `/opt/llama-cpp` untouched |
+| **A v1.4** | from 2026-08-05 | **+ llama.cpp b10273** in `/opt/llama-cpp-nb`, for architectures the production build predates | `/opt/llama-cpp` still b10098 and still the production runtime |
 
 The kernel step from v1.0 to v1.1 is the only stack change inside the series, and its
 effect was **measured rather than assumed**: 78.47 against 78.18 on the same
 workload. No effect.
 
-llama.cpp **b10098** and Mesa **26.1.5** held constant across all four versions.
+Mesa **26.1.5** held constant across all five versions, and llama.cpp **b10098**
+across the first four.
+
+**The v1.4 build was measured against the one it sits beside rather than assumed
+equivalent:** Llama-3.2-3B gives 250.65 t/s on b10273 against 251.33 on b10098, 0.27 %
+apart. No earlier figure is invalidated by the new prefix.
+
+**A second prefix needs `LD_LIBRARY_PATH`, not just a path.** The `ld.so` cache
+resolves every `libllama`/`libggml` to `/opt/llama-cpp/lib`, so the new binary runs on
+the old libraries otherwise — all eight of them, silently. Here it failed loudly
+(`unknown model architecture: 'nanbeige'`); with an architecture both builds know, it
+would not have.
 
 ### System B
 
@@ -80,6 +92,7 @@ lost their upstream repository and are marked as such.
 | [Multi-GPU](hardware/multi-gpu.md), after the slot change | **A v1.2** | quiet |
 | [ROCm vs Vulkan](hardware/backends.md) | **A v1.3** | **performance** |
 | [`faster-whisper` on the RTX 2070](models/transcription.md#part-3--faster-whisper-on-the-second-card) | **A v1.3** | quiet |
+| [Nanbeige4.2-3B](models/language-understanding.md#a-looped-model-measured-twice--nanbeige42-3b), and the Qwen3.5-9B run beside it | **A v1.4** | quiet |
 | GPU BIOS comparison ([power.md](hardware/power.md#the-cards-dual-bios-quiet-wins)) | **A v1.3** | both |
 | [Fine-tuning](models/finetuning.md) | **A v1.3** | quiet |
 

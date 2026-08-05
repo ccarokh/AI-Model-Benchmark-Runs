@@ -18,6 +18,8 @@ paths, and add nothing a reader can check.
 | [`reference_power_socket.tsv`](reference_power_socket.tsv) | 4 runs | wall-socket power for the same runs |
 | [`ollama_vs_llamacpp.tsv`](ollama_vs_llamacpp.tsv) | 2 runtimes | same model, card, context and backend |
 | [`transcription_fasterwhisper.tsv`](transcription_fasterwhisper.tsv) | 8 runs | `large-v3` on one 63.72 s clip, GPU and CPU |
+| [`chat_belebele_reasoning.tsv`](chat_belebele_reasoning.tsv) | 3 runs | belebele with the generate-and-extract harness, thinking on |
+| [`throughput_looped_transformer.tsv`](throughput_looped_transformer.tsv) | 8 rows | `llama-bench`, looped vs dense at the same scale |
 
 ## Columns
 
@@ -66,6 +68,22 @@ model produced nothing to measure.
   *other* card. The CPU rows exist in both states and agree to within 5 %.
 - `segments` and `chars` are there so a silent change in output can be spotted; they
   are not a quality measure.
+
+**`chat_belebele_reasoning.tsv`** — `model`, `harness`, `thinking`, `correct`, `n`,
+`accuracy`, `tokens_total`, `tokens_median`, `tokens_mean`, `truncated_at_8192`,
+`no_answer`.
+
+- `harness` is `logprob` (one token, read the letter's probability) or `generate`
+  (generate freely, extract the last standalone letter). **They are not
+  interchangeable** — the same model scores 76.0 % and 88.7 %.
+- The `logprob` row has token columns of 1 by construction, not by measurement.
+- ⚠️ **`truncated_at_8192` is the column to read before the accuracy column.** Those
+  answers were extracted from reasoning that never finished. 18 of 150 and 28 of 150.
+
+**`throughput_looped_transformer.tsv`** — `model`, `size_gib`, `params_b`, `backend`,
+`gpu`, `test`, `t_per_s`, `stddev`. `llama-bench -n 128 -p 512,4096 -pg 4096,128
+-ngl 99 -r 20 -sm none -mg 0`, llama.cpp b10273. Llama-3.2-3B is the dense control at
+the same scale, not a competitor.
 
 ## A note on one filename
 

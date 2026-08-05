@@ -1,0 +1,9 @@
+model	size_gib	params_b	backend	gpu	test	t_per_s	stddev
+nanbeige-4.2-3b-q4_k_m	2.50	4.17	Vulkan	RX 7900 XTX	pp512	3384.40	29.36
+nanbeige-4.2-3b-q4_k_m	2.50	4.17	Vulkan	RX 7900 XTX	pp4096	2793.68	4.47
+nanbeige-4.2-3b-q4_k_m	2.50	4.17	Vulkan	RX 7900 XTX	tg128	131.15	0.74
+nanbeige-4.2-3b-q4_k_m	2.50	4.17	Vulkan	RX 7900 XTX	pp4096+tg128	1629.18	6.57
+llama-3.2-3b-instruct-q4_k_m	1.87	3.21	Vulkan	RX 7900 XTX	pp512	5623.05	429.49
+llama-3.2-3b-instruct-q4_k_m	1.87	3.21	Vulkan	RX 7900 XTX	pp4096	6031.38	55.13
+llama-3.2-3b-instruct-q4_k_m	1.87	3.21	Vulkan	RX 7900 XTX	tg128	250.65	2.12
+llama-3.2-3b-instruct-q4_k_m	1.87	3.21	Vulkan	RX 7900 XTX	pp4096+tg128	3331.42	15.85

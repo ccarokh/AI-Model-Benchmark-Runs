@@ -17,6 +17,7 @@ way round: pick a model, see everything measured about it.
 | Qwen3-30B-A3B-2507 | 90.7 % * | | | |
 | [**Qwen2.5-Coder-32B**](#qwen25-coder-32b) | **89.3 %** | **8.4 %** | | previous coding incumbent |
 | Qwen3.5-4B | 89.3 % | | | |
+| [**Nanbeige4.2-3B**](#nanbeige42-3b) | **76.0 %** ‡ | | | looped transformer; 88.7 % on a different harness |
 | Nemotron-Nano-9B-v2 | 88.7 % | | | |
 | Qwen3-8B | 88.7 % | | | previous chat default |
 | Qwen3-4B-Instruct | 88.0 % | | | |
@@ -49,6 +50,9 @@ way round: pick a model, see everything measured about it.
 | Qwen3-ASR-1.7B | | | | 20.3 % WER |
 
 \* measured on System B under CPU offload — see the [provenance caveat](models/language-understanding.md#provenance-caveat).
+
+‡ the only System A v1.4 row, and the only one where the harness changes the answer —
+[below](#nanbeige42-3b).
 
 ---
 
@@ -113,6 +117,24 @@ a recommendation.
 | Nemotron-3-Nano-30B-A3B | **aborted** — `/no_think` ignored, no KV cache reuse, ~39 s/example |
 
 Same family, same vendor, opposite behaviour. **Family is not a predictor.**
+
+### Nanbeige4.2-3B
+
+The one model here whose score depends on which harness asks the question.
+
+| | |
+|---|---:|
+| belebele, thinking **off** (the table's harness) | **76.0 %** |
+| belebele, thinking **on** | **88.7 %** |
+| Qwen3.5-9B, same harness, same session | 90.0 % |
+| Generation, `tg128` | 131.15 t/s |
+| Llama-3.2-3B for scale, `tg128` | 250.65 t/s |
+
+**A tie with a 9B at 2.50 GiB, paid for in throughput.** 22 layers run twice: prefill
+drops to 46 % of a comparable dense 3B, generation to 52 %, and it emits 2.5× the
+tokens per answer. Not adopted; kept in view for a memory-constrained host.
+
+Details in [language-understanding.md](models/language-understanding.md#a-looped-model-measured-twice--nanbeige42-3b).
 
 ---
 

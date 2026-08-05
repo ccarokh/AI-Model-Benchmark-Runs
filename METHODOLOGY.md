@@ -132,6 +132,17 @@ The tell was in the noise, before it was in the backend column: variance jumped 
 **Rule: read the backend column of every run, and treat a sudden change in
 variance as a defect signal, not as a bad day.**
 
+The same failure returned in a second form when a newer llama.cpp was installed into
+its own prefix to run an architecture the production build predates. The new binary
+resolved **all eight** of its `libllama`/`libggml` libraries to the *old* prefix,
+because the `ld.so` cache points there. It was only caught because the old libraries
+did not know the architecture and said so. **With an architecture both builds
+support, the run would have completed and reported the wrong build's numbers.**
+
+**A second install prefix is not selected by calling its binary.** Set
+`LD_LIBRARY_PATH` and count how many libraries actually resolve into it before
+trusting a single measurement from it.
+
 ## Read the separator syntax of your own flags
 
 `llama-bench -ts 3,1` does not mean "split 3:1". The tensor-split separator is `/`;
