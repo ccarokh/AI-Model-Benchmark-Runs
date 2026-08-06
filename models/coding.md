@@ -134,7 +134,7 @@ them turned out to be the actual result.
 | Qwen3-Coder-30B-A3B | 2/19 | 0/10 | 4/22 | 3/8 | 2/22 | **11/81 = 13.6 %** | **40/81 = 49.4 %** |
 | ornith-35b | 8/19 | 1/10 | — | — | — | 9/29 | 14/29 |
 | Qwen3.6-35B-A3B | 7/19 | 1/10 | — | — | — | 8/29 | 11/29 |
-| [Nanbeige4.2-3B](#a-4b-model-that-fails-on-format-not-on-diagnosis) | 4/19 | — | — | — | — | 4/19 | 9/19 |
+| [Nanbeige4.2-3B](#a-4b-model-that-fails-on-format-not-on-diagnosis) | 4/19 | 0/10 | — | — | — | 4/29 | 16/29 |
 
 ### The finding
 
@@ -174,25 +174,48 @@ Per-repository differences of two or three instances sit **inside the noise band
 weight, and only where the gap is large. The 31 vs 11 is large. The 9 vs 8 between
 ornith-35b and Qwen3.6-35B-A3B is not a result.
 
+### ⚠️ One pylint instance is broken for every model
+
+**`pylint-4551` produced an empty patch in all six runs ever made here** — every
+model, every cache type, no exception. It is not a model failure: aider crashes
+during the repository scan on a scipy/numpy incompatibility, first as
+`ModuleNotFoundError: No module named 'numpy.char'`, and after the scipy upgrade
+built to fix exactly that, as `No module named 'numpy.strings'`. The fix moved the
+error rather than removing it.
+
+**So pylint has 9 winnable instances, not 10**, and every published pylint figure in
+this repository carries one guaranteed non-answer. The scores are low enough that
+this does not reorder anything — the field spans 0 to 1 — but the `empty` column is
+inflated by exactly one for all of them.
+
+**The gold-patch calibration cannot catch this, by construction.** It applies a known
+patch and runs the tests; it never starts an agent. The instance is broken precisely
+where the gold patch does not look. `pylint 10/10` in the
+[calibration table](../METHODOLOGY.md#prove-the-harness-can-succeed-before-blaming-the-model)
+is true and misleading at the same time.
+
 ### A 4B model that fails on format, not on diagnosis
 
 > [System A](../SYSTEMS.md#system-a) v1.4, llama.cpp b10273. Vendor table:
 > **SWE-bench Verified 63.6**, above Qwen3.5-9B and Gemma-4-12B. Measured here on
-> pytest, `repomap`, q8_0: **4 of 19 = 21.1 %**, against 10 of 19 for Qwen3.6-27B.
+> `repomap`, q8_0: **4 of 19 on pytest**, against 10 of 19 for Qwen3.6-27B, and
+> **0 of 10 on pylint**.
 
-That gap is worth taking apart rather than reporting, because **the non-answers do
-not all belong to the model.** Every empty patch was traced to a cause:
+pylint decides nothing — the whole field scores 0 or 1 there. pytest is where the gap
+is, and it is worth taking apart rather than reporting, because **the non-answers do
+not all belong to the model.** Every empty patch in both runs was traced to a cause:
 
-| Cause | Count | Attributable to |
-|---|---:|---|
-| **Edit format not followed** — the filename is missing from the line before the fence | **4** | model |
-| aider input-token limit | 2 | harness |
-| `ModuleNotFoundError: numpy.char` during the repository scan | 1 | harness |
-| aider began scraping GitHub URLs the model had emitted | 1 | model, via harness behaviour |
-| model **asked for a file** instead of editing one | 1 | model |
+| Cause | pytest | pylint | Attributable to |
+|---|---:|---:|---|
+| **Edit format not followed** — the filename is missing from the line before the fence | 4 | 1 | model |
+| model **asked for a file** instead of editing one | 1 | 3 | model |
+| aider began scraping GitHub URLs the model had emitted | 1 | 1 | model, via harness behaviour |
+| aider input-token limit | 2 | 1 | harness |
+| `numpy.char` / `numpy.strings` import error during the repository scan | 1 | 1 | harness |
+| **Total empty** | **9/19** | **7/10** | |
 
-**Six of the nine are the model's, three are not.** Excluding the three still leaves
-4 of 16.
+**Eleven of the sixteen are the model's, five are not.** Per instance in
+[`data/coding_swebench_empty_causes.tsv`](../data/coding_swebench_empty_causes.tsv).
 
 **The four format failures are the interesting ones.** In `pytest-5631` the model
 diagnosed the bug correctly — `p.new in sentinels` returns an array rather than a

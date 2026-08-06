@@ -8,3 +8,10 @@ nanbeige-4.2-3b	pytest-dev-pytest	repomap	q8_0	pytest-dev__pytest-7324	aider_inp
 nanbeige-4.2-3b	pytest-dev-pytest	repomap	q8_0	pytest-dev__pytest-10051	numpy_char_import_error	harness
 nanbeige-4.2-3b	pytest-dev-pytest	repomap	q8_0	pytest-dev__pytest-6202	aider_scraped_model_emitted_urls	model_via_harness
 nanbeige-4.2-3b	pytest-dev-pytest	repomap	q8_0	pytest-dev__pytest-7982	asked_for_file_instead_of_editing	model
+nanbeige-4.2-3b	pylint-dev-pylint	repomap	q8_0	pylint-dev__pylint-4551	numpy_strings_import_error	harness
+nanbeige-4.2-3b	pylint-dev-pylint	repomap	q8_0	pylint-dev__pylint-6528	edit_format_missing_filename	model
+nanbeige-4.2-3b	pylint-dev-pylint	repomap	q8_0	pylint-dev__pylint-6386	aider_input_token_limit	harness
+nanbeige-4.2-3b	pylint-dev-pylint	repomap	q8_0	pylint-dev__pylint-6903	aider_scraped_model_emitted_urls	model_via_harness
+nanbeige-4.2-3b	pylint-dev-pylint	repomap	q8_0	pylint-dev__pylint-4604	asked_for_file_instead_of_editing	model
+nanbeige-4.2-3b	pylint-dev-pylint	repomap	q8_0	pylint-dev__pylint-4970	asked_for_file_instead_of_editing	model
+nanbeige-4.2-3b	pylint-dev-pylint	repomap	q8_0	pylint-dev__pylint-7080	asked_for_file_instead_of_editing	model

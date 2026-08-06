@@ -17,7 +17,7 @@ way round: pick a model, see everything measured about it.
 | Qwen3-30B-A3B-2507 | 90.7 % * | | | |
 | [**Qwen2.5-Coder-32B**](#qwen25-coder-32b) | **89.3 %** | **8.4 %** | | previous coding incumbent |
 | Qwen3.5-4B | 89.3 % | | | |
-| [**Nanbeige4.2-3B**](#nanbeige42-3b) | **76.0 %** ‡ | | **21.1 %** (4/19) | looped transformer; 88.7 % on a different harness |
+| [**Nanbeige4.2-3B**](#nanbeige42-3b) | **76.0 %** ‡ | | **13.8 %** (4/29) | looped transformer; 88.7 % on a different harness |
 | Nemotron-Nano-9B-v2 | 88.7 % | | | |
 | Qwen3-8B | 88.7 % | | | previous chat default |
 | Qwen3-4B-Instruct | 88.0 % | | | |
@@ -134,8 +134,10 @@ The one model here whose score depends on which harness asks the question.
 drops to 46 % of a comparable dense 3B, generation to 52 %, and it emits 2.5× the
 tokens per answer. Not adopted; kept in view for a memory-constrained host.
 
-On coding it is the opposite of a tie — **4 of 19 against 10 of 19** for Qwen3.6-27B.
-But four of its nine non-answers were correct fixes rejected for
+On coding it is the opposite of a tie — **4 of 19 on pytest against 10 of 19** for
+Qwen3.6-27B, and 0 of 10 on pylint where the whole field scores 0 or 1. But five of
+its sixteen non-answers were the scaffold's, not the model's, and several more were
+fixes rejected for
 [edit-format errors](models/coding.md#a-4b-model-that-fails-on-format-not-on-diagnosis),
 so that number describes the model *in our scaffold*.
 

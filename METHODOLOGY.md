@@ -311,3 +311,16 @@ correct fix — to establish what the harness can resolve at all:
 
 Three instances in `requests` are unwinnable in this setup regardless of model.
 Without that calibration run, they would have been counted against every candidate.
+
+**But a gold-patch run validates the evaluator, not the agent.** It applies a known
+patch and runs the tests — it never starts the agent, so nothing that breaks *inside*
+the agent can show up in it. One `pylint` instance produced an empty patch in **all
+six runs ever made here**, across every model and cache type, because the agent
+crashes during its repository scan on a dependency conflict. Gold-patch calibration
+scored that same instance as winnable, and did so correctly:
+[the details](models/coding.md#-one-pylint-instance-is-broken-for-every-model).
+
+**Two calibrations are needed, not one.** The gold patch proves the evaluation can
+pass. Only a per-instance look at the agent logs proves the agent can *run* — and
+"empty patch" is the symptom that should trigger it, which is one more reason to
+[count non-answers separately](#count-the-non-answers-separately).
