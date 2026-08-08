@@ -25,6 +25,7 @@ paths, and add nothing a reader can check.
 | [`image_generation_ocr.tsv`](image_generation_ocr.tsv) | 10 rows | the two machine measures for text in images |
 | [`image_generation_ab.tsv`](image_generation_ab.tsv) | 11 runs | one variable at a time on a single model |
 | [`image_generation_seeds.tsv`](image_generation_seeds.tsv) | 50 runs | the two OCR measures repeated across five seeds |
+| [`image_generation_energy.tsv`](image_generation_energy.tsv) | 5 models | card power integrated over one full image each |
 | [`image_generation_verdicts.tsv`](image_generation_verdicts.tsv) | 38 verdicts | **operator judgements, not measurements** |
 
 ## Columns
@@ -120,6 +121,16 @@ seeds, and the model reported as unable to hits it in 1 of 5.
 ⚠️ In `_seeds.tsv` the `05_schematic` rows carry a `denominator` column on purpose. The
 share alone is meaningless where only one or two tokens were recognised at all — read
 `value` and `denominator` together or not at all.
+
+**`image_generation_energy.tsv`** — `model`, `seconds`, `mean_watt_chip`,
+`peak_watt_chip`, `wh_per_image`, `samples`.
+
+⚠️ The column names say `chip` on purpose. `power1_average` reads the graphics
+processor, not the board and not power-supply losses; the wall-socket figure is higher
+by an amount that is itself not constant. **Use these to compare models with each
+other, never as an electricity bill.**
+
+⚠️ One image per model. The spread across repeats is not measured.
 
 ## A note on one filename
 

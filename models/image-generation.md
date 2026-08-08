@@ -7,6 +7,7 @@
 > [`_ocr.tsv`](../data/image_generation_ocr.tsv),
 > [`_ab.tsv`](../data/image_generation_ab.tsv),
 > [`_seeds.tsv`](../data/image_generation_seeds.tsv) (15 seeds for task 02, 5 for task 05),
+> [`_energy.tsv`](../data/image_generation_energy.tsv),
 > [`_verdicts.tsv`](../data/image_generation_verdicts.tsv).
 
 **Five models, eight tasks. The three tasks that carry a statement rather than a
@@ -161,6 +162,48 @@ broken image, but the convincing one showing wrong technique. Five legs on a hor
 catch every reader; a harness attached to nothing catches only someone who knows the
 work. It is the visual counterpart to the **fluent-nonsense transcriptions** in
 [the ASR series](transcription.md#part-1--the-configuration-was-the-problem-not-the-model).
+
+## What an image costs in energy
+
+Card power sampled at 1 Hz over each full run and integrated. Same prompt, same seed,
+card idle at 7 W beforehand.
+
+| Model | Time | Mean | Peak | **Energy per image** |
+|---|---:|---:|---:|---:|
+| **FLUX.1-schnell** | 36.8 s | 88.1 W | 290 W | **0.91 Wh** |
+| RealVisXL V5.0 | 38.4 s | 139.0 W | 285 W | 1.50 Wh |
+| SDXL 1.0 base | 39.4 s | 137.2 W | 285 W | 1.52 Wh |
+| SD 3.5 Medium | 74.3 s | 188.6 W | 294 W | 3.90 Wh |
+| **Chroma1-HD** | 149.9 s | 243.2 W | 295 W | **10.13 Wh** |
+
+**Chroma costs eleven times what FLUX costs per image, not four.** Time alone predicts
+4×; the rest is load. Chroma holds the card at 243 W mean against FLUX's 88 W — it is
+not merely on the card longer, it works it nearly three times harder while there.
+
+**Peak is the same for everyone**, 285–295 W. Every model reaches the card's limit;
+they differ only in how long they stay there. A power cap would therefore hit all five
+alike — see [the throttle curve](../hardware/power.md).
+
+### The energy price of the one thing only two models can do
+
+Task 02 has a measured hit rate, so the cost of a *usable* sign can be stated rather
+than guessed:
+
+| | Hit rate | Attempts for one hit | Energy |
+|---|---:|---:|---:|
+| Chroma1-HD | 40 % | ~2.5 | **~25 Wh** |
+| FLUX.1-schnell | 13 % | ~7.7 | **~7 Wh** |
+
+**The slower model is the more expensive one per correct sign — but the faster one is
+cheaper despite needing three times the attempts.** Attempt count and energy per
+attempt pull in opposite directions, and only measuring both shows which wins.
+
+⚠️ Expected attempts is `1 / rate`, arithmetic on a measured rate, not a measurement.
+
+⚠️ **`power1_average` reads the graphics chip only** — not the board, not power-supply
+losses. A wall-socket meter measured 46 W where this sensor showed 28 W of difference
+([power.md](../hardware/power.md#measure-the-whole-machine-when-comparing-operating-modes)).
+**These figures are a floor, not a wall-plug number.**
 
 ## The parameter A/B, and what it settled
 

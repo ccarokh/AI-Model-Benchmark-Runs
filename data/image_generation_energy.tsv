@@ -1,0 +1,6 @@
+model	seconds	mean_watt_chip	peak_watt_chip	wh_per_image	samples
+flux.1-schnell	36.8	88.1	290.0	0.905	37
+sdxl-1.0-base	39.4	137.2	285.0	1.515	40
+realvisxl-v5.0	38.4	139.0	285.0	1.501	39
+sd3.5-medium	74.3	188.6	294.0	3.896	74
+chroma1-hd	149.9	243.2	295.0	10.133	149
