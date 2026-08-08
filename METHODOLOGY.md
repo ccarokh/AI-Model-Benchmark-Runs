@@ -302,6 +302,27 @@ steps, each on its usual setting. Defensible per model, but it makes the timing 
 a comparison of configurations. One sweep showed the "4.4× slower" headline was the
 choice of 20 steps: at 8 steps the same model is 2.2× slower.
 
+## One sample is not a rate
+
+An image model was reported here as the only one able to render a required German
+string — measured once, on one seed. Repeated across five seeds:
+
+| | Edit distance per seed | Exact |
+|---|---|---:|
+| the "only" model | 0 · 0 · 2 · 8 · 8 | 2 / 5 |
+| the one said to fail | 0 · 1 · 1 · 2 · 6 | 1 / 5 |
+
+**Both claims were wrong, in opposite directions.** The winner is not reliable, and the
+loser can do it. The document had been published for an hour before the sweep landed.
+
+The same sweep exposed a broken metric. "Share of rendered text that is a real word"
+was reported as 50 % and 39 % for two models — resting on 6 and 72 tokens. Across seeds
+the same measure returns 100 % from a *single* recognised token. **A ratio without its
+denominator is not a measurement**, and one that can be computed from n = 1 needs a
+floor before it is quoted.
+
+Where output is sampled rather than computed, **n = 1 is an anecdote wearing a number**.
+
 ## A single run is not a duration
 
 Forty images from one model, one after another, same size and settings. **One took

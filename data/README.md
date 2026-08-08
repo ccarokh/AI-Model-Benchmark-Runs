@@ -24,6 +24,7 @@ paths, and add nothing a reader can check.
 | [`image_generation.tsv`](image_generation.tsv) | 5 models | time, VRAM, licence per image model |
 | [`image_generation_ocr.tsv`](image_generation_ocr.tsv) | 10 rows | the two machine measures for text in images |
 | [`image_generation_ab.tsv`](image_generation_ab.tsv) | 11 runs | one variable at a time on a single model |
+| [`image_generation_seeds.tsv`](image_generation_seeds.tsv) | 50 runs | the two OCR measures repeated across five seeds |
 | [`image_generation_verdicts.tsv`](image_generation_verdicts.tsv) | 38 verdicts | **operator judgements, not measurements** |
 
 ## Columns
@@ -111,8 +112,14 @@ the same scale, not a competitor.
   for this use case and hiding it in prose would be worse — but it carries no more
   authority than one careful pair of eyes.
 
-⚠️ **Every row rests on a single seed.** Diffusion output scatters across seeds; none
-of these figures should be read as a property of a model until repeated.
+⚠️ **Everything except `_seeds.tsv` rests on a single seed** (42). `_seeds.tsv` repeats
+the two machine-measurable tasks across five, and **both headline numbers moved**: the
+model reported as the only one able to render the required string hits it in 2 of 5
+seeds, and the model reported as unable to hits it in 1 of 5.
+
+⚠️ In `_seeds.tsv` the `05_schematic` rows carry a `denominator` column on purpose. The
+share alone is meaningless where only one or two tokens were recognised at all — read
+`value` and `denominator` together or not at all.
 
 ## A note on one filename
 

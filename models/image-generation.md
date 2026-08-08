@@ -6,6 +6,7 @@
 > [`image_generation.tsv`](../data/image_generation.tsv),
 > [`_ocr.tsv`](../data/image_generation_ocr.tsv),
 > [`_ab.tsv`](../data/image_generation_ab.tsv),
+> [`_seeds.tsv`](../data/image_generation_seeds.tsv),
 > [`_verdicts.tsv`](../data/image_generation_verdicts.tsv).
 
 **Five models, eight tasks. The three tasks that carry a statement rather than a
@@ -40,19 +41,52 @@ Two tasks demand text, and both can be checked instead of judged. **The metric h
 follow the prompt:** a required string is an edit-distance question, a free label is a
 vocabulary question.
 
-| Model | 02 · distance to `ACHTUNG BEHAELTER` | what OCR read | 05 · real words |
-|---|---:|---|---:|
-| **Chroma1-HD** | **0** | `ACHTUNG BEHAELTER` | 0 % (0 of 1) |
-| FLUX.1-schnell | 1 | `ACHITUNG BEHAELTER` | **50 %** (3 of 6) |
-| SDXL 1.0 base | 6 | `ACHUTING BELLER` | 25 % (3 of 12) |
-| SD 3.5 Medium | 10 | `AG EN E TZER` | 39 % (28 of 72) |
-| RealVisXL V5.0 | 12 | `E B N E A E` | 9 % (1 of 11) |
+### Task 02 — does the required string appear?
 
-**Exactly one model renders a required German string correctly**, and it is one of the
-two under Apache-2.0. Verified by OCR and then by eye — clean typography on a bolted
-warning sign.
+Edit distance to `ACHTUNG BEHAELTER`, **five seeds per model**:
 
-**Labelled diagrams fail on all five.** The best label vocabulary is half real words.
+| Model | Distances across seeds | Exact hits | Best read |
+|---|---|---:|---|
+| **Chroma1-HD** | 0 · 0 · 2 · 8 · 8 | **2 / 5** | `ACHTUNG BEHAELTER` |
+| **FLUX.1-schnell** | 0 · 1 · 1 · 2 · 6 | **1 / 5** | `ACHTUNG BEHAELTER` |
+| SD 3.5 Medium | 3 · 4 · 4 · 4 · 8 | 0 / 5 | — |
+| SDXL 1.0 base | 6 · 6 · 7 · 7 · 17 | 0 / 5 | — |
+| RealVisXL V5.0 | 7 · 8 · 12 · 12 · 12 | 0 / 5 | — |
+
+**Two models can do it; neither does it reliably.** Chroma lands the string exactly in
+two seeds of five and misses by eight in two others. FLUX hits it once — with the same
+prompt that gave `ACHITUNG` on the seed everything else was measured on.
+
+**This corrects the first version of this document**, which read "exactly one model
+renders a required German string correctly". That claim came from a single seed and was
+wrong in both directions: it made Chroma look reliable and FLUX look incapable.
+Both figures moved once the seed was varied.
+
+The three remaining models never come close. Their floor is a real result: on this
+prompt they do not render German text at a usable distance at any of five seeds.
+
+### Task 05 — of the labels it renders, how much is language?
+
+Same five seeds, counting real words against `en_US` + `de_DE`:
+
+| Model | Real words / tokens found, per seed |
+|---|---|
+| SD 3.5 Medium | 9/37 · 8/53 · 6/49 · 3/34 · 2/7 |
+| RealVisXL V5.0 | 2/11 · 2/7 · 1/12 · 1/11 · 1/3 |
+| SDXL 1.0 base | 3/12 · 2/2 · 1/3 · 0/0 · 0/0 |
+| FLUX.1-schnell | 3/6 · 2/5 · 2/3 · 0/0 · 0/0 |
+| Chroma1-HD | 1/1 · 0/0 · 0/0 · 0/0 · 0/0 |
+
+⚠️ **Read the denominators, not the percentages.** A share of 100 % here comes from a
+single recognised token. Chroma produces essentially no readable label text at all —
+four seeds out of five yield nothing to score. SD 3.5 produces by far the most text and
+gets 16–24 % of it right.
+
+**The metric needs a minimum denominator to mean anything**, and the first version of
+this document did not say so: it reported "50 %" for FLUX and "39 %" for SD 3.5 as if
+those were comparable, when they rest on 6 and 72 tokens.
+
+**Labelled diagrams fail on all five** — that part survives the seed sweep intact.
 
 ⚠️ **The word-share metric is wrong for task 02** — `BEHAELTER` is the requested
 string but not a dictionary entry, so it scores as a non-word. Each task needs the
@@ -80,7 +114,7 @@ note. Full list in [`_verdicts.tsv`](../data/image_generation_verdicts.tsv).
 
 | Task | Why it failed, on every model |
 |---|---|
-| **02 · sign with German text** | four of five produce non-words; the fifth is the exception above |
+| **02 · sign with German text** | rated on the seed-42 images, where four of five produced non-words. **The seed sweep since found two models that can hit the string** — neither reliably |
 | **04 · hands on a torque wrench** | no model produced a tool that exists — invented hybrids, or a shaft where a wrench belongs |
 | **05 · two-stage filter schematic** | **no image shows water flowing from A to B** |
 
@@ -154,9 +188,11 @@ rated separately — they carry the same grid.
 
 ## Not measured
 
-- **One seed per task.** Diffusion models scatter across seeds; a single sample is not
-  a property. This is the largest open gap in the series, and it applies to every
-  number above, including the one exact text hit.
+- **One seed per task, except the two OCR-measurable ones.** Tasks 02 and 05 were
+  repeated across five seeds and both headline numbers moved — see above. The other six
+  tasks, and every operator verdict, still rest on a single sample. **Read the pass
+  counts with that in mind:** the seed sweep changed the text result substantially, and
+  there is no reason the others would be more stable.
 - **Steps and cfg are not equalised across models**, so the time column compares
   operating points, not architectures.
 - **English prompts only.** All five expect English; whether German prompts carry was
