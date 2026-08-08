@@ -19,6 +19,7 @@ everything measured about one model across all topics.
 | Coding | [Coding](models/coding.md) | 18 models; the ranking inverted once the harness stopped naming the file |
 | ASR — speech to text | [Transcription](models/transcription.md) | Qwen3-ASR-1.7B matches Whisper large-v3; a config fix was worth 30 points of WER; Whisper runs at 27× real time on an 8 GB card with no CUDA toolkit installed |
 | VLM — image input | [Vision](models/vision.md) | Runs permanently alongside three other models: 15.1 of 24.5 GB |
+| Image generation | [Image generation](models/image-generation.md) | 5 models; the three tasks that carry a statement rather than a motif fail on every one |
 | Fine-tuning | [Fine-tuning](models/finetuning.md) | A third-party fine-tune lost 26.7 points against its own base and doubled the non-answers |
 | Power draw | [Power](hardware/power.md) | 7-point curve from 276 W down to 159 W — at half the core clock, generation still delivers 85 %. Idle costs more per year than throttling saves |
 | Second GPU | [Multi-GPU](hardware/multi-gpu.md) | Capacity, not speed: ~62 % of single-card generation. The bus sat at 0–5 % and doubling its width changed nothing |
@@ -48,6 +49,7 @@ Everything above that is untested — see [open](#open).
 | Item | Status |
 |---|---|
 | Models above ~24 GB — incl. GLM-4.5-Air, Hunyuan-A13B | never run |
+| Image generation across several seeds — every figure there is one sample | planned |
 | TTS | planned |
 | Home Assistant voice pipeline | planned |
 | Energy efficiency per phase — tokens per Wh **and** Wh per completed task | planned |
@@ -62,6 +64,10 @@ included. Every number in the documents traces back here.
 
 **[`scripts/`](scripts/)** — the harnesses as they ran, hosts and paths lifted into a
 config block. Bash, driving `llama-bench`/`llama-server` over SSH.
+
+**Licences are recorded per model where they constrain use** — see
+[image generation](models/image-generation.md#what-a-machine-measured), the first
+series here where a model's licence, not its score, decides whether it can be used.
 
 ## Authorship
 

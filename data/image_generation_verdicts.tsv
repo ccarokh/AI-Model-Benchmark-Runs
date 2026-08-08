@@ -1,0 +1,39 @@
+model	task	verdict	operator_note
+chroma1-hd	01_work_scene	pass	
+flux.1-schnell	01_work_scene	pass	
+realvisxl-v5.0	01_work_scene	pass	sieht am besten aus, aber inhaltlich vieles ohne Sinn: Seil haengt an nichts, Schacht ohne Boden, Scheibe mit Lochbild einer Malerpalette
+sd3.5-medium	01_work_scene	pass	
+sdxl-1.0-base	01_work_scene	fail	
+chroma1-hd	02_sign_text	pass	einziges Modell, das ACHTUNG BEHAELTER exakt trifft (OCR-Editabstand 0)
+flux.1-schnell	02_sign_text	fail	ACHITUNG statt ACHTUNG
+realvisxl-v5.0	02_sign_text	fail	
+sd3.5-medium	02_sign_text	fail	
+sdxl-1.0-base	02_sign_text	fail	Buchstabenfolgen ohne Wortcharakter
+chroma1-hd	03_flat_icon	pass	
+flux.1-schnell	03_flat_icon	pass	
+realvisxl-v5.0	03_flat_icon	pass	
+sd3.5-medium	03_flat_icon	pass	
+sdxl-1.0-base	03_flat_icon	fail	Hintergrund nicht einheitlich weiss, war ausdrueckliche Vorgabe
+chroma1-hd	04_hands_tool	fail	sieht sehr plastikhaft aus
+flux.1-schnell	04_hands_tool	fail	Werkzeug gibt es nicht: Drehmomentschluessel-Griff mit flacher Klinge vorn
+realvisxl-v5.0	04_hands_tool	fail	merkwuerdige Haende, sehen aus als sollte ein Handschuh drueber, ist aber keiner
+sd3.5-medium	04_hands_tool	fail	da sind 2 Hände ineinander verschmolzen
+sdxl-1.0-base	04_hands_tool	fail	Hand ohne aufloesbare Finger, Welle statt Schluessel
+chroma1-hd	05_schematic	fail	kein Fluss von Filter A nach Filter B -- die Aussage des Schemas fehlt bei allen; zusaetzlich ausradierte Objekte, Rohre enden im Nichts
+flux.1-schnell	05_schematic	fail	kein Fluss von Filter A nach Filter B -- die Aussage des Schemas fehlt bei allen
+realvisxl-v5.0	05_schematic	fail	kein Fluss von Filter A nach Filter B -- die Aussage des Schemas fehlt bei allen; Beschriftung nicht lesbar, Wortanteil 9 %
+sd3.5-medium	05_schematic	fail	Text ist teilweise nonsense, Diagram beschreibt nicht das was gefordert wurde
+sdxl-1.0-base	05_schematic	fail	kein Fluss von Filter A nach Filter B -- die Aussage des Schemas fehlt bei allen; Rohre enden im Nichts
+chroma1-hd	06_dog	fail	der Hund wird ueber seine eigenen Beine stolpern, Laeufe gekreuzt
+flux.1-schnell	06_dog	pass	
+realvisxl-v5.0	06_dog	pass	
+sd3.5-medium	06_dog	fail	all four legs visible, <-- wurde nicht eingehalten
+sdxl-1.0-base	06_dog	fail	vierte Pfote ohne Verbindung zum Koerper, dazu fellfreie Schaedeldecke
+chroma1-hd	07_cat	fail	Punkte-Fell statt Linien; in Q8_0 identisch, also nicht die Quantisierung
+flux.1-schnell	07_cat	fail	haelt das Prompt nicht ein: Katze schaut nicht aus dem Fenster
+realvisxl-v5.0	07_cat	pass	
+sdxl-1.0-base	07_cat	pass	
+chroma1-hd	08_horse	fail	zu shiny / plastikhaft
+flux.1-schnell	08_horse	pass	
+realvisxl-v5.0	08_horse	pass	
+sdxl-1.0-base	08_horse	fail	fuenf Beine

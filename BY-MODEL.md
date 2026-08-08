@@ -46,6 +46,11 @@ way round: pick a model, see everything measured about it.
 | OlympicCoder-32B | | **aborted** | | |
 | BGE-M3 | | | | **embedding slot**, 96.25 % |
 | Qwen3-VL-Embedding-8B | | | | 96.25 % — exact tie |
+| **FLUX.1-schnell** Q4_K | | | | image gen: 4/8, 33.5 s, 89 % of the card, Apache-2.0 |
+| **Chroma1-HD** Q4_0 | | | | image gen: 3/8, **only model to render a required string exactly**, Apache-2.0 |
+| **RealVisXL V5.0** | | | | image gen: **5/8**, best score — and its best image is physically impossible |
+| **SD 3.5 Medium** | | | | image gen: 2/6, Stability Community licence |
+| **SDXL 1.0 base** | | | | image gen: 1/8 |
 | Whisper large-v3 | | | | **ASR production**, 19.6 % WER |
 | Qwen3-ASR-1.7B | | | | 20.3 % WER |
 
@@ -182,6 +187,13 @@ Sixteen models between 33.3 % and 93.3 %, with the top seven inside four points.
 |---|---:|---:|---:|
 | BGE-M3 | 96.25 % | 1024 | 0.9 GB |
 | Qwen3-VL-Embedding-8B | 96.25 % | 4096 | 8.05 GB |
+
+### Image generation — [image-generation.md](models/image-generation.md)
+
+Five models, eight tasks, one seed each. **Three tasks fail on every model** — a sign
+with required German text, a tool that exists, and a diagram that shows a process
+rather than its parts. Licence is a first-class column there: two of the five are
+Apache-2.0, the others carry conditions.
 
 ### ASR — [transcription.md](models/transcription.md)
 

@@ -275,6 +275,44 @@ Three things worth taking from it:
 - **Cached weights do not mean offline.** Libraries that resolve a model by name will
   still call home to check a revision unless told not to.
 
+## Vary one thing, or you are comparing setups, not models
+
+Five image models were run, each assembled from its own parts — its own autoencoder,
+its own text encoders, its own quantisation. **Every difference in that assembly came
+out looking like a difference between models.** Three separate "model failures" here
+were the harness:
+
+| Reported as | Actually |
+|---|---|
+| "this model is unusable, every image is a dot grid" | it was decoded with **another model's autoencoder** |
+| "this model crashes on every task" | a 15-byte HTML error page downloaded as a text encoder |
+| "this model renders fur as a grid" | **survived the A/B** — genuinely the model |
+
+The last row is the point. An A/B is not only for catching your own mistakes; it is
+what lets a real defect be *asserted*. Four variables were changed one at a time —
+quantisation, step count, guidance scale, autoencoder — and the defect stayed. Without
+that, the claim would have been the same sentence with nothing behind it.
+
+**Two habits follow.** Where a project ships an all-in-one checkpoint, use it rather
+than assembling the parts yourself — that alone fixed one of the three above. And
+before attributing anything to a model, change one variable and look again.
+
+**Also: a per-model operating point is not a comparison.** Those five ran at 4 to 28
+steps, each on its usual setting. Defensible per model, but it makes the timing column
+a comparison of configurations. One sweep showed the "4.4× slower" headline was the
+choice of 20 steps: at 8 steps the same model is 2.2× slower.
+
+## A single run is not a duration
+
+Forty images from one model, one after another, same size and settings. **One took
+809.6 s where its neighbour took 75.8 s** — the same script, the same card, minutes
+apart. The GPU sat at 4 % utilisation throughout the slow one. No error, no log entry,
+cause never identified.
+
+A mean over that set would have been wrong by a third, and nothing in the output would
+have shown it. **Report the spread, or report n.** The outlier was only noticed
+because someone was watching the run rather than collecting the total afterwards.
+
 ## Watch load outside the target GPU
 
 An evaluation was aborted with load average at 45 and RAM plus swap nearly
@@ -289,6 +327,26 @@ before you measure** — not "should be idle", but VRAM and utilisation read bac
 zero. This matters most for reference runs and anything drawing from a socket meter,
 where another process on the same card contaminates the number without changing
 anything you would notice in the output.
+
+**Check before every item, not once per run — and know that a check is not a lock.**
+A model occupying 89 % of the card was measured while the host's hourly health probe
+took 6100 MiB; the card went to `ErrorOutOfDeviceMemory` three times in a row
+(`ring comp_1.1.0 timeout` in the kernel log). The guard was then moved to run before
+each individual image, which caught the next collision — but one image still started
+in the gap between the check passing and the probe arriving. **Where a lease mechanism
+exists, take the lease; polling only narrows the window.**
+
+## Do not judge from a stale copy
+
+Two images were regenerated and replaced under the same filenames. The rating tool
+served them with `Cache-Control: max-age=86400`, so the browser kept handing back the
+old ones — and both were rated a second time as broken, hours after the fix had
+landed. Two verdicts about files that no longer existed.
+
+**Anything a human judges from must be validated, not cached by name.** An ETag from
+the file's own modification time costs nothing and makes the failure impossible. The
+same applies to any artefact reviewed after being regenerated: the version under
+review has to be the version on disk.
 
 ## Count the non-answers separately
 

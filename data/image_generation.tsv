@@ -1,0 +1,6 @@
+model	quant	licence	commercial	steps	cfg	seconds_per_image	n_runs	params_mb	peak_vram_mib	card_share_pct
+flux.1-schnell	Q4_K	Apache-2.0	yes	4	1.0	33.5	8	15948.45	21894	89
+chroma1-hd	Q4_0	Apache-2.0	yes	20	4.0	147.7	8	14424.14	20389	83
+sd3.5-medium	Q4_K_M-allinone	Stability Community	under 1M revenue	28	4.5	69.5	8	15980.96	18878	77
+sdxl-1.0-base	fp16	CreativeML OpenRAIL++-M	with conditions	25	7.0	37.0	8	6624.11	12503	51
+realvisxl-v5.0	fp16	OpenRAIL++	with conditions	25	7.0	37.4	8	6624.11	12503	51

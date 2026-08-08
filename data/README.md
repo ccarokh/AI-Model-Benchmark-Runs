@@ -20,7 +20,11 @@ paths, and add nothing a reader can check.
 | [`transcription_fasterwhisper.tsv`](transcription_fasterwhisper.tsv) | 8 runs | `large-v3` on one 63.72 s clip, GPU and CPU |
 | [`chat_belebele_reasoning.tsv`](chat_belebele_reasoning.tsv) | 3 runs | belebele with the generate-and-extract harness, thinking on |
 | [`throughput_looped_transformer.tsv`](throughput_looped_transformer.tsv) | 8 rows | `llama-bench`, looped vs dense at the same scale |
-| [`coding_swebench_empty_causes.tsv`](coding_swebench_empty_causes.tsv) | 9 instances | why each empty patch was empty, one run |
+| [`coding_swebench_empty_causes.tsv`](coding_swebench_empty_causes.tsv) | 16 instances | why each empty patch was empty, two runs |
+| [`image_generation.tsv`](image_generation.tsv) | 5 models | time, VRAM, licence per image model |
+| [`image_generation_ocr.tsv`](image_generation_ocr.tsv) | 10 rows | the two machine measures for text in images |
+| [`image_generation_ab.tsv`](image_generation_ab.tsv) | 11 runs | one variable at a time on a single model |
+| [`image_generation_verdicts.tsv`](image_generation_verdicts.tsv) | 38 verdicts | **operator judgements, not measurements** |
 
 ## Columns
 
@@ -94,6 +98,21 @@ model produced nothing to measure.
 `gpu`, `test`, `t_per_s`, `stddev`. `llama-bench -n 128 -p 512,4096 -pg 4096,128
 -ngl 99 -r 20 -sm none -mg 0`, llama.cpp b10273. Llama-3.2-3B is the dense control at
 the same scale, not a competitor.
+
+**`image_generation*.tsv`** — four files, and the split between them is the point.
+
+- `image_generation.tsv` and `_ab.tsv` are **measured**: seconds, MiB, and whether a
+  texture defect survived a controlled change.
+- `_ocr.tsv` is **measured but metric-dependent**: two different measures, because a
+  required string and a free label are different questions. Read the task column
+  before comparing values.
+- `_verdicts.tsv` is **not a measurement.** It is one person looking at each image and
+  saying pass or fail, with a note. It is in `data/` because it is the deciding result
+  for this use case and hiding it in prose would be worse — but it carries no more
+  authority than one careful pair of eyes.
+
+⚠️ **Every row rests on a single seed.** Diffusion output scatters across seeds; none
+of these figures should be read as a property of a model until repeated.
 
 ## A note on one filename
 

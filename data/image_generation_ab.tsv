@@ -1,0 +1,12 @@
+model	variable	value	seconds_per_image	grid_texture_present
+chroma1-hd	quantisation	Q4_0	147.7	yes
+chroma1-hd	quantisation	Q8_0	154.8	yes
+chroma1-hd	steps	8	75.0	yes
+chroma1-hd	steps	14	112.2	yes
+chroma1-hd	steps	20	147.7	yes
+chroma1-hd	steps	28	199.6	yes
+chroma1-hd	cfg	2.5	149.4	yes
+chroma1-hd	cfg	4.0	147.7	yes
+chroma1-hd	cfg	5.5	149.2	yes
+chroma1-hd	vae	flux-ae	147.7	yes
+chroma1-hd	vae	chroma-own	147.9	yes

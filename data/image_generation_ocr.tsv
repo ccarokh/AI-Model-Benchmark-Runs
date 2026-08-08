@@ -1,0 +1,11 @@
+model	task	metric	value	detail
+flux.1-schnell	02_sign_text	edit_distance_to_target	1	ACHITUNG BEHAELTER
+chroma1-hd	02_sign_text	edit_distance_to_target	0	ACHTUNG BEHAELTER
+sdxl-1.0-base	02_sign_text	edit_distance_to_target	6	ACHUTING BELLER
+sd3.5-medium	02_sign_text	edit_distance_to_target	10	AG EN E TZER
+realvisxl-v5.0	02_sign_text	edit_distance_to_target	12	E B N E A E
+flux.1-schnell	05_schematic	real_word_share	0.50	3 of 6 tokens
+sd3.5-medium	05_schematic	real_word_share	0.39	28 of 72 tokens
+sdxl-1.0-base	05_schematic	real_word_share	0.25	3 of 12 tokens
+realvisxl-v5.0	05_schematic	real_word_share	0.09	1 of 11 tokens
+chroma1-hd	05_schematic	real_word_share	0.00	0 of 1 tokens
