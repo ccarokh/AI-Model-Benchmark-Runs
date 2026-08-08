@@ -6,7 +6,7 @@
 > [`image_generation.tsv`](../data/image_generation.tsv),
 > [`_ocr.tsv`](../data/image_generation_ocr.tsv),
 > [`_ab.tsv`](../data/image_generation_ab.tsv),
-> [`_seeds.tsv`](../data/image_generation_seeds.tsv),
+> [`_seeds.tsv`](../data/image_generation_seeds.tsv) (15 seeds for task 02, 5 for task 05),
 > [`_verdicts.tsv`](../data/image_generation_verdicts.tsv).
 
 **Five models, eight tasks. The three tasks that carry a statement rather than a
@@ -43,27 +43,34 @@ vocabulary question.
 
 ### Task 02 — does the required string appear?
 
-Edit distance to `ACHTUNG BEHAELTER`, **five seeds per model**:
+Edit distance to `ACHTUNG BEHAELTER`, **fifteen seeds per model**:
 
-| Model | Distances across seeds | Exact hits | Best read |
-|---|---|---:|---|
-| **Chroma1-HD** | 0 · 0 · 2 · 8 · 8 | **2 / 5** | `ACHTUNG BEHAELTER` |
-| **FLUX.1-schnell** | 0 · 1 · 1 · 2 · 6 | **1 / 5** | `ACHTUNG BEHAELTER` |
-| SD 3.5 Medium | 3 · 4 · 4 · 4 · 8 | 0 / 5 | — |
-| SDXL 1.0 base | 6 · 6 · 7 · 7 · 17 | 0 / 5 | — |
-| RealVisXL V5.0 | 7 · 8 · 12 · 12 · 12 | 0 / 5 | — |
+| Model | Exact | Within 1 char | Median | Range |
+|---|---:|---:|---:|---|
+| **Chroma1-HD** | **6 / 15 = 40 %** | **11 / 15 = 73 %** | **1** | 0 – 8 |
+| **FLUX.1-schnell** | 2 / 15 = 13 % | 7 / 15 = 47 % | 3 | 0 – 15 |
+| SD 3.5 Medium | 0 / 15 | 0 / 15 | 6 | 3 – 13 |
+| SDXL 1.0 base | 0 / 15 | 0 / 15 | 7 | 5 – 17 |
+| RealVisXL V5.0 | 0 / 15 | 0 / 15 | 8 | 5 – 15 |
 
-**Two models can do it; neither does it reliably.** Chroma lands the string exactly in
-two seeds of five and misses by eight in two others. FLUX hits it once — with the same
-prompt that gave `ACHITUNG` on the seed everything else was measured on.
+**Two separate bands, not a ranking.** Two models land the string exactly some of the
+time; the other three never do — not once in fifteen attempts, and never within two
+characters either. That floor is as solid a result as the ceiling.
 
-**This corrects the first version of this document**, which read "exactly one model
-renders a required German string correctly". That claim came from a single seed and was
-wrong in both directions: it made Chroma look reliable and FLUX look incapable.
-Both figures moved once the seed was varied.
+**Chroma is clearly ahead of FLUX**, three times the hit rate and a third of the median
+distance. Neither is reliable enough to use unattended.
 
-The three remaining models never come close. Their floor is a real result: on this
-prompt they do not render German text at a usable distance at any of five seeds.
+**A rate is a workflow number.** At 40 % per attempt, three attempts reach a correct
+sign 78 % of the time and five reach 92 % — arithmetic on the measured rate, not a
+measurement. At 147.7 s per image that is about seven minutes of card time for one
+usable sign, and it needs a checker: the OCR script in
+[`scripts/image/`](../scripts/image/) is that checker.
+
+**This section has now been rewritten twice.** The first version said "exactly one
+model renders a required German string correctly" — from a single seed. The second, at
+five seeds, said 2/5 against 1/5 and made the two look close. **Neither survived more
+data**, and the direction of the error was different each time. See
+[METHODOLOGY](../METHODOLOGY.md#one-sample-is-not-a-rate).
 
 ### Task 05 — of the labels it renders, how much is language?
 

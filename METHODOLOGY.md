@@ -307,13 +307,18 @@ choice of 20 steps: at 8 steps the same model is 2.2× slower.
 An image model was reported here as the only one able to render a required German
 string — measured once, on one seed. Repeated across five seeds:
 
-| | Edit distance per seed | Exact |
-|---|---|---:|
-| the "only" model | 0 · 0 · 2 · 8 · 8 | 2 / 5 |
-| the one said to fail | 0 · 1 · 1 · 2 · 6 | 1 / 5 |
+| | Exact hits at n = 1 | at n = 5 | at n = 15 |
+|---|---|---|---|
+| the "only" model | 1 / 1 | 2 / 5 | **6 / 15 = 40 %** |
+| the one said to fail | 0 / 1 | 1 / 5 | **2 / 15 = 13 %** |
 
-**Both claims were wrong, in opposite directions.** The winner is not reliable, and the
-loser can do it. The document had been published for an hour before the sweep landed.
+**The claim was rewritten twice, and the error pointed a different way each time.** At
+n = 1 one model looked capable and the other incapable. At n = 5 they looked close. At
+n = 15 the gap is threefold and neither is reliable. Three of the five models never hit
+the string in fifteen attempts — *that* floor held from the first measurement on.
+
+**Watch which direction more data moves a number.** A result that keeps moving has not
+converged; a result that holds while n grows is the one worth quoting.
 
 The same sweep exposed a broken metric. "Share of rendered text that is a real word"
 was reported as 50 % and 39 % for two models — resting on 6 and 72 tokens. Across seeds
