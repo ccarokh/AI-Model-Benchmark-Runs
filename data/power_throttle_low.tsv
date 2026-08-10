@@ -1,0 +1,9 @@
+step	clock_ceiling_mhz	sclk_reached	pp2048	tg128	mean_watt_chip	peak_watt_chip	watt_per_tok_s	samples	kernel_msgs
+stock	-	2685	2720.7	108.33	277.0	292.0	2.557	6	0
+throttle	1400	1439	1568.3	86.68	148.6	169.0	1.714	9	0
+stock	-	2636	2714.1	107.61	289.7	295.0	2.692	6	0
+throttle	1200	1231	1352.0	82.14	139.6	160.0	1.700	10	0
+throttle	1000	1029	1132.4	72.16	128.8	146.0	1.785	11	0
+stock	-	2585	2706.5	108.45	289.5	294.0	2.669	6	0
+throttle	800	820	908.0	59.12	114.3	131.0	1.933	14	0
+stock	-	2605	2705.8	108.55	289.7	294.0	2.669	6	0

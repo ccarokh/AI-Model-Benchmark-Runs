@@ -47,6 +47,7 @@ Two related habits are worth keeping from the originals:
 | `hardware/rocm_vs_vulkan.sh` | both backends measured in the same run |
 | `hardware/reference_bench.sh` | the portable reference point, upstream flags, with guards and a power trace |
 | `hardware/tokens_per_wh.sh` | tokens per watt-hour, prefill and generation priced separately, integrating over the compute window only |
+| `hardware/throttle_curve_low.sh` | the throttle curve below 159 W, with interleaved stock controls and a trap that un-throttles the card on any exit |
 | `coding/swebench_run.sh` | one repository × model × mode × cache type, agent run plus evaluation |
 | `coding/night_chain.sh` | chains runs unattended with a deadline and a disk guard |
 | `asr/faster_whisper_bench.py` | one `faster-whisper` run, one device, one precision |

@@ -28,6 +28,7 @@ paths, and add nothing a reader can check.
 | [`image_generation_energy.tsv`](image_generation_energy.tsv) | 5 models | card power integrated over one full image each |
 | [`image_generation_verdicts.tsv`](image_generation_verdicts.tsv) | 38 verdicts | **operator judgements, not measurements** |
 | [`energy_tokens.tsv`](energy_tokens.tsv) | 18 runs | tokens per Wh, prefill and generation separately |
+| [`power_throttle_low.tsv`](power_throttle_low.tsv) | 8 runs | the throttle curve below 159 W, with interleaved stock controls |
 
 ## Columns
 
@@ -153,6 +154,22 @@ reports, which makes its token figure optimistic.
 
 ⚠️ `mean_watt_chip` is `power1_average` — the graphics processor, not the board and not
 power-supply losses. A floor, not an electricity bill.
+
+**`power_throttle_low.tsv`** — `step`, `clock_ceiling_mhz`, `sclk_reached`, `pp2048`,
+`tg128`, `mean_watt_chip`, `peak_watt_chip`, `watt_per_tok_s`, `samples`,
+`kernel_msgs`.
+
+Rows are in **execution order**. `step = stock` rows are the drift control, interleaved
+deliberately rather than run as a block — they span the whole session and agree to
+within 0.9 %, so nothing in the throttled rows is warming or driver drift.
+
+`kernel_msgs` counts `ring`/`reset`/`VRAM is lost`/`timeout` lines appearing in `dmesg`
+during that step. It is 0 everywhere here, which is the point of recording it:
+[a throughput test alone will pass a card that has already reset itself](../METHODOLOGY.md#a-throughput-test-will-pass-a-broken-card).
+
+⚠️ `mean_watt_chip` integrates over the compute window only. The earlier steps of this
+curve, published in [power.md](../hardware/power.md#the-curve), were measured before that
+distinction was made and are not in this file.
 
 ## A note on one filename
 

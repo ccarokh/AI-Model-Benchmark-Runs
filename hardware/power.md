@@ -1,8 +1,9 @@
 # Power: what does throttling cost?
 
 **Down to ~250 W, throttling is practically free — 2.7 % of generation speed. Even at
-197 W, 29 % below stock, it costs 8.5 %. Efficiency improves monotonically all the way
-down: there is no optimum below which it gets worse again.**
+197 W, 29 % below stock, it costs 8.5 %. Efficiency improves down to a minimum at a
+1200 MHz clock ceiling — 1.70 W per tok/s against 2.54 at stock — and gets worse again
+below that.**
 
 Measured on [System A v1.0](../SYSTEMS.md#system-a), quiet BIOS, on a
 factory-overclocked RX 7900 XTX.
@@ -20,21 +21,57 @@ factory-overclocked RX 7900 XTX.
 | **261 W + clock ≤ 2400** | **247 W** | 2442 MHz | 2597.3 | 105.49 | −4.3 % | **−2.7 %** | 2.34 |
 | **261 W + clock ≤ 2000** | **197 W** | 2050 MHz | 2215.5 | 99.26 | −18.4 % | **−8.5 %** | **1.98** |
 | **261 W + clock ≤ 1600** | **159 W** | 1637 MHz | 1788.9 | 91.86 | −34.1 % | **−15.3 %** | **1.73** |
+| 261 W + clock ≤ 1400 | 149 W | 1439 MHz | 1568.3 | 86.68 | −42.2 % | −20.1 % | 1.71 |
+| **261 W + clock ≤ 1200** | **140 W** | 1231 MHz | 1352.0 | 82.14 | −50.2 % | −24.3 % | **1.70** ← best |
+| 261 W + clock ≤ 1000 | 129 W | 1029 MHz | 1132.4 | 72.16 | −58.3 % | −33.5 % | 1.79 |
+| 261 W + clock ≤ 800 | **114 W** | 820 MHz | 908.0 | 59.12 | −66.6 % | **−45.5 %** | 1.93 |
 
 ⚠️ The 280 W mean is a sampling artifact — too few samples landed under load. Its peak
 is sound, its mean is not.
 
-**Generation is remarkably insensitive to throttling.** At roughly half the core clock
-(1637 against 2733 MHz) it still delivers **85 % of throughput**. Same reason
-overclocking the core did nothing: **generation is bandwidth-bound, and a core clock
-ceiling does not touch the memory clock.** Prompt processing is compute-bound and
-drops accordingly — −34 %.
+**Generation is insensitive to throttling — but only in the upper half of the range.**
+At 1637 MHz it still delivers 85 % of throughput, which is why overclocking the core did
+nothing: generation is bandwidth-bound, and a core clock ceiling does not touch the
+memory clock. **That stops holding below ~1600 MHz.** At 820 MHz generation is down to
+**54 %**, and the loss per MHz is steepest at the bottom. Bandwidth is the limit until
+the core becomes one.
 
-**Efficiency improves monotonically downwards**: 2.54 W per tok/s at stock against
-1.73 at 159 W. In this range there is no point where it turns around — you buy
-efficiency linearly with throughput.
+### There is an optimum, and it sits at 1200 MHz
 
-Below 159 W is **untested**. The 1600 MHz ceiling was the lowest step tried.
+**This corrects an earlier claim in this file.** The curve previously stopped at 1600 MHz
+— the lowest step tried at the time — and reported efficiency as improving monotonically
+with no turning point. Extending it four steps further finds the turn:
+
+| Ceiling | W per tok/s | pp2048 per W |
+|---|---:|---:|
+| 2000 MHz | 1.99 | **11.25** |
+| 1600 MHz | 1.73 | **11.25** |
+| 1400 MHz | 1.71 | 10.55 |
+| **1200 MHz** | **1.70** | 9.68 |
+| 1000 MHz | 1.79 | 8.79 |
+| 800 MHz | 1.93 | 7.94 |
+
+**Below 1200 MHz you buy nothing.** At 800 MHz efficiency is back where 2000 MHz was,
+having given up 40 % of generation throughput to get there. The floor exists because
+memory clock stays at 1250 MHz on every step — that power is constant, so as the core
+slows it is amortised over fewer and fewer tokens.
+
+**Prefill turns earlier than generation**: it is flat from 2000 to 1600 MHz and declines
+from 1400 down. Weighted for a RAG workload, where prefill dominates the token count,
+**the useful floor is 1600 MHz, not 1200.**
+
+⚠️ **The new rows integrate power over the compute window only**; how the original rows
+were integrated is not recorded. If the old rows included idle time, their watt figures
+are understated and their efficiency flattered — which would make the published
+monotonic claim *more* wrong, not less. **The turning point itself lies entirely within
+the four new rows, all measured identically**, so it does not depend on the join.
+
+Four stock measurements were interleaved through the run as a drift control:
+**108.33 / 107.61 / 108.45 / 108.55 tok/s.** No kernel messages on any step.
+
+**Below 800 MHz is still untested**, as is the memory clock — which this whole curve
+leaves untouched and which the arithmetic above suggests is where the remaining
+headroom is.
 
 ## The load case that counts — under production flags
 

@@ -55,7 +55,7 @@ Everything above that is untested — see [open](#open).
 | Energy efficiency — Wh per completed task (tokens per Wh is [done](hardware/power.md#tokens-per-watt-hour-per-phase)) | planned |
 | Varying the harness instead of the model | planned |
 | Re-running the System B results on System A | planned |
-| Below 159 W on the throttle curve | planned |
+| Below 114 W on the throttle curve, and the memory clock (down to 159 W is [done](hardware/power.md#there-is-an-optimum-and-it-sits-at-1200-mhz)) | planned |
 
 ## Data and scripts
 
