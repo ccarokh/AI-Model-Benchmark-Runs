@@ -328,6 +328,49 @@ floor before it is quoted.
 
 Where output is sampled rather than computed, **n = 1 is an anecdote wearing a number**.
 
+## Guard the harness as well as the card
+
+Every measurement script here waits for the GPU to be empty before it starts, so a
+foreign process cannot land in the middle of a run. **None of them guarded against their
+own child hanging.**
+
+A determinism check invoked `llama-cli` in a background run. Without a terminal it fell
+into conversation mode and waited for input that was never going to arrive. It held the
+card for **seven hours** before anyone looked. The card guard was working perfectly the
+whole time — it protects against other people's load, not against yours.
+
+Three cheap habits, all of which this cost:
+
+- **`< /dev/null` on every child that can read stdin.** An interactive prompt in a
+  background job is an indefinite hang, not an error.
+- **`timeout` on every child.** Pick a number a few times the expected runtime. It costs
+  nothing when the run is healthy.
+- **Check for output, not just for a live process.** `ps` showed the script running and
+  the GPU busy, which is exactly what a healthy run looks like. What distinguished it was
+  that the results file had not grown.
+
+**A hang and a long run are indistinguishable from the outside.** Make the harness prove
+it is progressing.
+
+## Some settings can only be undone with a screwdriver
+
+Scripts here restore whatever they changed, with the reset wired to a `trap` so it fires
+on a crash or a kill as well as a clean exit. That is enough for anything the kernel
+survives. **It is not enough for everything.**
+
+Lowering the memory clock on an RX 7900 XTX took the card off the PCIe bus. The kernel
+went down with it, so the trap never ran — and it would not have helped, because after
+the reboot there was no card left to write the reset to. A PCI rescan and a second warm
+reboot both failed. Only cutting mains power brought it back.
+
+**Before changing a setting, ask what undoes it if the machine stops responding
+mid-change.** If the honest answer is "physical access", that experiment needs someone in
+the room, or it does not run. The same knob in the other direction — memory clock *up* —
+was recoverable and had already been measured safely, which is exactly what made the
+downward step look routine.
+
+**Symmetry of a parameter is not symmetry of its failure mode.**
+
 ## The measurement window must contain only the work you are counting
 
 A power sampler was started before `llama-bench` and stopped after it, and mean watts

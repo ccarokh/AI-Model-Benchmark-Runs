@@ -69,9 +69,40 @@ the four new rows, all measured identically**, so it does not depend on the join
 Four stock measurements were interleaved through the run as a drift control:
 **108.33 / 107.61 / 108.45 / 108.55 tok/s.** No kernel messages on any step.
 
-**Below 800 MHz is still untested**, as is the memory clock — which this whole curve
-leaves untouched and which the arithmetic above suggests is where the remaining
-headroom is.
+**Below 800 MHz is still untested.** The memory clock is not — see the next section.
+
+### The memory clock is not a knob you can turn down
+
+The arithmetic above points at the memory clock: it is fixed at 1250 MHz on every core
+step, so its power is constant and is what makes the curve turn back upwards. Lowering
+it is the obvious next experiment. **It took the card off the PCIe bus.**
+
+The run completed its stock control normally — pp2048 2734.3, tg128 108.94, 290.8 W,
+output hash identical to a pre-run reference. It then set a 1000 MHz memory ceiling and
+started the next benchmark. The machine died within a second: no panic, no GPU reset
+message, the journal simply stops. CPU load was observed at 100 % as it went.
+
+After the automatic reboot the card was **gone** — zero AMD devices on the bus, the x16
+slot reporting `LnkSta: Width x0`, and `amdgpu` loading with no GPU to attach to. A PCI
+rescan did not recover it, and neither did a second warm reboot. **Only pulling mains
+power brought it back**, after which it enumerated at full 16 GT/s x16 with 23 GiB and
+reproduced the reference hash bit-for-bit. No damage.
+
+**The direction that looked safe is the dangerous one.** Raising the memory clock to
+1450 MHz cost a GPU reset that the card survived and reported cleanly. Lowering it cost
+the card's presence on the bus, silently, with nothing in the log to attribute it.
+
+| | Result | Recoverable by |
+|---|---|---|
+| Memory clock **up** to 1450 MHz | GPU reset, `VRAM is lost` in the log | itself |
+| Memory clock **down** to 1000 MHz | card off the bus, no log entry | **mains power only** |
+
+**This axis is closed here.** Not "approach carefully" — the knob has no safe working
+range downwards on this card, the failure gives no warning, and recovery needs physical
+access. The core-clock curve already found its optimum without it.
+
+⚠️ **If you repeat this, do not do it on a machine you cannot reach.** Everything else in
+this repository recovers from a bad step by itself.
 
 ## The load case that counts — under production flags
 

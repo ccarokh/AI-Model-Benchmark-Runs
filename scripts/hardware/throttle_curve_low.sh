@@ -59,7 +59,11 @@ messen(){ # $1 = Stufe
   local sclk=$(grep -oP '^\d+: \K\d+(?=Mhz \*)' $D/pp_dpm_sclk 2>/dev/null | tail -1)
   # Ein Durchsatztest laeuft auch auf einer Karte durch, die sich schon
   # zurueckgesetzt hat -- deshalb das Kernel-Log mitlesen.
-  local neu=$(dmesg | tail -n +$((vorher+1)) | grep -ci "ring\|reset\|VRAM is lost\|timeout" || true)
+  # Anchored on purpose. A bare "ring" matches Registering, buffering and
+  # Keyring, and a bare "reset" matches half the boot log -- a health check that
+  # cries wolf gets ignored, which is worse than not having one.
+  local neu=$(dmesg | tail -n +$((vorher+1)) \
+    | grep -ciE "amdgpu.*(ring|reset|error)|GPU reset|VM_L2|VRAM is lost|ring [a-z_]+ timeout" || true)
   if [ $rc -ne 0 ]; then echo "$s: FEHLER rc=$rc"; return; fi
   python3 - $OUT/${s}.watt $OUT/${s}.json "$s" "$sclk" "$neu" <<'PY'
 import sys, json
