@@ -241,7 +241,78 @@ Temperature was never a factor: 52–56 °C across every step, and 54 °C even a
 All of the above is the **quiet BIOS**. On the performance BIOS the limits sit higher
 and the curve shifts; the percentages here apply to this profile.
 
-## Planned: energy efficiency, both ways
+## Tokens per watt-hour, per phase
+
+**Under load this card draws 255–290 W no matter which model is resident.** Power is
+not a model property here, so energy per token is throughput and nothing else. The
+consequences are all in the second column: a generated token costs **19–30×** a read
+token, and the spread between the best and worst model at generation is **6.9×**.
+
+Nine models, `llama-bench -p 4096 -n 0` and `-p 0 -n 512`, `-r 5`, one fresh process
+per measurement, card verified empty beforehand. Card sensor only — see the caveat
+below. Full table in [`data/energy_tokens.tsv`](../data/energy_tokens.tsv).
+
+| Model | Size | **Prefill, tok/Wh** | **Generation, tok/Wh** | W under load |
+|---|---:|---:|---:|---:|
+| Llama-3.2-3B | 1.87 GiB | **99 668** ⚠️ | **3 304** | 267 |
+| gpt-oss-20B · MoE | 11.27 | 51 235 | 2 729 | 272 |
+| Qwen3-30B-A3B · MoE | 17.28 | 36 138 | **2 501** | 278 |
+| Qwen3-Coder-30B-A3B · MoE | 17.28 | 37 349 | 2 498 | 256 |
+| Nanbeige-4.2-3B · looped | 2.50 | 36 056 | 1 704 | 277 |
+| Qwen3.5-9B | 5.28 | 36 031 | 1 401 | 280 |
+| DeepSeek-R1-14B | 8.37 | 19 395 | 987 | 291 |
+| Gemma-4-12B | 6.62 | 21 023 | 969 | 285 |
+| Qwen3.6-27B | 15.65 | 10 564 | **481** | 289 |
+
+⚠️ The Llama-3.2-3B prefill row rests on **4 power samples** at 1 Hz over 3.3 s, and its
+227.8 W mean is visibly below the 285–290 W every other row reports. The token figure is
+correspondingly optimistic. Rows with fewer than ~8 samples are indicative only; the
+`samples` column in the data file is there to be read.
+
+### MoE wins on energy, and it is not because it draws less
+
+**Qwen3-30B-A3B against Qwen3.6-27B is the cleanest pair in the table**: near-identical
+file size (17.3 against 15.7 GiB), near-identical power (278 against 289 W), and
+**5.2× the tokens per watt-hour.** Only ~3B parameters are active per token, so the card
+does a fraction of the work for the same electricity. The energy result is the
+throughput result — it carries no separate information, and that is itself the finding.
+
+**Dense size is what costs.** Every dense model lands where its parameter count puts it,
+and the 27B is last by a wide margin.
+
+### The looped 3B does not buy back its loop
+
+Nanbeige-4.2-3B is a 2.50 GiB model that generates at 1 704 tok/Wh — only **22 % better
+than a 9B** at 40 % of the footprint, where a normal 3B of the same size manages
+3 304. **The doubled layer passes cost roughly half the energy advantage of being
+small.** It also runs the card at 277 W, in the middle of the field — the loop keeps the
+card as busy as anything else does.
+
+### Reading a token is cheap; writing one is not
+
+| Model | Generated token costs |
+|---|---:|
+| Llama-3.2-3B | 30× a read token |
+| Qwen3.5-9B | 26× |
+| Qwen3.6-27B | 22× |
+| Qwen3-30B-A3B | 14× |
+
+**For RAG this is the whole argument for a long context.** Stuffing 4 000 more tokens of
+retrieved passages into a prompt costs about as much energy as 150–280 generated tokens.
+Retrieval is cheap; verbosity is not.
+
+⚠️ **Card sensor only.** These figures come from `power1_average`, which
+[under-reports the real increase by about a quarter](#the-amd-sensor-under-reports-the-nvidia-one-does-not).
+Use them to compare models with each other. The socket figure is the still-open half of
+this measurement.
+
+⚠️ **This section was rewritten after publication.** The first version reported the two
+MoE models at 112–116 W and called low power an architecture property. It was an
+artifact: the power trace covered model loading as well as computing, and a 17 GB model
+loads for ~28 s while the card idles. See
+[METHODOLOGY](../METHODOLOGY.md#the-measurement-window-must-contain-only-the-work-you-are-counting).
+
+## Still open: watt-hours per completed task
 
 The `W per tok/s` column above is a partial answer to "what does this cost to run" —
 partial because it comes from the card sensor, which under-reports by about a quarter

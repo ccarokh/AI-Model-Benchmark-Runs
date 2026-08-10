@@ -27,6 +27,7 @@ paths, and add nothing a reader can check.
 | [`image_generation_seeds.tsv`](image_generation_seeds.tsv) | 50 runs | the two OCR measures repeated across five seeds |
 | [`image_generation_energy.tsv`](image_generation_energy.tsv) | 5 models | card power integrated over one full image each |
 | [`image_generation_verdicts.tsv`](image_generation_verdicts.tsv) | 38 verdicts | **operator judgements, not measurements** |
+| [`energy_tokens.tsv`](energy_tokens.tsv) | 18 runs | tokens per Wh, prefill and generation separately |
 
 ## Columns
 
@@ -131,6 +132,27 @@ by an amount that is itself not constant. **Use these to compare models with eac
 other, never as an electricity bill.**
 
 ⚠️ One image per model. The spread across repeats is not measured.
+
+**`energy_tokens.tsv`** — `model`, `phase`, `size_gib`, `tokens`, `reps`, `t_per_s`,
+`compute_s`, `mean_watt_chip`, `mwh`, `tokens_per_wh`, `samples`.
+
+`llama-bench -p 4096 -n 0` and `-p 0 -n 512`, `-r 5`, `-ngl 99 -sm none -mg 0`, fresh
+process per row, card verified empty first. `phase` is `prefill` (reading) or
+`erzeugung` (generating) — **they differ by a factor of 19–30 and must never be
+averaged together.**
+
+⚠️ **`mwh` covers the compute window only, not model loading.** The first version of this
+file integrated across the whole wrapper, which understated the two 17 GiB MoE models by
+a factor of 2.4–3.8 and produced a false architecture finding. See
+[METHODOLOGY](../METHODOLOGY.md#the-measurement-window-must-contain-only-the-work-you-are-counting).
+
+⚠️ **Read `samples` before `tokens_per_wh`.** Power is sampled at 1 Hz, so a 3.3 s
+compute window yields 4 points. The `llama-3.2-3b / prefill` row is the weakest in the
+file on exactly this ground — its 227.8 W sits well below the 285–290 W every longer row
+reports, which makes its token figure optimistic.
+
+⚠️ `mean_watt_chip` is `power1_average` — the graphics processor, not the board and not
+power-supply losses. A floor, not an electricity bill.
 
 ## A note on one filename
 

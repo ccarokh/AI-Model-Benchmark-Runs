@@ -52,7 +52,7 @@ Everything above that is untested — see [open](#open).
 | Image generation across several seeds — every figure there is one sample | planned |
 | TTS | planned |
 | Home Assistant voice pipeline | planned |
-| Energy efficiency per phase — tokens per Wh **and** Wh per completed task | planned |
+| Energy efficiency — Wh per completed task (tokens per Wh is [done](hardware/power.md#tokens-per-watt-hour-per-phase)) | planned |
 | Varying the harness instead of the model | planned |
 | Re-running the System B results on System A | planned |
 | Below 159 W on the throttle curve | planned |

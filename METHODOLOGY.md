@@ -328,6 +328,40 @@ floor before it is quoted.
 
 Where output is sampled rather than computed, **n = 1 is an anecdote wearing a number**.
 
+## The measurement window must contain only the work you are counting
+
+A power sampler was started before `llama-bench` and stopped after it, and mean watts
+were divided into the token count. The result looked like a discovery: two
+mixture-of-experts models drew **112–116 W** where every dense model drew 250–265 W.
+An architecture that runs cool — plausible, quotable, and wrong.
+
+The sampler was also running while the model loaded. Restricting the integration to the
+compute window alone:
+
+| | Whole window | Compute only | Share of window that was compute |
+|---|---:|---:|---:|
+| Qwen3-30B-A3B (17 GiB) | 116 W | **278 W** | 40 % |
+| Llama-3.2-3B (1.9 GiB) | 250 W | **267 W** | 92 % |
+
+**Under load every model draws 255–290 W.** The apparent effect was ~28 s of loading a
+17 GB file with the card idle, averaged into the mean — and because load time scales
+with model size, the artifact was *systematically* biased toward exactly the models the
+conclusion was about. It did not look like noise. It looked like a trend.
+
+Two rules come out of this:
+
+- **Integrate over the work, not over the wrapper.** Any setup, load, warmup or teardown
+  inside the window silently rewrites the result.
+- **A per-model artifact will impersonate a per-model finding.** Ask what else varies
+  with the axis you are plotting against. Here, file size drove both the conclusion and
+  the error.
+
+The same run carried a second, duller error: the token count read a `reps` key that
+`llama-bench` does not emit, so five repetitions were counted as one. That one was
+harmless — it hit every row by the same factor and cancelled in every comparison.
+**The dangerous mistake is not the one that scales everything; it is the one that scales
+with the variable under test.**
+
 ## A single run is not a duration
 
 Forty images from one model, one after another, same size and settings. **One took
