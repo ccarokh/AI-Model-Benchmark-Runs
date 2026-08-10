@@ -29,6 +29,7 @@ paths, and add nothing a reader can check.
 | [`image_generation_verdicts.tsv`](image_generation_verdicts.tsv) | 38 verdicts | **operator judgements, not measurements** |
 | [`energy_tokens.tsv`](energy_tokens.tsv) | 18 runs | tokens per Wh, prefill and generation separately |
 | [`power_throttle_low.tsv`](power_throttle_low.tsv) | 8 runs | the throttle curve below 159 W, with interleaved stock controls |
+| [`context_depth.tsv`](context_depth.tsv) | 14 runs | throughput and energy at four cache depths, three models |
 
 ## Columns
 
@@ -170,6 +171,20 @@ during that step. It is 0 everywhere here, which is the point of recording it:
 ⚠️ `mean_watt_chip` integrates over the compute window only. The earlier steps of this
 curve, published in [power.md](../hardware/power.md#the-curve), were measured before that
 distinction was made and are not in this file.
+
+**`context_depth.tsv`** — `model`, `depth`, `flash_attn`, `pp2048`, `tg128`,
+`mean_watt_chip`, `mwh`, `samples`.
+
+`llama-bench -p 2048 -n 128 -d <depth> -r 3`, f16 KV cache throughout. `depth` is how
+full the cache is before the measured work starts — **the axis every other table in this
+repository holds at 0.**
+
+The `flash_attn = off` rows are a deliberate second variable and are **not part of the
+depth curve**; they exist to show that flash attention is worth ~1 % at depth 0 and 18 %
+of generation at 32 768.
+
+⚠️ `mwh` covers the compute window only, and power is sampled at 1 Hz — the depth-0 rows
+rest on 3–6 samples. Read `samples` before quoting an energy value.
 
 ## A note on one filename
 
