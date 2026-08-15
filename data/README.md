@@ -31,6 +31,7 @@ paths, and add nothing a reader can check.
 | [`power_throttle_low.tsv`](power_throttle_low.tsv) | 8 runs | the throttle curve below 159 W, with interleaved stock controls |
 | [`context_depth.tsv`](context_depth.tsv) | 14 runs | throughput and energy at four cache depths, three models |
 | [`chat_belebele_harness.tsv`](chat_belebele_harness.tsv) | 18 runs | six models × three harnesses, one variable between each pair |
+| [`chat_belebele_chattemplate.tsv`](chat_belebele_chattemplate.tsv) | 30 runs | ten models × three harnesses, chat template taken from the GGUF |
 
 ## Columns
 
@@ -204,6 +205,21 @@ rest on 3–6 samples. Read `samples` before quoting an energy value.
   prompt onto stdout and corrupted the JSON line. Accuracy is sound; the counts are lost.
 - ⚠️ `truncated` before `accuracy`: Qwen3.5-9B hit the 8 192-token ceiling on 25 of 150
   thinking answers.
+
+**`chat_belebele_chattemplate.tsv`** — as `chat_belebele_harness.tsv`, plus `role` and
+`request_errors`, minus `thinking_switch`.
+
+Uses `/v1/chat/completions`, so **the chat template comes from the GGUF** rather than
+from an HF tokenizer repo — half these models have no tokenizer in the local cache, and
+it is the template that actually runs in production.
+
+- `role = eichung` are calibration rows with a known expected value; `role = neu` is the
+  measurement. **Read the calibration before the results.**
+- ⚠️ **The `thinking` rows are not comparable with `chat_belebele_harness.tsv`** (16 384
+  tokens instead of 8 192, and the reasoning field read separately — 3.3 points apart on
+  calibration). The `logprob` and `generate` rows are.
+- `request_errors` counts failed HTTP calls separately so they cannot pass as wrong
+  answers. It is 0 in every row here.
 
 ## A note on one filename
 

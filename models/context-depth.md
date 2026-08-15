@@ -86,6 +86,67 @@ of the energy bill.**
 **This is the same trap as the model ranking above**, and it is worth stating on its own:
 a feature that only acts under load looks like a no-op when measured without load.
 
+## Part 2 — the four fastest models, and the architecture that promised the most
+
+A second round on the models that came out on top of the
+[German comprehension re-run](harness-effect.md), plus the one linear-attention model
+on the box. **Linear attention is the reason this round exists**: the KV cache is
+supposed not to grow with length, which is exactly the quantity that made the ranking
+invert above.
+
+| Depth | Kimi-Linear-48B-A3B | Qwen3.5-27B | Ornith-35B | Qwen3.6-35B-A3B |
+|---|---:|---:|---:|---:|
+| **Prefill 0** | 332.1 | 837.0 | 2 626.3 | 2 631.3 |
+| 32 768 | **40.3** | 560.9 | 1 580.5 | 1 577.9 |
+| **Loss** | **−87.9 %** | −33.0 % | −39.8 % | −40.0 % |
+| **Generation 0** | 20.69 | 39.09 | 140.15 | 138.46 |
+| 32 768 | 12.31 | 34.46 | 117.69 | 115.92 |
+| **Loss** | −40.5 % | **−11.8 %** | −16.0 % | −16.3 % |
+| **Energy 0 → 32k** | 1 507 → **7 059** mWh | 1 375 → 1 492 | 378 → 481 | 372 → 486 |
+
+### The linear-attention model is the worst at depth, not the best
+
+**Kimi-Linear collapses to 40.3 tokens per second of prompt processing at 32 768** —
+**39× slower than Ornith-35B at the same depth**, and 8.2× slower than itself at depth
+0. Energy for identical work rises **4.7×**.
+
+The architectural claim is that linear attention removes the growth term. On this
+hardware, through this runtime, **the opposite is measured**: it is the steepest curve
+in the table by a wide margin, and it was already the slowest model at depth 0.
+
+⚠️ **This measures a model in llama.cpp on Vulkan, not the architecture in principle.**
+An implementation that has not been optimised for this path can lose everything the
+design was supposed to win. What it does establish is that **the promise does not
+arrive by itself** — it has to be measured on the runtime you actually use.
+
+**Consequence for the shortlist:** hybrid and linear-attention models do not get the
+benefit of the doubt on long context here. They get measured first.
+
+### The two best German readers are one model
+
+Ornith-35B and Qwen3.6-35B-A3B agree to within **0.2 % on every one of eight
+measurements**. The GGUF metadata explains it:
+
+| Model | `general.architecture` | `general.name` |
+|---|---|---|
+| ornith-1.0-35b | **`qwen35moe`** | Ornith 1.0 35B |
+| Qwen3.6-35B-A3B | **`qwen35moe`** | Qwen3.6 35B A3B |
+| Qwen3.5-27B | `qwen35` (dense) | Qwen3.5-27B |
+
+**Ornith-35B is a derivative of the same Qwen MoE.** Its 0.7-point lead in German
+comprehension is what a fine-tune moves, not an independent finding — and the two
+should never be quoted as two results.
+
+The same metadata explains Qwen3.5-27B: **dense**, so 837 t/s of prefill against 2 626
+for a *larger* MoE. It buys something for it, though — **the flattest generation curve
+in the whole file at −11.8 %.**
+
+### Reading this against Part 1
+
+The 30B MoE lost 74.5 % of prefill across the same range. **These 35B MoEs lose 40 %**,
+and the dense 27B loses 33 %. Depth scaling is not "MoE against dense" — it is the
+attention geometry of the particular model, and it has to be read per model.
+
 ## What this does not cover
 
 - **One prompt size** (2 048) at every depth. How cost splits between *prompt length* and
