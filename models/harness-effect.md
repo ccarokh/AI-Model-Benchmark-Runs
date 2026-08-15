@@ -164,7 +164,7 @@ adds a step that can only introduce error, and on this evidence it usually does.
 - **One task.** Belebele is multiple-choice reading comprehension. A harness effect
   here does not predict one on open generation.
 - **`thinking` figures are not comparable to the later
-  [chat-template run](../data/chat_belebele_neu.tsv)**, which allows 16 384 tokens and
+  [chat-template run](../data/chat_belebele_chattemplate.tsv)**, which allows 16 384 tokens and
   reads the reasoning field separately. The `logprob` and `generate` columns are.
 
 ## Scripts
