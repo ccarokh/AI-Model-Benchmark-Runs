@@ -30,6 +30,7 @@ paths, and add nothing a reader can check.
 | [`energy_tokens.tsv`](energy_tokens.tsv) | 18 runs | tokens per Wh, prefill and generation separately |
 | [`power_throttle_low.tsv`](power_throttle_low.tsv) | 8 runs | the throttle curve below 159 W, with interleaved stock controls |
 | [`context_depth.tsv`](context_depth.tsv) | 14 runs | throughput and energy at four cache depths, three models |
+| [`chat_belebele_harness.tsv`](chat_belebele_harness.tsv) | 18 runs | six models × three harnesses, one variable between each pair |
 
 ## Columns
 
@@ -185,6 +186,24 @@ of generation at 32 768.
 
 ⚠️ `mwh` covers the compute window only, and power is sampled at 1 Hz — the depth-0 rows
 rest on 3–6 samples. Read `samples` before quoting an energy value.
+
+**`chat_belebele_harness.tsv`** — `model`, `harness`, `thinking`, `correct`, `n`,
+`accuracy`, `tokens_total`, `tokens_median`, `tokens_mean`, `truncated`, `no_answer`,
+`no_letter_in_top20`, `thinking_switch`, `max_tokens`, `seconds`.
+
+- **`no_letter_in_top20` is the column that explains this file.** It counts questions
+  where none of A/B/C/D appeared among the twenty most likely first tokens. It is 0
+  everywhere except DeepSeek-R1-14B, where it is **147 of 150** — that row measures the
+  harness, not the model.
+- ⚠️ **`thinking_switch` says only that the chat template accepted the argument**, not
+  that the model reasoned. Qwen3-30B-A3B reads `angenommen` and generated 878 against
+  879 tokens with the switch off and on. **Read the token columns to see whether
+  anything happened.**
+- ⚠️ The three `nanbeige-4.2-3b` rows carry `-` in the token columns. Their accuracies
+  were recovered from the progress log after the tokenizer wrote a `trust_remote_code`
+  prompt onto stdout and corrupted the JSON line. Accuracy is sound; the counts are lost.
+- ⚠️ `truncated` before `accuracy`: Qwen3.5-9B hit the 8 192-token ceiling on 25 of 150
+  thinking answers.
 
 ## A note on one filename
 

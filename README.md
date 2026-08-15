@@ -16,6 +16,7 @@ everything measured about one model across all topics.
 |---|---|---|
 | RAG — German chat | [Language understanding](models/language-understanding.md) | 16 models; the 5.3 GB default was never beaten, not even by a model 3× its size |
 | **RAG — long context** | **[Context depth](models/context-depth.md)** | **The ranking inverts with a full cache: the 30B MoE reads 2.4× slower than the 9B at 32k, and costs more energy** |
+| **RAG — the harness itself** | **[Harness effect](models/harness-effect.md)** | **How you ask is worth 1.3–2.7 points for ordinary models and 70 for a reasoning model — one published row measures the harness, not the model** |
 | RAG — retrieval | [Embedding](models/embedding.md) | A 9× larger model tied BGE-M3 exactly |
 | Coding | [Coding](models/coding.md) | 18 models; the ranking inverted once the harness stopped naming the file |
 | ASR — speech to text | [Transcription](models/transcription.md) | Qwen3-ASR-1.7B matches Whisper large-v3; a config fix was worth 30 points of WER; Whisper runs at 27× real time on an 8 GB card with no CUDA toolkit installed |
@@ -54,7 +55,7 @@ Everything above that is untested — see [open](#open).
 | TTS | planned |
 | Home Assistant voice pipeline | planned |
 | Energy efficiency — Wh per completed task (tokens per Wh is [done](hardware/power.md#tokens-per-watt-hour-per-phase)) | planned |
-| Varying the harness instead of the model | planned |
+| Varying the harness — remaining 10 models of the chat table ([6 done](models/harness-effect.md)) | running |
 | Re-running the System B results on System A | planned |
 | Below 114 W on the throttle curve (down to 159 W is [done](hardware/power.md#there-is-an-optimum-and-it-sits-at-1200-mhz)) | planned |
 | Lowering the memory clock | [abandoned](hardware/power.md#the-memory-clock-is-not-a-knob-you-can-turn-down) — took the card off the bus |

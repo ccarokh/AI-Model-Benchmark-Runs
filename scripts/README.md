@@ -51,6 +51,7 @@ Two related habits are worth keeping from the originals:
 | `hardware/context_depth.sh` | throughput and energy against cache depth, with an out-of-VRAM step reported as a result rather than swallowed |
 | `coding/swebench_run.sh` | one repository × model × mode × cache type, agent run plus evaluation |
 | `coding/night_chain.sh` | chains runs unattended with a deadline and a disk guard |
+| `chat/eval_belebele_harness.py` | belebele across three harnesses — letter logprob, free generation, and generation with reasoning |
 | `asr/faster_whisper_bench.py` | one `faster-whisper` run, one device, one precision |
 | `image/sd_bench.sh` | the eight image tasks across models, card guard before **each** image |
 | `image/ab_one_variable.sh` | one model, one variable at a time — quantisation, steps, cfg, autoencoder |
