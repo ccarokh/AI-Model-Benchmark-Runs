@@ -33,6 +33,7 @@ paths, and add nothing a reader can check.
 | [`chat_belebele_harness.tsv`](chat_belebele_harness.tsv) | 18 runs | six models × three harnesses, one variable between each pair |
 | [`chat_belebele_chattemplate.tsv`](chat_belebele_chattemplate.tsv) | 30 runs | ten models × three harnesses, chat template taken from the GGUF |
 | [`integration_cost.tsv`](integration_cost.tsv) | 8 models | what it took to get each model running at all |
+| [`embedding_chunk_position.tsv`](embedding_chunk_position.tsv) | 12 runs | retrieval against the position of the answer inside the chunk |
 
 ## Columns
 
@@ -229,6 +230,22 @@ Not a measurement — a record of setup friction, written down while it happened
 than reconstructed. `blockers_hit` counts things that stopped a run until they were
 fixed, not inconveniences. **A model that ships only safetensors costs a conversion step
 that a GGUF ladder does not**, and that belongs next to the score.
+
+**`embedding_chunk_position.tsv`** — `model`, `pooling`, `variant`, `position`,
+`correct`, `n`, `accuracy`, `chunk_tokens_mean`, `truncated`.
+
+`variant = short` is one passage per chunk (~135 tokens); `long3000` pads to our
+production chunk size of 3 000 characters (~760 tokens) with filler from other passages.
+**`position` is the variable** — where the answer sits inside the chunk.
+
+- ⚠️ **Do not compare two models at a single position.** Each pooling strategy peaks
+  where it looks: CLS at the start, last-token at the end. A single position measures the
+  pooling, not the model. That mistake was made here first and corrected.
+- The `long3000_trunc256` row is Mankei capped at its *trained* sequence length of 256
+  rather than its architectural 2 048. It scores 0.0 because the target sits past the
+  cut — that zero is the truncation, not the model.
+- `chunk_tokens_mean` values with `~` are derived from character counts, not tokenised;
+  the exact ones come from the model's own tokenizer.
 
 ## A note on one filename
 

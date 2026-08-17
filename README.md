@@ -18,6 +18,7 @@ everything measured about one model across all topics.
 | **RAG — long context** | **[Context depth](models/context-depth.md)** | **The ranking inverts with a full cache. The linear-attention model, whose whole promise is long context, is the worst of all at 32k — 39× slower than a 35B MoE** |
 | **RAG — the harness itself** | **[Harness effect](models/harness-effect.md)** | **How you ask is worth 1.3–2.7 points for ordinary models and 70 for two reasoning models. 8 more models measured; new best German reader at 0.9733** |
 | RAG — retrieval | [Embedding](models/embedding.md) | A 9× larger model tied BGE-M3 exactly |
+| **RAG — chunk position** | **[Chunk position](models/chunk-position.md)** | **Same model, same query: 60 % when the answer is at the start of a 3 000-char chunk, 5 % at the end. A defect in our own running system** |
 | Coding | [Coding](models/coding.md) | 18 models; the ranking inverted once the harness stopped naming the file |
 | ASR — speech to text | [Transcription](models/transcription.md) | Qwen3-ASR-1.7B matches Whisper large-v3; a config fix was worth 30 points of WER; Whisper runs at 27× real time on an 8 GB card with no CUDA toolkit installed |
 | VLM — image input | [Vision](models/vision.md) | Runs permanently alongside three other models: 15.1 of 24.5 GB |
