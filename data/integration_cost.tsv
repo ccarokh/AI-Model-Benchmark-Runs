@@ -1,0 +1,9 @@
+model	shipped_as	steps_to_run	blockers_hit	notes
+qwen3.8-27b	GGUF Q4_K_M + mmproj	download, copy to host	0	ran on first attempt
+qwen3.8-27b-abliterated	GGUF Q4_K_M	download, copy to host	0	same quant as base, deliberately
+mankei-1b-chat	GGUF ladder f16..q3	download, copy to host	0	publisher ships six quants
+mankei-326m-embedder	safetensors only	download, convert_hf_to_gguf.py, copy	1	no GGUF published; LlamaModel arch converts cleanly
+mankei-326m-reranker	safetensors only	download, convert needed	1	not yet run
+nanbeige-4.2-3b	GGUF	download, copy	2	tokenizer demands trust_remote_code and writes the prompt to stdout, corrupting captured JSON; second llama.cpp prefix needed explicit LD_LIBRARY_PATH
+kimi-linear-48b-a3b	GGUF	download, copy	0	linear attention served without special flags
+gemma-4-12b	GGUF + mmproj	download, copy, --mmproj flag	1	vision needs runtime v1.4.0 for --mmproj

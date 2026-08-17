@@ -32,6 +32,7 @@ paths, and add nothing a reader can check.
 | [`context_depth.tsv`](context_depth.tsv) | 14 runs | throughput and energy at four cache depths, three models |
 | [`chat_belebele_harness.tsv`](chat_belebele_harness.tsv) | 18 runs | six models × three harnesses, one variable between each pair |
 | [`chat_belebele_chattemplate.tsv`](chat_belebele_chattemplate.tsv) | 30 runs | ten models × three harnesses, chat template taken from the GGUF |
+| [`integration_cost.tsv`](integration_cost.tsv) | 8 models | what it took to get each model running at all |
 
 ## Columns
 
@@ -220,6 +221,14 @@ it is the template that actually runs in production.
   calibration). The `logprob` and `generate` rows are.
 - `request_errors` counts failed HTTP calls separately so they cannot pass as wrong
   answers. It is 0 in every row here.
+
+**`integration_cost.tsv`** — `model`, `shipped_as`, `steps_to_run`, `blockers_hit`,
+`notes`.
+
+Not a measurement — a record of setup friction, written down while it happened rather
+than reconstructed. `blockers_hit` counts things that stopped a run until they were
+fixed, not inconveniences. **A model that ships only safetensors costs a conversion step
+that a GGUF ladder does not**, and that belongs next to the score.
 
 ## A note on one filename
 

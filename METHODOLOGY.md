@@ -485,3 +485,31 @@ scored that same instance as winnable, and did so correctly:
 pass. Only a per-instance look at the agent logs proves the agent can *run* — and
 "empty patch" is the symptom that should trigger it, which is one more reason to
 [count non-answers separately](#count-the-non-answers-separately).
+
+## Record what it cost to run the model, not only how it scored
+
+Every table here reports what a model achieved. None of them reported what it took to
+get it running — and for someone reproducing this, that is often the part that decides
+whether they try at all.
+
+The friction is real and uneven:
+
+| Model | Shipped as | Blockers |
+|---|---|---|
+| Qwen3.8-27B | GGUF plus vision projector | none — ran first attempt |
+| Mankei-1B-Chat | GGUF, six quantisation levels | none |
+| Mankei-326M-Embedder | **safetensors only** | no GGUF published; had to be converted |
+| Nanbeige-4.2-3B | GGUF | **two** — see below |
+| Gemma-4-12B | GGUF plus projector | runtime had to be new enough for `--mmproj` |
+
+Nanbeige is the cautionary case. Its tokenizer demands `trust_remote_code` and writes
+that prompt **to stdout**, where it corrupted the JSON line the harness was parsing —
+three complete 150-question runs produced correct results that were then thrown away by
+the collector. Separately, a second llama.cpp install resolved its libraries to the
+*first* prefix until `LD_LIBRARY_PATH` was set explicitly.
+
+**Two models with identical scores are not equally usable.** A publisher who ships a
+GGUF ladder has done work that a publisher shipping raw safetensors has left to you, and
+that difference belongs next to the score rather than in someone's memory.
+
+Recorded per model in [`data/integration_cost.tsv`](data/integration_cost.tsv).
