@@ -546,3 +546,27 @@ the harness — with it, every window would have begun again at zero.
 
 **A guard that skips must say so.** Silence from a guard is indistinguishable from
 success.
+
+## Ruling something out is a claim, and needs the same evidence as ruling it in
+
+Three times in one week, work here was nearly closed off by a sentence that sounded
+like a finding and rested on nothing:
+
+| Claim written | What it rested on | What measurement showed |
+|---|---|---|
+| "256-token embedder, unusable for our 3 000-char chunks" | the model card | the config allows 2 048; at that length it scores 0.2875 instead of 0.0 |
+| "the thinking switch only dampens, it does not disable" | a token median of 109 | 3 completion tokens and an empty reasoning field — it disables completely |
+| "vLLM is not an option for us" | an unexamined assumption about CUDA | official gfx1100 support, ROCm already installed here, and a 4-bit quant with the MTP head published |
+
+Each was caught by someone asking *why not*, and each would have removed a real avenue.
+The second one had already been adopted as shared knowledge before it was tested.
+
+**The tell is the sentence shape, not the topic.** "That is settled", "not available to
+us", "no point measuring" — a negative conclusion feels like caution, so it gets waved
+through where a positive claim would be challenged. It is the same claim with a minus
+sign, and it costs more, because a wrong positive gets corrected by the next measurement
+while a wrong negative deletes the measurement that would have corrected it.
+
+**Rule: before writing a sentence that closes an option, name the measurement behind
+it.** If there is none, the honest sentence is *unmeasured* — and unmeasured things go
+on the open list, not into the bin.
