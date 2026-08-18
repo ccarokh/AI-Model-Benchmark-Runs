@@ -526,8 +526,15 @@ Two things came out of it.
 
 **Report the partial result immediately, labelled as partial.** `61_von_225` with a
 measured 18.5 min/task is an honest row. Waiting for completeness meant publishing
-nothing for three days while the conclusion — *too slow, and here is the throughput
-arithmetic that explains it* — was already supported.
+nothing for three days while the conclusion — *too slow for anyone waiting on it, and
+here is the throughput arithmetic that explains it* — was already supported.
+
+**But state which use the number rules out, and which it does not.** 19 minutes per task
+disqualifies interactive and agentic work, where a person or a loop waits on each turn.
+It says nothing about batch use — hand over a task list, collect results in the morning —
+where 225 tasks over a weekend is unremarkable. **A latency measurement is not a verdict
+on a model, only on a mode of use**, and this repository organises everything by slot
+precisely so that distinction survives.
 
 **A long run should yield the card, not wait for it.** The chains that failed here
 waited politely for hours and then skipped their own steps — and worse, **the skip wrote

@@ -39,7 +39,7 @@ Ran, and did not work. Never-attempted models are under [open](#open) instead.
 | Nemotron-3-Nano-30B-A3B | chat, aborted 9/150 | forced reasoning `/no_think` could not suppress, no KV cache reuse across requests, and very slow offloaded decode — ~39 s per example |
 | OlympicCoder-32B | coding, aborted 2/225 | ~38 min per task; 6 days extrapolated |
 | Gemma-4-26B-A4B / 12B | coding | 11.6 and >29 min per task; answers up to 26 085 tokens — [one harness only](models/coding.md#three-findings-that-outlive-the-model-list) |
-| Qwen3.8-27B | coding, **partial — 61 and 38 of 225** | **18.5 and 19.0 min per task against 1.5 for a 35B MoE.** Too slow for agentic work because it is dense, not because it reasons — the switch demonstrably works. Remaining tasks are being run in idle evening windows |
+| Qwen3.8-27B | coding, **partial — 61 and 38 of 225** | **18.5 and 19.0 min per task against 1.5 for a 35B MoE** — dense, not reasoning: the thinking switch demonstrably works and changed nothing. ⚠️ **This rules out interactive and agentic use, where someone waits. It says nothing about batch use** — hand it a task, collect the result in the morning — which is untested. Remaining tasks run in idle evening windows |
 
 ## Size ceiling
 
@@ -60,6 +60,7 @@ Everything above that is untested — see [open](#open).
 | Varying the harness — remaining 10 models of the chat table ([6 done](models/harness-effect.md)) | running |
 | Re-running the System B results on System A | planned |
 | Below 114 W on the throttle curve (down to 159 W is [done](hardware/power.md#there-is-an-optimum-and-it-sits-at-1200-mhz)) | planned |
+| **Batch coding: a slow model given a task list overnight** — the latency numbers rule out interactive use and say nothing about this | planned |
 | Lowering the memory clock | [abandoned](hardware/power.md#the-memory-clock-is-not-a-knob-you-can-turn-down) — took the card off the bus |
 
 ## Data and scripts
