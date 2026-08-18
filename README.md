@@ -18,12 +18,13 @@ everything measured about one model across all topics.
 | **RAG — long context** | **[Context depth](models/context-depth.md)** | **The ranking inverts with a full cache. The linear-attention model, whose whole promise is long context, is the worst of all at 32k — 39× slower than a 35B MoE** |
 | **RAG — the harness itself** | **[Harness effect](models/harness-effect.md)** | **How you ask is worth 1.3–2.7 points for ordinary models and 70 for two reasoning models. 8 more models measured; new best German reader at 0.9733** |
 | RAG — retrieval | [Embedding](models/embedding.md) | A 9× larger model tied BGE-M3 exactly |
-| **RAG — chunk position** | **[Chunk position](models/chunk-position.md)** | **Same model, same query: 60 % when the answer is at the start of a 3 000-char chunk, 5 % at the end. A defect in our own running system** |
+| **RAG — chunk position and size** | **[Chunk position](models/chunk-position.md)** | **60 % when the answer is at the start of a 3 000-char chunk, 5 % at the end. At 400 chars the effect is gone; a reranker recovers 0.05 → 0.53. A defect in our own running system** |
 | Coding | [Coding](models/coding.md) | 18 models; the ranking inverted once the harness stopped naming the file |
 | ASR — speech to text | [Transcription](models/transcription.md) | Qwen3-ASR-1.7B matches Whisper large-v3; a config fix was worth 30 points of WER; Whisper runs at 27× real time on an 8 GB card with no CUDA toolkit installed |
 | VLM — image input | [Vision](models/vision.md) | Runs permanently alongside three other models: 15.1 of 24.5 GB |
 | Image generation | [Image generation](models/image-generation.md) | 5 models; the three tasks that carry a statement rather than a motif fail on every one |
 | Fine-tuning | [Fine-tuning](models/finetuning.md) | A third-party fine-tune lost 26.7 points against its own base and doubled the non-answers |
+| **Abliteration** | **[Abliteration](models/abliteration.md)** | **Costs nothing measurable on eight axes — but generates 37 % fewer tokens for the same answers** |
 | Power draw | [Power](hardware/power.md) | 7-point curve from 276 W down to 159 W — at half the core clock, generation still delivers 85 %. Idle costs more per year than throttling saves |
 | Second GPU | [Multi-GPU](hardware/multi-gpu.md) | Capacity, not speed: ~62 % of single-card generation. The bus sat at 0–5 % and doubling its width changed nothing |
 | Backend | [Backends](hardware/backends.md) | Vulkan stays: ROCm is +11 % prefill, −11 % generation |
@@ -59,7 +60,7 @@ Everything above that is untested — see [open](#open).
 | Energy efficiency — Wh per completed task (tokens per Wh is [done](hardware/power.md#tokens-per-watt-hour-per-phase)) | planned |
 | Varying the harness — remaining 10 models of the chat table ([6 done](models/harness-effect.md)) | running |
 | Re-running the System B results on System A | planned |
-| Below 114 W on the throttle curve (down to 159 W is [done](hardware/power.md#there-is-an-optimum-and-it-sits-at-1200-mhz)) | planned |
+| Below 84.5 W on the throttle curve — [down to 84.5 W is done](hardware/power.md#there-is-an-optimum-and-it-sits-at-1200-mhz), efficiency worsens monotonically past the 1 200 MHz optimum | low priority |
 | **Batch coding: a slow model given a task list overnight** — the latency numbers rule out interactive use and say nothing about this | planned |
 | **Three-way runtime comparison: Ollama vs llama.cpp vs vLLM** on one card and one model — [two of the three are done](models/../data/ollama_vs_llamacpp.tsv) | planned |
 | **MTP / speculative decoding** — llama.cpp discards Qwen's `nextn` tensors; whether vLLM on ROCm uses them here is untested | planned |

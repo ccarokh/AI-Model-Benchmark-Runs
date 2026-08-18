@@ -1,0 +1,15 @@
+model	pooling	chunk_chars	position	correct	n	accuracy	max_len	truncated
+mankei-326m-embedder	last	400	start	-	80	0.8125	2048	0
+mankei-326m-embedder	last	400	end	-	80	0.725	2048	0
+mankei-326m-embedder	last	800	start	-	80	0.6375	2048	0
+mankei-326m-embedder	last	800	end	-	80	0.275	2048	0
+mankei-326m-embedder	last	1600	start	-	80	0.2625	2048	0
+mankei-326m-embedder	last	1600	end	-	80	0.200	2048	0
+mankei-326m-embedder	last	3000	start	-	80	0.125	2048	0
+mankei-326m-embedder	last	3000	end	-	80	0.2875	2048	0
+mankei-326m-embedder	last	6000	start	-	80	0.0125	2048	0
+mankei-326m-embedder	last	6000	end	-	80	0.4375	2048	0
+mankei-326m-reranker	last	0	end	28	40	0.7000	192	1
+mankei-326m-reranker	last	3000	start	20	40	0.5000	192	40
+mankei-326m-reranker	last	3000	end	0	40	0.0000	192	40
+mankei-326m-reranker	last	3000	end	21	40	0.5250	1024	0

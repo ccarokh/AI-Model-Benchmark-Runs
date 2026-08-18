@@ -34,6 +34,8 @@ paths, and add nothing a reader can check.
 | [`chat_belebele_chattemplate.tsv`](chat_belebele_chattemplate.tsv) | 30 runs | ten models × three harnesses, chat template taken from the GGUF |
 | [`integration_cost.tsv`](integration_cost.tsv) | 8 models | what it took to get each model running at all |
 | [`embedding_chunk_position.tsv`](embedding_chunk_position.tsv) | 12 runs | retrieval against the position of the answer inside the chunk |
+| [`embedding_chunk_size.tsv`](embedding_chunk_size.tsv) | 14 runs | the same against chunk size, plus the reranker |
+| [`abliteration.tsv`](abliteration.tsv) | 6 runs | a de-refused model against its own base, same quantisation |
 
 ## Columns
 
@@ -246,6 +248,21 @@ production chunk size of 3 000 characters (~760 tokens) with filler from other p
   cut — that zero is the truncation, not the model.
 - `chunk_tokens_mean` values with `~` are derived from character counts, not tokenised;
   the exact ones come from the model's own tokenizer.
+
+**`abliteration.tsv`** — same columns as `chat_belebele_chattemplate.tsv`. Base and
+derivative measured on the same card in the same quantisation, one day apart. ⚠️ At
+n = 150 **one question is 0.67 points**; differences of one or two questions here are
+noise, not a result.
+
+**`embedding_chunk_size.tsv`** — `model`, `pooling`, `chunk_chars`, `position`,
+`correct`, `n`, `accuracy`, `max_len`, `truncated`.
+
+- The `mankei-326m-reranker` rows have **n = 40**, the embedder rows n = 80.
+- ⚠️ The reranker's `max_len 192` is the publisher's documented length; the `1024` row
+  runs **five times past it** and is the one that separates truncation from capability.
+- ⚠️ An earlier reranker measurement using `AutoModelForSequenceClassification` produced
+  a **randomly initialised scoring head** and is not in this file. The real head ships
+  separately as `head.pt`.
 
 ## A note on one filename
 

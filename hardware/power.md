@@ -69,7 +69,20 @@ the four new rows, all measured identically**, so it does not depend on the join
 Four stock measurements were interleaved through the run as a drift control:
 **108.33 / 107.61 / 108.45 / 108.55 tok/s.** No kernel messages on any step.
 
-**Below 800 MHz is still untested.** The memory clock is not — see the next section.
+Two further steps close the curve at the bottom:
+
+| Ceiling | Power | tg128 | W per tok/s |
+|---|---:|---:|---:|
+| 800 MHz | 114.3 W | 59.12 | 1.933 |
+| **600 MHz** | **96.8 W** | 45.96 | 2.106 |
+| **500 MHz** | **84.5 W** | 38.50 | 2.195 |
+| stock control, same session | 290.3 W | 107.96 | 2.688 |
+
+**84.5 W is the floor reached here**, and efficiency keeps worsening all the way down —
+2.195 W per tok/s against 1.700 at the 1 200 MHz optimum. The turning point identified
+above now has four steps below it rather than one, and it holds.
+
+The memory clock is a different matter — see the next section.
 
 ### The memory clock is not a knob you can turn down
 

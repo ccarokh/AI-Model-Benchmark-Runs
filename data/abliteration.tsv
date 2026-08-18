@@ -1,0 +1,7 @@
+model	harness	thinking	correct	n	accuracy	tokens_total	tokens_median	truncated
+qwen3.8-27b	logprob	off	143	150	0.9533	150	1	0
+qwen3.8-27b	generate	off	145	150	0.9667	28884	109	4
+qwen3.8-27b	generate	on	137	150	0.9133	59044	176	0
+qwen3.8-27b-abliterated	logprob	off	142	150	0.9467	150	1	0
+qwen3.8-27b-abliterated	generate	off	143	150	0.9533	18310	68	2
+qwen3.8-27b-abliterated	generate	on	142	150	0.9467	51816	264	0
