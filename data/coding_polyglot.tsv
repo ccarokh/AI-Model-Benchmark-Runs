@@ -23,3 +23,5 @@ qwen3-coder-30b-a3b-slot32k	diff	12.9	32.0	95.6	17	94.0	225
 ornith-35b-slot32k	diff	28.4	61.8	96.9	7	220.2	225
 qwen3.6-27b-slot32k-q8	diff	34.2	72.9	100.0	0	806.9	225
 qwopus3.6-35b-a3b-slot32k	diff	10.2	36.0	97.8	5	630.5	225
+qwen3.8-27b-slot32k	diff	TEILLAUF	TEILLAUF	-	-	1110	61_von_225
+qwen3.8-27b-nothink-slot32k	diff	TEILLAUF	TEILLAUF	-	-	1140	38_von_225

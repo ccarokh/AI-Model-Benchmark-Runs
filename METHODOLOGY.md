@@ -513,3 +513,29 @@ GGUF ladder has done work that a publisher shipping raw safetensors has left to 
 that difference belongs next to the score rather than in someone's memory.
 
 Recorded per model in [`data/integration_cost.tsv`](data/integration_cost.tsv).
+
+## A benchmark that blocks the card for three days is not a benchmark you can afford
+
+A dense 27B needed 19 minutes per aider-polyglot task against 1.5 for a 35B MoE —
+70 hours for the full 225. Run in one block it held the only GPU the whole time, and
+**three other measurements were skipped three nights in a row**: a vision test, a
+throttle curve, and a chunk-size sweep. Each of those was worth more than the second
+decimal place of one pass rate.
+
+Two things came out of it.
+
+**Report the partial result immediately, labelled as partial.** `61_von_225` with a
+measured 18.5 min/task is an honest row. Waiting for completeness meant publishing
+nothing for three days while the conclusion — *too slow, and here is the throughput
+arithmetic that explains it* — was already supported.
+
+**A long run should yield the card, not wait for it.** The chains that failed here
+waited politely for hours and then skipped their own steps — and worse, **the skip wrote
+nothing to the log.** The vision step vanished silently because the guard was
+`if free; then ... fi` with no `else`. The replacement runs in an evening window, checks
+once whether the card is free, and **gives up immediately if it is not.** It resumes
+where it stopped rather than restarting, which meant removing a hardcoded `--new` from
+the harness — with it, every window would have begun again at zero.
+
+**A guard that skips must say so.** Silence from a guard is indistinguishable from
+success.

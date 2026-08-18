@@ -51,6 +51,9 @@ Two related habits are worth keeping from the originals:
 | `hardware/context_depth.sh` | throughput and energy against cache depth, with an out-of-VRAM step reported as a result rather than swallowed |
 | `coding/swebench_run.sh` | one repository × model × mode × cache type, agent run plus evaluation |
 | `coding/night_chain.sh` | chains runs unattended with a deadline and a disk guard |
+| `coding/abend_polyglot.sh` | one evening window of polyglot; **gives up immediately if the card is busy** rather than waiting, and resumes instead of restarting |
+| `coding/orchestrate_resume.sh` | server plus one resumed session, with the card lease returned afterwards |
+| `coding/run-bench-resume.sh` | the aider invocation **without** `--new`, so an existing run directory is continued |
 | `chat/eval_embed_chunks.py` | retrieval against answer position inside a chunk, via an embedding server |
 | `chat/eval_embed_hf.py` | the same, direct `transformers` — for models llama.cpp cannot convert |
 | `chat/eval_belebele_harness.py` | belebele across three harnesses — letter logprob, free generation, and generation with reasoning |

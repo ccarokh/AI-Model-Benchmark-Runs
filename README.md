@@ -39,6 +39,7 @@ Ran, and did not work. Never-attempted models are under [open](#open) instead.
 | Nemotron-3-Nano-30B-A3B | chat, aborted 9/150 | forced reasoning `/no_think` could not suppress, no KV cache reuse across requests, and very slow offloaded decode — ~39 s per example |
 | OlympicCoder-32B | coding, aborted 2/225 | ~38 min per task; 6 days extrapolated |
 | Gemma-4-26B-A4B / 12B | coding | 11.6 and >29 min per task; answers up to 26 085 tokens — [one harness only](models/coding.md#three-findings-that-outlive-the-model-list) |
+| Qwen3.8-27B | coding, **partial — 61 and 38 of 225** | **18.5 and 19.0 min per task against 1.5 for a 35B MoE.** Too slow for agentic work because it is dense, not because it reasons — the switch demonstrably works. Remaining tasks are being run in idle evening windows |
 
 ## Size ceiling
 
