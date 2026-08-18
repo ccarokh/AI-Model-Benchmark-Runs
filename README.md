@@ -61,6 +61,8 @@ Everything above that is untested — see [open](#open).
 | Re-running the System B results on System A | planned |
 | Below 114 W on the throttle curve (down to 159 W is [done](hardware/power.md#there-is-an-optimum-and-it-sits-at-1200-mhz)) | planned |
 | **Batch coding: a slow model given a task list overnight** — the latency numbers rule out interactive use and say nothing about this | planned |
+| **Three-way runtime comparison: Ollama vs llama.cpp vs vLLM** on one card and one model — [two of the three are done](models/../data/ollama_vs_llamacpp.tsv) | planned |
+| **MTP / speculative decoding** — llama.cpp discards Qwen's `nextn` tensors; whether vLLM on ROCm uses them here is untested | planned |
 | Lowering the memory clock | [abandoned](hardware/power.md#the-memory-clock-is-not-a-knob-you-can-turn-down) — took the card off the bus |
 
 ## Data and scripts

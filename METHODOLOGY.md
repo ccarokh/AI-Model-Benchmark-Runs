@@ -556,7 +556,7 @@ like a finding and rested on nothing:
 |---|---|---|
 | "256-token embedder, unusable for our 3 000-char chunks" | the model card | the config allows 2 048; at that length it scores 0.2875 instead of 0.0 |
 | "the thinking switch only dampens, it does not disable" | a token median of 109 | 3 completion tokens and an empty reasoning field — it disables completely |
-| "vLLM is not an option for us" | an unexamined assumption about CUDA | official gfx1100 support, ROCm already installed here, and a 4-bit quant with the MTP head published |
+| "vLLM is not an option for us" | a check run days earlier whose result was never written down | the whole investigation was repeated from scratch — see the next entry |
 
 Each was caught by someone asking *why not*, and each would have removed a real avenue.
 The second one had already been adopted as shared knowledge before it was tested.
@@ -570,3 +570,22 @@ while a wrong negative deletes the measurement that would have corrected it.
 **Rule: before writing a sentence that closes an option, name the measurement behind
 it.** If there is none, the honest sentence is *unmeasured* — and unmeasured things go
 on the open list, not into the bin.
+
+## A negative result that is not written down will be re-derived, badly
+
+The vLLM row above is not quite an example of the rule above it. That option **had** been
+examined, days earlier, and the result went nowhere: not into this repository, not into
+its open list, not into any note. So the same ground was covered a second time — and the
+second pass reached the opposite conclusion by assumption, which is worse than either
+answer alone.
+
+**Negative results are the ones most likely to go unrecorded**, because there is no
+artefact at the end: nothing was installed, no number was produced, and it feels like
+the afternoon simply did not happen. But *"we looked at this and here is why it was set
+aside"* is exactly what stops the next person — or the same person a week later — from
+spending the afternoon again.
+
+This repository has an [open list](README.md#open) and a
+[Failed table](README.md#failed) for that purpose. **The rule is that an evaluation ends
+in a written line, whichever way it went**, and the line names what was checked, what
+was found, and what would change the answer.
