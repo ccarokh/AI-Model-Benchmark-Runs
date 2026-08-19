@@ -1,0 +1,10 @@
+{"lauf": "claude-opus-5-blind2-claudecode",
+ "model": "claude-opus-5",
+ "beschreibung": "blind",
+ "harness": "claudecode",
+ "runtime": "Anthropic-API (Cloud)",
+ "quant": "unbekannt, beim Anbieter",
+ "aufgabe": "aufgabe.md", "aufgabe_id": "dd62b9d75964",
+ "temp": null, "maxtok": null, "ctx": null, "template": "keine",
+ "zeitlimit": null, "sekunden": 1658, "werkzeugaufrufe": 57,
+ "gguf": "", "hf": "", "messrechner": "keiner"}

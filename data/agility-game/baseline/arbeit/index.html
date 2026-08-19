@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agility-Parcours</title>
+<style>
+  :root{
+    --bg-a:#26324c; --bg-b:#0e131d;
+    --ink:#e9eef7; --muted:#9db0cc;
+    --panel:#19212f; --line:#2d3a54; --accent:#ffd166;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:radial-gradient(1100px 620px at 50% -12%, var(--bg-a) 0%, var(--bg-b) 62%) fixed;
+    color:var(--ink);
+    font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    min-height:100vh;
+    display:flex; flex-direction:column; align-items:center;
+    padding:20px 14px 48px;
+    -webkit-font-smoothing:antialiased;
+  }
+  header{width:100%;max-width:960px;margin-bottom:12px}
+  h1{font-size:23px;margin:0 0 3px;letter-spacing:.01em}
+  .sub{margin:0;color:var(--muted);font-size:13.5px}
+  .stage{width:100%;max-width:960px}
+  canvas#game{
+    display:block; width:100%; height:auto;
+    border:2px solid var(--line); border-radius:14px;
+    box-shadow:0 20px 44px rgba(0,0,0,.5);
+    background:#cfeaff;
+    touch-action:manipulation;
+    -webkit-user-select:none; user-select:none;
+  }
+  .panels{
+    width:100%; max-width:960px; margin-top:16px;
+    display:grid; gap:14px; grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  }
+  .card{
+    background:var(--panel); border:1px solid var(--line); border-radius:12px;
+    padding:14px 16px 16px;
+  }
+  .card h2{margin:0 0 10px;font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+  table{border-collapse:collapse;width:100%;font-size:14.5px}
+  th,td{text-align:left;padding:7px 6px;border-bottom:1px solid rgba(255,255,255,.07);vertical-align:middle}
+  tr:last-child th, tr:last-child td{border-bottom:none}
+  th{font-weight:600;color:var(--muted);width:45%}
+  kbd{
+    display:inline-block; margin:2px 4px 2px 0; padding:3px 9px;
+    font:600 13px/1.35 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    color:#0f1622; background:linear-gradient(#ffffff,#d7dfec);
+    border:1px solid #96a3b8; border-bottom-width:3px; border-radius:6px;
+    box-shadow:0 1px 0 rgba(0,0,0,.35);
+  }
+  ul{margin:0;padding-left:18px;font-size:14px;line-height:1.62;color:#cdd8e9}
+  ul li + li{margin-top:5px}
+  .hint{margin-top:10px;font-size:13px;color:var(--muted)}
+  footer{margin-top:18px;font-size:12.5px;color:#6f809a}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Agility-Parcours</h1>
+  <p class="sub">Der Hund läuft von links nach rechts. Über Hürden springen, durch Tunnel ducken.</p>
+</header>
+
+<div class="stage">
+  <canvas id="game" width="960" height="360" aria-label="Agility-Parcours Spielfeld"></canvas>
+</div>
+
+<div class="panels">
+  <section class="card">
+    <h2>Tastenbelegung</h2>
+    <table>
+      <tbody>
+        <tr>
+          <th>Springen (Hürde)</th>
+          <td><kbd>Leertaste</kbd><kbd>W</kbd></td>
+        </tr>
+        <tr>
+          <th>Ducken (Tunnel) &ndash; gedrückt halten</th>
+          <td><kbd>Strg</kbd><kbd>S</kbd></td>
+        </tr>
+        <tr>
+          <th>Neustart (nach Spielende)</th>
+          <td><kbd>R</kbd><kbd>Enter</kbd></td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="hint">Nach dem Spielende geht der Neustart auch per Klick auf die Schaltfläche im Spielfeld.</p>
+  </section>
+
+  <section class="card">
+    <h2>Spielregeln</h2>
+    <ul>
+      <li><strong>Hürde</strong> (Ständer mit Stangen, oben offen): darüber <strong>springen</strong>. Ducken hilft hier nicht.</li>
+      <li><strong>Tunnel</strong> (blaue Röhre mit dunkler Öffnung): <strong>ducken</strong> und hindurchlaufen. Springen hilft hier nicht.</li>
+      <li>Die Ducktaste ist ein gehaltener Zustand: schon in der Luft gedrückt halten, dann duckt sich der Hund beim Aufsetzen.</li>
+      <li>Hürden kommen einzeln, zu zweit oder zu dritt &ndash; eine Gruppe schafft man mit <em>einem</em> Sprung.</li>
+      <li>Das Tempo steigt, und im Verlauf wechseln Tag und Nacht.</li>
+    </ul>
+  </section>
+</div>
+
+<footer>Läuft komplett offline &ndash; keine externen Dateien, kein Build-Schritt.</footer>
+
+<script>
+/* =========================================================================
+   Agility-Parcours – komplettes Spiel in einer Datei.
+   Alles (Hund, Hürden, Tunnel, Hintergrund) wird per Canvas 2D gezeichnet.
+   ========================================================================= */
+(function () {
+"use strict";
+
+/* ------------------------------------------------------------------ Welt */
+const W = 960, H = 360;          // logische Canvasgröße
+const GROUND_Y = 296;            // Bodenlinie
+const DOG_X = 132;               // Der Hund bleibt an derselben Stelle
+
+/* ------------------------------------------------------------- Physik ---
+   Sprung:  v0 = 740 px/s, g = 1650 px/s²
+     Flugzeit      = 2*740/1650              = 0.897 s
+     Scheitelhöhe  = 740²/(2*1650)           = 166 px
+
+   Entscheidend ist nicht das schnellste, sondern das LANGSAMSTE Tempo:
+   je langsamer der Hund, desto länger braucht er über eine Gruppe hinweg.
+   Zeit oberhalb der Höhe h:  T(h) = 2*sqrt(v0² - 2*g*h) / g
+     T(54 px) = 2*sqrt(547600 - 178200)/1650 = 0.737 s
+   Breiteste Gruppe = 3 Hürden = 3*28 + 2*30 = 144 px, dazu die Trefferbreite
+   des Hundes (48 px) = 192 px.
+   Dreiergruppen sind höchstens 48 px hoch, T(48) = 0.756 s:
+     bei Starttempo   380 px/s:  192/380 = 0.505 s  ->  0.25 s Spielraum
+     bei Höchsttempo  660 px/s:  192/660 = 0.291 s  ->  0.47 s Spielraum
+   Eine Dreiergruppe ist also bei jedem im Spiel vorkommenden Tempo mit
+   einem Sprung zu schaffen, und zwar mit einem Zeitfenster von mindestens
+   gut zwei Zehntelsekunden.                                              */
+const GRAVITY   = 1650;
+const JUMP_V    = 740;
+const FASTFALL  = 1.55;          // schnelleres Fallen, wenn Ducken gehalten wird
+
+const SPEED_START = 380;
+const SPEED_MAX   = 660;
+const SPEED_ACC   = 9;           // px/s pro Sekunde
+
+/* --------------------------------------------------------- Hindernisse */
+const HURDLE_W    = 28;          // Breite einer einzelnen Hürde
+const HURDLE_GAP  = 30;          // freier Abstand innerhalb einer Gruppe
+const HURDLE_HEIGHTS = [42, 48, 54];
+
+const TUNNEL_LEN   = 210;        // deutlich länger als hoch (210 / 70 = 3.0)
+const TUNNEL_H     = 70;
+const TUNNEL_INNER = 54;         // lichte Höhe der Röhre
+
+/* ------------------------------------------------------ Trefferflächen */
+// laufend/springend: 48 breit, 60 hoch   -> passt NICHT durch 54 px Tunnel
+// geduckt:           56 breit, 40 hoch   -> 14 px Luft im Tunnel
+const BOX_RUN  = { l: -22, r: 26, h: 60 };
+const BOX_DUCK = { l: -24, r: 32, h: 40 };
+
+/* ------------------------------------------------------------- Canvas */
+const cv  = document.getElementById("game");
+const ctx = cv.getContext("2d");
+const TAU = Math.PI * 2;
+
+function fitCanvas() {
+  const dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 2));
+  cv.width  = Math.round(W * dpr);
+  cv.height = Math.round(H * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+fitCanvas();
+window.addEventListener("resize", fitCanvas);
+
+/* ------------------------------------------------------------- Farben */
+function hex2rgb(h) {
+  return [parseInt(h.substr(1, 2), 16), parseInt(h.substr(3, 2), 16), parseInt(h.substr(5, 2), 16)];
+}
+function mix(a, b, t) {
+  t = t < 0 ? 0 : t > 1 ? 1 : t;
+  const A = hex2rgb(a), B = hex2rgb(b);
+  return "rgb(" + Math.round(A[0] + (B[0] - A[0]) * t) + "," +
+                  Math.round(A[1] + (B[1] - A[1]) * t) + "," +
+                  Math.round(A[2] + (B[2] - A[2]) * t) + ")";
+}
+// Nachtstimmung: alle Objektfarben wandern Richtung kühles Dunkelblau.
+function nc(color) { return mix(color, "#2a3450", game.night * 0.42); }
+
+/* ------------------------------------------------- kleine Zeichenhilfen */
+function roundRect(x, y, w, h, r) {
+  const rr = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + rr, y);
+  ctx.lineTo(x + w - rr, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + rr);
+  ctx.lineTo(x + w, y + h - rr);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - rr, y + h);
+  ctx.lineTo(x + rr, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - rr);
+  ctx.lineTo(x, y + rr);
+  ctx.quadraticCurveTo(x, y, x + rr, y);
+  ctx.closePath();
+}
+// nur die oberen Ecken rund – der Tunnel liegt unten flach auf dem Boden
+function roundTopRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x, y + h);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h);
+  ctx.closePath();
+}
+
+/* ------------------------------------------------------ Deko (fixer RNG) */
+let _seed = 987654321;
+function rnd() { _seed = (_seed * 1664525 + 1013904223) >>> 0; return _seed / 4294967296; }
+const PEBBLE_PERIOD = 2400, CLOUD_PERIOD = 1900;
+const pebbles = [], stars = [], clouds = [], tufts = [];
+for (let i = 0; i < 90; i++) pebbles.push({ x: rnd() * PEBBLE_PERIOD, y: 8 + rnd() * 44, w: 4 + rnd() * 16 });
+for (let i = 0; i < 34; i++) tufts.push({ x: rnd() * PEBBLE_PERIOD, y: 4 + rnd() * 18, s: 0.7 + rnd() * 0.7 });
+for (let i = 0; i < 80; i++) stars.push({ x: rnd() * W, y: 8 + rnd() * 195, r: 0.4 + rnd() * 1.3, tw: rnd() * TAU });
+for (let i = 0; i < 7;  i++) clouds.push({ x: rnd() * CLOUD_PERIOD, y: 24 + rnd() * 78, s: 0.7 + rnd() * 0.6 });
+
+/* ------------------------------------------------------------ Highscore */
+const LS_KEY = "agility-parcours-highscore";
+let memoryBest = 0;              // Rückfall, falls localStorage blockiert ist
+function loadBest() {
+  try { const v = parseInt(window.localStorage.getItem(LS_KEY) || "0", 10); return isFinite(v) ? v : 0; }
+  catch (e) { return memoryBest; }
+}
+function saveBest(v) {
+  memoryBest = v;
+  try { window.localStorage.setItem(LS_KEY, String(v)); } catch (e) { /* file:// ohne Storage */ }
+}
+
+/* ------------------------------------------------------- Spielzustand */
+const game = {
+  mode: "ready",              // "ready" | "playing" | "over"
+  time: 0,
+  dist: 0,
+  speed: SPEED_START,
+  score: 0,
+  best: loadBest(),
+  y: 0, vy: 0, onGround: true,
+  ducking: false,
+  legPhase: 0,
+  night: 0,
+  obstacles: [],
+  spawnLeft: 520,
+  queue: [],
+  intro: true,
+  overT: 0,
+  blink: 0
+};
+
+function resetRun() {
+  game.mode = "playing";
+  game.time = 0;
+  game.dist = 0;
+  game.speed = SPEED_START;
+  game.score = 0;
+  game.y = 0; game.vy = 0; game.onGround = true;
+  game.ducking = false;
+  game.legPhase = 0;
+  game.night = 0;
+  game.obstacles.length = 0;
+  game.spawnLeft = 520;
+  // Der Auftakt garantiert, dass alle drei Gruppengrößen und der Tunnel
+  // tatsächlich vorkommen – nicht nur zufällig vorkommen können.
+  game.queue = ["h1", "h2", "tunnel", "h3"];
+  game.overT = 0;
+}
+
+/* ------------------------------------------------------------- Eingabe */
+const duckKeys = new Set();      // gehaltene Ducktasten (Strg / S)
+
+function isJumpKey(e) {
+  return e.code === "Space" || e.key === " " || e.key === "Spacebar" ||
+         e.code === "KeyW" || e.key === "w" || e.key === "W";
+}
+function isDuckKey(e) {
+  return e.key === "Control" || e.code === "ControlLeft" || e.code === "ControlRight" ||
+         e.code === "KeyS" || e.key === "s" || e.key === "S";
+}
+function isRestartKey(e) {
+  return e.code === "KeyR" || e.key === "r" || e.key === "R" ||
+         e.key === "Enter" || e.code === "Enter" || e.code === "NumpadEnter";
+}
+function duckId(e) { return e.code || e.key; }
+
+function tryJump() {
+  if (game.mode === "ready") { resetRun(); return; }
+  if (game.mode === "playing" && game.onGround) {
+    game.vy = JUMP_V;
+    game.onGround = false;
+  }
+}
+
+window.addEventListener("keydown", function (e) {
+  if (e.repeat && !isDuckKey(e)) {
+    if (isJumpKey(e)) e.preventDefault();
+    return;
+  }
+  if (isJumpKey(e)) { e.preventDefault(); tryJump(); }
+  if (isDuckKey(e)) {
+    duckKeys.add(duckId(e));
+    if (game.mode === "ready") resetRun();
+  }
+  if (isRestartKey(e)) {
+    if (game.mode === "over") { e.preventDefault(); resetRun(); }
+    else if (game.mode === "ready") { e.preventDefault(); resetRun(); }
+  }
+}, { passive: false });
+
+window.addEventListener("keyup", function (e) {
+  if (isDuckKey(e)) duckKeys.delete(duckId(e));
+  // Strg wird beim Loslassen manchmal als eigener Code gemeldet – sicherheitshalber:
+  if (e.key === "Control") { duckKeys.delete("ControlLeft"); duckKeys.delete("ControlRight"); }
+});
+window.addEventListener("blur", function () { duckKeys.clear(); });
+
+/* -------------------------------------- Neustart-Schaltfläche im Feld */
+const btn = { x: W / 2 - 116, y: 200, w: 232, h: 54, hover: false };
+function pointInBtn(px, py) {
+  return px >= btn.x && px <= btn.x + btn.w && py >= btn.y && py <= btn.y + btn.h;
+}
+function toCanvas(evt) {
+  const r = cv.getBoundingClientRect();
+  return { x: (evt.clientX - r.left) * (W / r.width), y: (evt.clientY - r.top) * (H / r.height) };
+}
+cv.addEventListener("pointermove", function (e) {
+  if (game.mode !== "over") { btn.hover = false; cv.style.cursor = "default"; return; }
+  const p = toCanvas(e);
+  btn.hover = pointInBtn(p.x, p.y);
+  cv.style.cursor = btn.hover ? "pointer" : "default";
+});
+cv.addEventListener("pointerdown", function (e) {
+  const p = toCanvas(e);
+  if (game.mode === "over") {
+    if (pointInBtn(p.x, p.y)) { resetRun(); btn.hover = false; cv.style.cursor = "default"; }
+  } else if (game.mode === "ready") {
+    resetRun();
+  } else {
+    tryJump();                       // Maus/Touch als zusätzliche Sprungtaste
+  }
+  e.preventDefault();
+});
+cv.addEventListener("pointerleave", function () { btn.hover = false; cv.style.cursor = "default"; });
+cv.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+
+/* ------------------------------------------------------ Hindernisbau */
+function shuffle(a) {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = (Math.random() * (i + 1)) | 0;
+    const t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+function nextPattern() {
+  if (game.queue.length === 0) {
+    // Jeder Beutel enthält alle drei Gruppengrößen und Tunnel.
+    game.queue = shuffle(["h1", "h2", "h3", "tunnel", "h1", "tunnel", "h2", "h3"]);
+  }
+  return game.queue.shift();
+}
+
+function spawnGroup() {
+  const pattern = nextPattern();
+  const spawnX = W + 40;
+  let groupWidth;
+
+  if (pattern === "tunnel") {
+    game.obstacles.push({ type: "tunnel", x: spawnX, w: TUNNEL_LEN, h: TUNNEL_H, inner: TUNNEL_INNER });
+    groupWidth = TUNNEL_LEN;
+  } else {
+    const n = parseInt(pattern.substring(1), 10);
+    // Dreiergruppen bleiben etwas niedriger – so bleibt das Zeitfenster
+    // für den einen Sprung auch beim langsamen Starttempo großzügig.
+    const pool = n >= 3 ? HURDLE_HEIGHTS.slice(0, 2) : HURDLE_HEIGHTS;
+    const h = pool[(Math.random() * pool.length) | 0];
+    for (let i = 0; i < n; i++) {
+      game.obstacles.push({
+        type: "hurdle",
+        x: spawnX + i * (HURDLE_W + HURDLE_GAP),
+        w: HURDLE_W,
+        h: h,
+        bars: h >= 50 ? 3 : 2
+      });
+    }
+    groupWidth = n * HURDLE_W + (n - 1) * HURDLE_GAP;
+  }
+
+  // Freie Strecke bis zur nächsten Gruppe: mindestens 1.35 s Reaktionszeit,
+  // gemessen ab dem Ende der gerade gesetzten Gruppe.
+  const gapSeconds = 1.35 + Math.random() * 0.85;
+  game.spawnLeft = groupWidth + game.speed * gapSeconds;
+}
+
+/* ------------------------------------------------------------- Update */
+function update(dt) {
+  game.blink += dt;
+
+  if (game.mode !== "playing") {
+    if (game.mode === "over") game.overT += dt;
+    // Der Hund trippelt im Startbildschirm leicht weiter.
+    if (game.mode === "ready") game.legPhase += dt * 8;
+    return;
+  }
+
+  game.time += dt;
+  game.speed = Math.min(SPEED_MAX, SPEED_START + SPEED_ACC * game.time);
+  const move = game.speed * dt;
+  game.dist += move;
+  game.legPhase += dt * (game.speed / 26);
+
+  // Punkte
+  game.score += dt * game.speed / 55;
+  if (game.score > game.best) { game.best = Math.floor(game.score); saveBest(game.best); }
+
+  // Ducken ist ein gehaltener Zustand: greift auch, wenn die Taste bereits
+  // in der Luft gedrückt wurde und beim Aufsetzen noch gehalten wird.
+  const duckHeld = duckKeys.size > 0;
+
+  // Sprungphysik
+  if (!game.onGround) {
+    const g = (duckHeld && game.vy < 0) ? GRAVITY * FASTFALL : GRAVITY;
+    game.vy -= g * dt;
+    game.y  += game.vy * dt;
+    if (game.y <= 0) { game.y = 0; game.vy = 0; game.onGround = true; }
+  }
+  game.ducking = duckHeld && game.onGround;
+
+  // Tag/Nacht: sanfte Umschaltung mit Plateaus, Periode 300 Punkte
+  const phase = (game.score % 300) / 300;
+  const smooth = function (t) { t = t < 0 ? 0 : t > 1 ? 1 : t; return t * t * (3 - 2 * t); };
+  if (phase < 0.35)      game.night = 0;
+  else if (phase < 0.50) game.night = smooth((phase - 0.35) / 0.15);
+  else if (phase < 0.85) game.night = 1;
+  else                   game.night = 1 - smooth((phase - 0.85) / 0.15);
+
+  // Hindernisse bewegen und aufräumen
+  for (let i = game.obstacles.length - 1; i >= 0; i--) {
+    const o = game.obstacles[i];
+    o.x -= move;
+    if (o.x + o.w < -80) game.obstacles.splice(i, 1);
+  }
+
+  // Nachschub
+  game.spawnLeft -= move;
+  if (game.spawnLeft <= 0) spawnGroup();
+
+  if (checkCollision()) gameOver();
+}
+
+function dogBox() {
+  const b = game.ducking ? BOX_DUCK : BOX_RUN;
+  const bottom = GROUND_Y - game.y;
+  return { l: DOG_X + b.l, r: DOG_X + b.r, t: bottom - b.h, b: bottom };
+}
+
+function checkCollision() {
+  const d = dogBox();
+  for (let i = 0; i < game.obstacles.length; i++) {
+    const o = game.obstacles[i];
+    if (o.type === "hurdle") {
+      const l = o.x + 2, r = o.x + o.w - 2;
+      const t = GROUND_Y - o.h;
+      if (d.r > l && d.l < r && d.b > t) return true;
+    } else {
+      // Tunnel: alles oberhalb der lichten Höhe ist blockiert – deshalb
+      // hilft Springen hier nicht, nur Ducken bringt einen hindurch.
+      const l = o.x + 8, r = o.x + o.w - 8;
+      const ceiling = GROUND_Y - o.inner;
+      if (d.r > l && d.l < r && d.t < ceiling) return true;
+    }
+  }
+  return false;
+}
+
+function gameOver() {
+  game.mode = "over";
+  game.overT = 0;
+  const s = Math.floor(game.score);
+  if (s > game.best) { game.best = s; }
+  saveBest(game.best);
+  btn.hover = false;
+  cv.style.cursor = "default";
+}
+
+/* ====================================================================== */
+/*  Zeichnen: Hintergrund                                                 */
+/* ====================================================================== */
+function drawSky() {
+  const g = ctx.createLinearGradient(0, 0, 0, GROUND_Y);
+  g.addColorStop(0, mix("#79c6f2", "#060b1c", game.night));
+  g.addColorStop(0.62, mix("#bfe6ff", "#132146", game.night));
+  g.addColorStop(1, mix("#e6f5ff", "#22305c", game.night));
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, GROUND_Y);
+
+  // Sterne
+  if (game.night > 0.02) {
+    for (let i = 0; i < stars.length; i++) {
+      const s = stars[i];
+      const tw = 0.65 + 0.35 * Math.sin(game.blink * 1.7 + s.tw);
+      ctx.globalAlpha = game.night * tw;
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, TAU); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // Sonne geht unter, Mond geht auf – getrennte Bahnen, damit sich beim
+  // Übergang nicht zwei Scheiben überlagern.
+  const sunX = 812, sunY = 66 + game.night * 120;
+  if (game.night < 0.99) {
+    ctx.globalAlpha = Math.min(1, (1 - game.night) * 1.35);
+    const gg = ctx.createRadialGradient(sunX, sunY, 6, sunX, sunY, 58);
+    gg.addColorStop(0, "rgba(255,236,170,.85)");
+    gg.addColorStop(1, "rgba(255,236,170,0)");
+    ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(sunX, sunY, 58, 0, TAU); ctx.fill();
+    ctx.fillStyle = "#ffe08a"; ctx.beginPath(); ctx.arc(sunX, sunY, 26, 0, TAU); ctx.fill();
+  }
+  const mx = 654, my = 178 - game.night * 118;
+  if (game.night > 0.01) {
+    ctx.globalAlpha = Math.min(1, game.night * 1.35);
+    ctx.fillStyle = "#eef2ff"; ctx.beginPath(); ctx.arc(mx, my, 23, 0, TAU); ctx.fill();
+    ctx.fillStyle = "rgba(178,190,220,.55)";
+    ctx.beginPath(); ctx.arc(mx - 8, my - 6, 5, 0, TAU); ctx.fill();
+    ctx.beginPath(); ctx.arc(mx + 7, my + 4, 6.5, 0, TAU); ctx.fill();
+    ctx.beginPath(); ctx.arc(mx + 2, my - 12, 3.2, 0, TAU); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawClouds() {
+  const off = game.dist * 0.16;
+  ctx.fillStyle = mix("#ffffff", "#3a4670", game.night);
+  ctx.globalAlpha = 0.85 - game.night * 0.45;
+  for (let i = 0; i < clouds.length; i++) {
+    const c = clouds[i];
+    let x = c.x - off;
+    x = ((x % CLOUD_PERIOD) + CLOUD_PERIOD) % CLOUD_PERIOD;
+    if (x > W + 90) continue;
+    const s = c.s;
+    ctx.beginPath();
+    ctx.arc(x, c.y, 16 * s, 0, TAU);
+    ctx.arc(x + 20 * s, c.y - 7 * s, 21 * s, 0, TAU);
+    ctx.arc(x + 44 * s, c.y + 1 * s, 15 * s, 0, TAU);
+    ctx.arc(x + 22 * s, c.y + 8 * s, 17 * s, 0, TAU);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawHillLayer(offset, period, height, baseY, color) {
+  const start = -(((offset % period) + period) % period) - period;
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(start, baseY);
+  for (let x = start; x < W + period; x += period) {
+    ctx.quadraticCurveTo(x + period * 0.5, baseY - height, x + period, baseY);
+  }
+  ctx.lineTo(W + period * 2, H);
+  ctx.lineTo(start, H);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawScenery() {
+  drawHillLayer(game.dist * 0.20, 430, 108, GROUND_Y + 4, mix("#a9cf9a", "#16223c", game.night));
+  drawHillLayer(game.dist * 0.38, 290, 62,  GROUND_Y + 4, mix("#8cbd7b", "#101a30", game.night));
+}
+
+function drawGround() {
+  ctx.fillStyle = mix("#d9c9a3", "#262d44", game.night);
+  ctx.fillRect(0, GROUND_Y, W, H - GROUND_Y);
+  ctx.fillStyle = mix("#a88f5f", "#3b4463", game.night);
+  ctx.fillRect(0, GROUND_Y - 3, W, 4);
+
+  const off = game.dist;
+  // Grasbüschel auf der Linie
+  ctx.strokeStyle = mix("#7fae6b", "#2b3450", game.night);
+  ctx.lineWidth = 2; ctx.lineCap = "round";
+  for (let i = 0; i < tufts.length; i++) {
+    const t = tufts[i];
+    let x = t.x - off;
+    x = ((x % PEBBLE_PERIOD) + PEBBLE_PERIOD) % PEBBLE_PERIOD;
+    if (x > W + 20) continue;
+    ctx.beginPath();
+    ctx.moveTo(x, GROUND_Y - 2);      ctx.lineTo(x - 4 * t.s, GROUND_Y - 2 - t.y);
+    ctx.moveTo(x + 1, GROUND_Y - 2);  ctx.lineTo(x + 1, GROUND_Y - 3 - t.y * 1.15);
+    ctx.moveTo(x + 2, GROUND_Y - 2);  ctx.lineTo(x + 6 * t.s, GROUND_Y - 2 - t.y * 0.8);
+    ctx.stroke();
+  }
+  // Kiesel im Boden
+  ctx.fillStyle = mix("#c0a97d", "#333c58", game.night);
+  for (let i = 0; i < pebbles.length; i++) {
+    const p = pebbles[i];
+    let x = p.x - off;
+    x = ((x % PEBBLE_PERIOD) + PEBBLE_PERIOD) % PEBBLE_PERIOD;
+    if (x > W + 20) continue;
+    ctx.fillRect(x, GROUND_Y + p.y, p.w, 2.5);
+  }
+}
+
+/* ====================================================================== */
+/*  Zeichnen: Hürde – Ständer links und rechts, Stangen dazwischen,       */
+/*  oben offen.                                                           */
+/* ====================================================================== */
+function drawHurdle(o) {
+  const x = o.x, h = o.h, top = GROUND_Y - h;
+  const postW = 6;
+  const lx = x + 1, rx = x + o.w - 1 - postW;
+
+  const white = nc("#f4f6f8");
+  const red   = nc("#d1443c");
+  const dark  = nc("#3d4654");
+  const foot  = nc("#5a6472");
+
+  // Schatten am Boden
+  ctx.fillStyle = "rgba(0,0,0," + (0.16 - game.night * 0.08).toFixed(3) + ")";
+  ctx.beginPath(); ctx.ellipse(x + o.w / 2, GROUND_Y + 3, o.w * 0.75, 4.5, 0, 0, TAU); ctx.fill();
+
+  // Füße der Ständer
+  ctx.fillStyle = foot;
+  roundRect(lx - 7, GROUND_Y - 6, postW + 14, 7, 2.5); ctx.fill();
+  roundRect(rx - 7, GROUND_Y - 6, postW + 14, 7, 2.5); ctx.fill();
+
+  // Ständer (weiß mit roten Ringen)
+  for (let s = 0; s < 2; s++) {
+    const px = s === 0 ? lx : rx;
+    ctx.fillStyle = white;
+    roundRect(px, top, postW, h - 3, 2.5); ctx.fill();
+    ctx.fillStyle = red;
+    for (let k = 0; k < 3; k++) {
+      const by = top + 8 + k * (h - 20) / 3;
+      ctx.fillRect(px, by, postW, 5);
+    }
+    ctx.strokeStyle = dark; ctx.lineWidth = 1;
+    roundRect(px + 0.5, top + 0.5, postW - 1, h - 4, 2.5); ctx.stroke();
+  }
+
+  // Waagerechte Stangen zwischen den Ständern (oben offen)
+  const barX = lx + postW - 1, barW = rx - lx - postW + 2;
+  const nBars = o.bars;
+  for (let b = 0; b < nBars; b++) {
+    const by = top + 9 + b * (h - 16) / nBars;
+    ctx.fillStyle = white;
+    roundRect(barX, by, barW, 6, 3); ctx.fill();
+    ctx.fillStyle = red;
+    ctx.fillRect(barX + barW * 0.36, by, barW * 0.28, 6);
+    ctx.strokeStyle = dark; ctx.lineWidth = 1;
+    roundRect(barX + 0.5, by + 0.5, barW - 1, 5, 2.5); ctx.stroke();
+  }
+}
+
+/* ====================================================================== */
+/*  Zeichnen: Agility-Stofftunnel – liegende Röhre, flach auf dem Boden,  */
+/*  gleichbleibender Durchmesser, Querringe, kräftig blau, dunkle runde   */
+/*  Öffnung mit dunklem Rand.                                             */
+/* ====================================================================== */
+function drawTunnel(o) {
+  const x = o.x, len = o.w, h = o.h;
+  const top = GROUND_Y - h;
+
+  const blue      = nc("#1f6fd0");
+  const blueDark  = nc("#124a95");
+  const blueLite  = nc("#5aa3ec");
+  const edge      = nc("#0b2c58");
+  const hole      = mix("#05070d", "#01030a", game.night);
+
+  ctx.save();
+
+  /* Röhrenkörper: unten flach auf dem Boden, oben gerundet, über die
+     ganze Länge gleicher Durchmesser. */
+  const g = ctx.createLinearGradient(0, top, 0, GROUND_Y);
+  g.addColorStop(0.00, blueDark);
+  g.addColorStop(0.20, blueLite);
+  g.addColorStop(0.52, blue);
+  g.addColorStop(1.00, blueDark);
+  roundTopRect(x, top, len, h, 16);
+  ctx.fillStyle = g;
+  ctx.fill();
+
+  /* Querringe wie bei einem Faltenschlauch – sie machen die Rundung sichtbar */
+  ctx.save();
+  roundTopRect(x, top, len, h, 16);
+  ctx.clip();
+  for (let rp = x + 12; rp < x + len - 6; rp += 19) {
+    ctx.strokeStyle = "rgba(7,38,80,.50)";
+    ctx.lineWidth = 3.2;
+    ctx.beginPath();
+    ctx.moveTo(rp, GROUND_Y + 2);
+    ctx.quadraticCurveTo(rp - 4.5, GROUND_Y - h * 0.55, rp, top - 3);
+    ctx.stroke();
+    ctx.strokeStyle = "rgba(196,228,255,.26)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(rp + 4, GROUND_Y + 2);
+    ctx.quadraticCurveTo(rp - 0.5, GROUND_Y - h * 0.55, rp + 4, top - 3);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  /* Kontur der Röhre */
+  roundTopRect(x, top, len, h, 16);
+  ctx.strokeStyle = edge; ctx.lineWidth = 2.5; ctx.stroke();
+
+  /* Die Öffnungen: kreisrund, dunkel, mit dunklem Rand. Sie zeigen, dass
+     die Röhre innen hohl ist – vorne läuft der Hund hinein, hinten kommt
+     er wieder heraus. */
+  function mouth(cx, rx) {
+    const cy = GROUND_Y - 29;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, rx, 27, 0, 0, TAU);
+    ctx.fillStyle = hole; ctx.fill();
+    ctx.strokeStyle = edge; ctx.lineWidth = 4.5; ctx.stroke();
+    // schwacher Lichtsaum am oberen Innenrand
+    ctx.strokeStyle = "rgba(125,175,235,.32)";
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, rx - 2.5, 24.5, 0, Math.PI * 1.05, Math.PI * 1.95);
+    ctx.stroke();
+  }
+  mouth(x + len - 15, 12.5); // hinteres Ende (dort kommt der Hund heraus)
+  mouth(x + 29, 24);         // vorderes Ende (dort läuft er hinein)
+
+  ctx.restore();
+}
+
+/* ====================================================================== */
+/*  Zeichnen: Hund                                                        */
+/*  Aufbau: Beine -> Schwanz -> Rumpf -> Hals/Kopf -> vordere Beine.      */
+/*  Alle Teile überlappen den Rumpf, es gibt keine schwebenden Teile.     */
+/*  Zwei Beine sitzen unter der Brust, zwei an der Hüfte.                 */
+/* ====================================================================== */
+function drawLeg(hx, hy, a1, a2, l1, l2, w, col) {
+  const kx = hx + Math.sin(a1) * l1, ky = hy + Math.cos(a1) * l1;
+  const fx = kx + Math.sin(a2) * l2, fy = ky + Math.cos(a2) * l2;
+  ctx.strokeStyle = col;
+  ctx.lineWidth = w;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.beginPath();
+  ctx.moveTo(hx, hy); ctx.lineTo(kx, ky); ctx.lineTo(fx, fy);
+  ctx.stroke();
+  // Pfote
+  ctx.fillStyle = col;
+  ctx.beginPath();
+  ctx.ellipse(fx + 1.5, fy - 0.6, w * 0.62, w * 0.42, 0, 0, TAU);
+  ctx.fill();
+}
+
+function gaitAngles(p) {
+  const a1 = 0.46 * Math.sin(p);
+  const a2 = a1 - 0.52 * Math.max(0, Math.sin(p + 1.05));
+  return [a1, a2];
+}
+
+function drawDog(ducking, airborne, phase) {
+  const FUR      = nc("#8f5c2c");
+  const FUR_DARK = nc("#69411e");
+  const FUR_LITE = nc("#a8703a");
+  const OUTLINE  = nc("#4d2f13");
+  const BELLY    = nc("#e6cba4");
+  const MUZZLE   = nc("#d7b083");
+  const DARK     = nc("#241811");
+  const COLLAR   = nc("#cf4a3f");
+
+  ctx.save();
+  ctx.translate(DOG_X, GROUND_Y - game.y);
+
+  /* ---- Schatten bleibt am Boden, auch im Sprung ---- */
+  ctx.save();
+  ctx.translate(0, game.y);
+  const sh = Math.max(0.10, 0.28 - game.y / 500);
+  ctx.fillStyle = "rgba(0,0,0," + sh.toFixed(3) + ")";
+  ctx.beginPath();
+  ctx.ellipse(-2, 3, Math.max(16, 34 - game.y * 0.08), Math.max(2.5, 5.5 - game.y * 0.014), 0, 0, TAU);
+  ctx.fill();
+  ctx.restore();
+
+  function outline(w) { ctx.strokeStyle = OUTLINE; ctx.lineWidth = w; ctx.stroke(); }
+
+  if (!ducking) {
+    /* ================= laufende / springende Haltung =================
+       Rumpf  x -34 .. 22  (56 lang, 26 hoch)
+       Hinterbeine an der Hüfte (x -24 / -18), Vorderbeine unter der
+       Brust (x 12 / 18). Beinlänge 25 < Rumpflänge 56.               */
+    const A = airborne
+      ? [[-0.90, -1.15], [-0.72, -1.00], [0.92, 0.50], [0.70, 0.34]]
+      : [gaitAngles(phase), gaitAngles(phase + 0.9),
+         gaitAngles(phase + Math.PI), gaitAngles(phase + Math.PI + 0.9)];
+
+    // hinteres Beinpaar (dunkler, weiter weg)
+    drawLeg(-26, -26, A[0][0], A[0][1], 13, 13, 7,   FUR_DARK);   // Hinterbein, Hüfte
+    drawLeg( 14, -26, A[2][0], A[2][1], 13, 13, 7,   FUR_DARK);   // Vorderbein, Brust
+
+    // Schwanz sitzt am Hinterteil
+    const wag = Math.sin(phase * 0.9) * 4;
+    ctx.lineCap = "round";
+    ctx.strokeStyle = FUR; ctx.lineWidth = 6.5;
+    ctx.beginPath();
+    ctx.moveTo(-31, -37);
+    ctx.quadraticCurveTo(-46, -42 + wag, -50, -57 + wag);
+    ctx.stroke();
+    ctx.strokeStyle = FUR_LITE; ctx.lineWidth = 3.4;
+    ctx.beginPath();
+    ctx.moveTo(-44, -46 + wag * 0.7);
+    ctx.quadraticCurveTo(-49, -51 + wag, -50.5, -58 + wag);
+    ctx.stroke();
+
+    // Rumpf
+    ctx.beginPath();
+    ctx.moveTo(-34, -30);
+    ctx.bezierCurveTo(-34, -42, -16, -45, 0, -44);
+    ctx.bezierCurveTo(12, -43.5, 21, -40, 22, -33);
+    ctx.bezierCurveTo(23, -24, 12, -19, -4, -19);
+    ctx.bezierCurveTo(-20, -19, -34, -22, -34, -30);
+    ctx.closePath();
+    ctx.fillStyle = FUR; ctx.fill(); outline(1.6);
+
+    // Bauchzeichnung
+    ctx.fillStyle = BELLY;
+    ctx.beginPath(); ctx.ellipse(-2, -21, 14, 3.4, 0, 0, TAU); ctx.fill();
+
+    // Hals: verbindet Brust und Kopf lückenlos
+    ctx.beginPath();
+    ctx.moveTo(12, -40);
+    ctx.lineTo(23, -54);
+    ctx.lineTo(34, -46);
+    ctx.lineTo(20, -31);
+    ctx.closePath();
+    ctx.fillStyle = FUR; ctx.fill(); outline(1.6);
+
+    // Kopf: deutlich kleiner als der Rumpf (21 x 17 gegen 56 x 26)
+    ctx.beginPath();
+    ctx.ellipse(30, -47, 10.5, 8.5, 0.05, 0, TAU);
+    ctx.fillStyle = FUR; ctx.fill(); outline(1.6);
+
+    // Brustfleck
+    ctx.fillStyle = BELLY;
+    ctx.beginPath(); ctx.ellipse(19, -32, 4.2, 6, -0.3, 0, TAU); ctx.fill();
+
+    // Schnauze: kurz und flach, kein zweiter Kopf
+    ctx.beginPath();
+    roundRect(36, -51.5, 12.5, 9, 4);
+    ctx.fillStyle = MUZZLE; ctx.fill(); outline(1.4);
+    ctx.fillStyle = DARK;
+    ctx.beginPath(); ctx.ellipse(46.8, -48, 3, 2.5, 0, 0, TAU); ctx.fill();
+    ctx.strokeStyle = DARK; ctx.lineWidth = 1.2; ctx.lineCap = "round";
+    ctx.beginPath(); ctx.moveTo(40, -43.2); ctx.lineTo(46.5, -43.4); ctx.stroke();
+
+    // Ohr sitzt oben am Kopf
+    ctx.beginPath();
+    ctx.moveTo(23.5, -51);
+    ctx.quadraticCurveTo(23, -62, 28.5, -61);
+    ctx.quadraticCurveTo(31.5, -57, 32.5, -48.5);
+    ctx.closePath();
+    ctx.fillStyle = FUR_DARK; ctx.fill(); outline(1.4);
+
+    // Auge
+    ctx.fillStyle = DARK;
+    ctx.beginPath(); ctx.arc(32, -50, 2.1, 0, TAU); ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,.9)";
+    ctx.beginPath(); ctx.arc(32.8, -50.8, 0.8, 0, TAU); ctx.fill();
+
+    // Halsband
+    ctx.strokeStyle = COLLAR; ctx.lineWidth = 4.4; ctx.lineCap = "butt";
+    ctx.beginPath(); ctx.moveTo(17.5, -43.5); ctx.lineTo(26, -36.5); ctx.stroke();
+
+    // vorderes Beinpaar (heller, näher)
+    drawLeg(-20, -23, A[1][0], A[1][1], 11.5, 11.5, 6.5, FUR_LITE); // Hinterbein
+    drawLeg( 20, -23, A[3][0], A[3][1], 11.5, 11.5, 6.5, FUR_LITE); // Vorderbein
+
+  } else {
+    /* ======================= geduckte Haltung =======================
+       Gleicher Bau, nur flacher: Rumpf x -36 .. 24 (60 lang, 18 hoch),
+       Beine angewinkelt, Kopf tief nach vorn, Ohr angelegt.
+       Kopf bleibt klar kleiner als der Rumpf.                        */
+    const B = [gaitAngles(phase), gaitAngles(phase + 0.9),
+               gaitAngles(phase + Math.PI), gaitAngles(phase + Math.PI + 0.9)];
+    const sc = 0.42;
+
+    drawLeg(-26, -15, B[0][0] * sc, B[0][1] * sc, 7.5, 7.5, 7,   FUR_DARK);
+    drawLeg( 13, -15, B[2][0] * sc, B[2][1] * sc, 7.5, 7.5, 7,   FUR_DARK);
+
+    // Schwanz tief nach hinten
+    const wag2 = Math.sin(phase * 0.9) * 2.5;
+    ctx.lineCap = "round";
+    ctx.strokeStyle = FUR; ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.moveTo(-33, -21);
+    ctx.quadraticCurveTo(-48, -22 + wag2, -55, -26 + wag2);
+    ctx.stroke();
+
+    // Rumpf
+    ctx.beginPath();
+    ctx.moveTo(-36, -19);
+    ctx.bezierCurveTo(-36, -26, -18, -29, -2, -28);
+    ctx.bezierCurveTo(12, -27.5, 22, -25, 24, -20);
+    ctx.bezierCurveTo(25, -14, 13, -10, -3, -10);
+    ctx.bezierCurveTo(-20, -10, -36, -12, -36, -19);
+    ctx.closePath();
+    ctx.fillStyle = FUR; ctx.fill(); outline(1.6);
+
+    ctx.fillStyle = BELLY;
+    ctx.beginPath(); ctx.ellipse(-4, -11.6, 14, 2.6, 0, 0, TAU); ctx.fill();
+
+    // Hals nach vorn-unten
+    ctx.beginPath();
+    ctx.moveTo(13, -26);
+    ctx.lineTo(25, -32);
+    ctx.lineTo(35, -25);
+    ctx.lineTo(20, -14);
+    ctx.closePath();
+    ctx.fillStyle = FUR; ctx.fill(); outline(1.6);
+
+    // Kopf
+    ctx.beginPath();
+    ctx.ellipse(34, -27, 9.8, 7.8, 0.10, 0, TAU);
+    ctx.fillStyle = FUR; ctx.fill(); outline(1.6);
+
+    // Schnauze
+    ctx.beginPath();
+    roundRect(40.5, -30.5, 12.5, 8.5, 3.8);
+    ctx.fillStyle = MUZZLE; ctx.fill(); outline(1.4);
+    ctx.fillStyle = DARK;
+    ctx.beginPath(); ctx.ellipse(51.3, -27.3, 2.9, 2.4, 0, 0, TAU); ctx.fill();
+    ctx.strokeStyle = DARK; ctx.lineWidth = 1.2; ctx.lineCap = "round";
+    ctx.beginPath(); ctx.moveTo(44.5, -22.6); ctx.lineTo(51, -22.8); ctx.stroke();
+
+    // angelegtes Ohr
+    ctx.beginPath();
+    ctx.moveTo(30, -32);
+    ctx.quadraticCurveTo(20, -36, 18.5, -31.5);
+    ctx.quadraticCurveTo(23, -28.5, 29, -26.5);
+    ctx.closePath();
+    ctx.fillStyle = FUR_DARK; ctx.fill(); outline(1.4);
+
+    ctx.fillStyle = DARK;
+    ctx.beginPath(); ctx.arc(36, -29.5, 2, 0, TAU); ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,.9)";
+    ctx.beginPath(); ctx.arc(36.8, -30.2, 0.8, 0, TAU); ctx.fill();
+
+    ctx.strokeStyle = COLLAR; ctx.lineWidth = 4.4; ctx.lineCap = "butt";
+    ctx.beginPath(); ctx.moveTo(20.5, -28.5); ctx.lineTo(25.5, -18.5); ctx.stroke();
+
+    drawLeg(-20, -13, B[1][0] * sc, B[1][1] * sc, 6.5, 6.5, 6.5, FUR_LITE);
+    drawLeg( 19, -13, B[3][0] * sc, B[3][1] * sc, 6.5, 6.5, 6.5, FUR_LITE);
+  }
+
+  ctx.restore();
+}
+
+/* ====================================================================== */
+/*  HUD, Startbildschirm, Spielende                                       */
+/* ====================================================================== */
+function pad(n) { const s = String(n); return "00000".substring(0, Math.max(0, 5 - s.length)) + s; }
+
+function drawHud() {
+  const ink = mix("#3a4152", "#e7eefc", game.night);
+  ctx.font = "bold 20px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+  ctx.textAlign = "right";
+  ctx.textBaseline = "top";
+
+  const cur = pad(Math.floor(game.score));
+  const bst = pad(game.best);
+
+  // Highscore steht direkt neben dem laufenden Punktestand
+  ctx.globalAlpha = 0.72;
+  ctx.fillStyle = ink;
+  const curW = ctx.measureText(cur).width;
+  ctx.fillText("HI " + bst, W - 26 - curW - 22, 20);
+  ctx.globalAlpha = 1;
+  ctx.fillText(cur, W - 26, 20);
+  ctx.textAlign = "left";
+}
+
+function drawCenterText(text, y, size, weight, color, alpha) {
+  ctx.globalAlpha = alpha === undefined ? 1 : alpha;
+  ctx.font = weight + " " + size + "px ui-sans-serif, system-ui, 'Segoe UI', Roboto, Arial, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "alphabetic";
+  ctx.fillStyle = color;
+  ctx.fillText(text, W / 2, y);
+  ctx.globalAlpha = 1;
+  ctx.textAlign = "left";
+}
+
+function drawReady() {
+  ctx.fillStyle = "rgba(10,16,28,.34)";
+  ctx.fillRect(0, 0, W, H);
+  drawCenterText("AGILITY-PARCOURS", 132, 40, "800", "#ffffff");
+  drawCenterText("Leertaste oder W = springen · Strg oder S gedrückt halten = ducken",
+                 172, 17, "600", "#dce6f7");
+  const pulse = 0.55 + 0.45 * Math.sin(game.blink * 3.2);
+  drawCenterText("Zum Starten Taste drücken oder klicken", 214, 19, "700", "#ffd166", pulse);
+}
+
+function drawGameOver() {
+  ctx.fillStyle = "rgba(8,12,22,.55)";
+  ctx.fillRect(0, 0, W, H);
+
+  drawCenterText("VORBEI", 112, 44, "800", "#ffffff");
+  drawCenterText("Punkte  " + Math.floor(game.score) + "     Bester Lauf  " + game.best,
+                 152, 20, "700", "#e7eefc");
+
+  // Neustart-Schaltfläche im Spielfeld
+  const hovered = btn.hover;
+  ctx.save();
+  ctx.shadowColor = "rgba(0,0,0,.45)";
+  ctx.shadowBlur = 14; ctx.shadowOffsetY = 5;
+  ctx.fillStyle = hovered ? "#ffe08a" : "#ffd166";
+  roundRect(btn.x, btn.y, btn.w, btn.h, 13); ctx.fill();
+  ctx.restore();
+  ctx.strokeStyle = "rgba(90,60,0,.55)"; ctx.lineWidth = 2;
+  roundRect(btn.x + 1, btn.y + 1, btn.w - 2, btn.h - 2, 12); ctx.stroke();
+
+  ctx.font = "800 20px ui-sans-serif, system-ui, 'Segoe UI', Roboto, Arial, sans-serif";
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillStyle = "#3a2a00";
+  ctx.fillText("NEU STARTEN", btn.x + btn.w / 2, btn.y + btn.h / 2 + 1);
+  ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+
+  drawCenterText("oder Taste  R  bzw.  Enter", 280, 16, "600", "#c9d6ec", 0.9);
+}
+
+/* ====================================================================== */
+/*  Bildaufbau                                                            */
+/* ====================================================================== */
+function render() {
+  ctx.clearRect(0, 0, W, H);
+  drawSky();
+  drawClouds();
+  drawScenery();
+  drawGround();
+
+  // Hürden liegen hinter dem Hund – er springt sichtbar darüber.
+  for (let i = 0; i < game.obstacles.length; i++) {
+    if (game.obstacles[i].type === "hurdle") drawHurdle(game.obstacles[i]);
+  }
+
+  drawDog(game.ducking, !game.onGround && game.mode === "playing", game.legPhase);
+
+  // Tunnel liegen VOR dem Hund – geduckt verschwindet er darin.
+  for (let i = 0; i < game.obstacles.length; i++) {
+    if (game.obstacles[i].type === "tunnel") drawTunnel(game.obstacles[i]);
+  }
+
+  drawHud();
+  if (game.mode === "ready") drawReady();
+  else if (game.mode === "over") drawGameOver();
+}
+
+/* ---------------------------------------------------------- Hauptloop */
+let last = 0;
+function frame(now) {
+  if (!last) last = now;
+  let dt = (now - last) / 1000;
+  last = now;
+  if (dt > 0.05) dt = 0.05;      // nach Tabwechsel nicht durchrasseln
+  update(dt);
+  render();
+  window.requestAnimationFrame(frame);
+}
+window.requestAnimationFrame(frame);
+
+})();
+</script>
+</body>
+</html>
