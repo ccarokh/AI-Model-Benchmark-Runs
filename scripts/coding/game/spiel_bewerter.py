@@ -9,6 +9,15 @@ eingebetteten Rahmen laesst sich ein Spiel nicht ernsthaft spielen.
 Das Primaerurteil ist binaer: laesst sich das Spiel oeffnen und spielen.
 Alles Weitere ist Kommentar.
 
+Jedes Kriterium hat VIER Zustaende: ja, nein, untestbar, noch nicht beantwortet.
+Ein Haekchen kann davon genau einen -- ein leeres Kaestchen hiesse gleichzeitig
+"nein" und "noch nicht angesehen", und dann laesst sich nie sagen, ob eine
+Bewertung fertig ist. Fertig heisst hier: alle acht beantwortet.
+
+"Untestbar" ist kein Ausweichen, sondern die einzig ehrliche Antwort, wenn das
+Spiel gar nicht erst startet: ob es mit der Zeit schneller wird, hat dann
+niemand gesehen. Als "nein" gezaehlt waere es eine erfundene Beobachtung.
+
 Nur Standardbibliothek.
 
     python3 spiel_bewerter.py [port]      # http://127.0.0.1:8109
@@ -35,6 +44,20 @@ KRITERIEN = [
     ("neustart",   "Game Over und Neustart funktionieren"),
 ]
 
+# Im Klartext, was das Spiel erzeugt hat. Ohne diese Saetze steht auf der Seite
+# ein Wort wie "direkt", das niemand einordnen kann -- und dann bewertet man das
+# Modell fuer etwas, das der Pruefstand ihm gar nicht ermoeglicht hat.
+PRUEFSTAND = {
+    "opencode": "Voller Pruefstand: das Modell arbeitet in OpenCode in einem leeren "
+                "Verzeichnis, darf Dateien anlegen, Befehle ausfuehren und deren "
+                "Ausgabe lesen -- gekapselt in einem Behaelter. Was am Ende dort "
+                "liegt, ist das Ergebnis.",
+}
+LAUFZEIT = {
+    "llamacpp": "llama-server, Chat-Vorlage aus der GGUF",
+    "vllm": "vLLM auf ROCm, im Behaelter",
+}
+
 def modelle():
     aus = []
     if not os.path.isdir(SPIELE):
@@ -43,20 +66,33 @@ def modelle():
         d = os.path.join(SPIELE, n)
         if not os.path.isdir(d):
             continue
-        idx = os.path.join(d, "index.html")
-        bilder = os.path.join(d, "bilder.json")
+        # Das Spiel liegt im Arbeitsverzeichnis des Agenten, nicht im Laufordner.
+        arbeit = os.path.join(d, "arbeit")
+        idx = os.path.join(arbeit, "index.html")
         eintrag = {
             "modell": n,
             "hat_index": os.path.exists(idx),
             "bytes": os.path.getsize(idx) if os.path.exists(idx) else 0,
-            "dateien": sorted(f for f in os.listdir(d)
-                              if not f.endswith((".log", ".json", ".txt"))),
-            "prompts": [],
+            "dateien": sorted(os.listdir(arbeit)) if os.path.isdir(arbeit) else [],
+            "kopf": {},
         }
-        if os.path.exists(bilder):
+        # Was diesen Lauf ausmacht, steht in lauf.json -- die Seite soll es
+        # zeigen, nicht der Dateiname andeuten.
+        lauf = os.path.join(d, "lauf.json")
+        if os.path.exists(lauf):
             try:
-                eintrag["prompts"] = json.load(open(bilder, encoding="utf-8"))
-            except Exception:
+                c = json.load(open(lauf, encoding="utf-8"))
+                eintrag["kopf"] = {
+                    "model": c.get("model", ""),
+                    "beschreibung": c.get("beschreibung", ""),
+                    "harness": c.get("harness", ""),
+                    "harness_text": PRUEFSTAND.get(c.get("harness", ""), ""),
+                    "runtime": c.get("runtime", ""),
+                    "runtime_text": LAUFZEIT.get(c.get("runtime", ""), ""),
+                    "temp": c.get("temp"), "maxtok": c.get("maxtok"),
+                    "template": c.get("template", ""),
+                }
+            except (OSError, ValueError):
                 pass
         aus.append(eintrag)
     return aus
@@ -73,11 +109,20 @@ def speichern(d):
     tmp = URTEILE + ".tmp"
     json.dump(d, open(tmp, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     os.replace(tmp, URTEILE)          # atomar: nie halb geschrieben lesen
-    z = ["model\t" + "\t".join(k for k, _ in KRITERIEN) + "\tkommentar\tzeit"]
+    z = ["model\tvollstaendig\t" + "\t".join(k for k, _ in KRITERIEN) + "\tkommentar\tzeit"]
     for m in modelle():
         u = d.get(m["modell"], {})
-        z.append("\t".join([m["modell"]]
-                 + [str(u.get(k, "")) for k, _ in KRITERIEN]
+        # Leer heisst nicht beantwortet -- nicht "nein". Der Unterschied ist der
+        # ganze Punkt der drei Zustaende.
+        def wort(k):
+            v = u.get(k, None)
+            if v is True: return "ja"
+            if v is False: return "nein"
+            if v == "untestbar": return "untestbar"
+            return ""
+        z.append("\t".join([m["modell"],
+                  "ja" if all(k in u for k, _ in KRITERIEN) else "nein"]
+                 + [wort(k) for k, _ in KRITERIEN]
                  + [(u.get("kommentar") or "").replace("\t", " ").replace("\n", " "),
                     u.get("zeit") or ""]))
     tmp = TABELLE + ".tmp"
@@ -114,7 +159,7 @@ class H(http.server.BaseHTTPRequestHandler):
             if len(teile) == 1: teile.append("index.html")
             modell, datei = teile
             # Kein Ausbrechen aus dem Spielverzeichnis.
-            basis = os.path.realpath(os.path.join(SPIELE, modell))
+            basis = os.path.realpath(os.path.join(SPIELE, modell, "arbeit"))
             pfad = os.path.realpath(os.path.join(basis, datei))
             if not pfad.startswith(basis + os.sep) and pfad != basis:
                 return self._send(403, "text/plain; charset=utf-8", "nein")
@@ -138,7 +183,13 @@ class H(http.server.BaseHTTPRequestHandler):
             return self._send(400, "text/plain; charset=utf-8", "unbekanntes Modell")
         d = laden(); e = d.get(m, {})
         for k, _ in KRITERIEN:
-            if k in ein: e[k] = bool(ein[k])
+            if k in ein:
+                v = ein[k]
+                if v is None: e.pop(k, None)            # zurueck auf unbeantwortet
+                elif v == "untestbar": e[k] = "untestbar"
+                elif isinstance(v, bool): e[k] = v
+                else: return self._send(400, "text/plain; charset=utf-8",
+                                        "unzulaessiger Wert fuer " + k)
         if "kommentar" in ein:
             t = (ein["kommentar"] or "").strip()
             if t: e["kommentar"] = t

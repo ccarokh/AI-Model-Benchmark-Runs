@@ -1,102 +1,234 @@
+<!doctype html>
 <meta charset="utf-8">
 <title>Agility-Spiele bewerten</title>
 <style>
- :root{--bg:#14161a;--karte:#1c1f26;--rand:#2c313b;--text:#e6e8ec;--matt:#9aa3b2;
-       --ja:#3fa66a;--nein:#c1523f;--akzent:#5b8def}
- *{box-sizing:border-box}
- body{margin:0;background:var(--bg);color:var(--text);
-      font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
- header{padding:14px 20px;border-bottom:1px solid var(--rand);display:flex;
-        gap:16px;align-items:baseline;position:sticky;top:0;background:var(--bg);z-index:5}
- h1{font-size:17px;margin:0}
- .matt{color:var(--matt);font-size:13px}
- main{padding:20px;display:grid;gap:18px;max-width:1100px}
- .karte{background:var(--karte);border:1px solid var(--rand);border-radius:10px;padding:16px}
- .kopf{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
- .name{font-weight:600;font-size:16px}
- .marke{font-size:12px;padding:2px 8px;border-radius:99px;border:1px solid var(--rand);color:var(--matt)}
- .fehlt{color:var(--nein);border-color:var(--nein)}
- a.spielen{margin-left:auto;background:var(--akzent);color:#fff;text-decoration:none;
-           padding:8px 16px;border-radius:7px;font-weight:600}
- a.spielen[aria-disabled=true]{background:#3a3f4a;color:var(--matt);pointer-events:none}
- .krit{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:6px}
- label.k{display:flex;gap:9px;align-items:center;padding:7px 9px;border-radius:7px;cursor:pointer}
- label.k:hover{background:#22262e}
- label.k input{width:17px;height:17px;accent-color:var(--ja)}
- .erst{border:1px solid var(--akzent);background:#1a2030}
- textarea{width:100%;margin-top:10px;background:#0f1116;color:var(--text);
-          border:1px solid var(--rand);border-radius:7px;padding:9px;font:inherit;resize:vertical}
- details{margin-top:10px}
- summary{cursor:pointer;color:var(--matt);font-size:13px}
- table{border-collapse:collapse;width:100%;margin-top:8px;font-size:13px}
- td,th{border:1px solid var(--rand);padding:5px 8px;text-align:left;vertical-align:top}
- .stand{font-size:13px;color:var(--matt)}
+  :root {
+    --grund: #14161a; --karte: #1c1f26; --rand: #2b303b; --schrift: #e6e9ef;
+    --leise: #99a1b3; --gruen: #35c46a; --gelb: #e0a740; --grau: #5a6172;
+    --ja: #1f6f42; --nein: #7a2f34;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--grund); color: var(--schrift);
+         font: 15px/1.5 system-ui, sans-serif; }
+
+  /* Der Gesamtstand klebt oben und ist die groesste Zahl auf der Seite --
+     "2 von 2" als Fliesstext ging unter. */
+  header { position: sticky; top: 0; z-index: 10; background: var(--karte);
+           border-bottom: 1px solid var(--rand); padding: 14px 20px 0; }
+  .kopf { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+  .kopf h1 { font-size: 17px; margin: 0; font-weight: 600; }
+  .kopf .hinweis { color: var(--leise); font-size: 13px; }
+  .stand { margin-left: auto; font-size: 28px; font-weight: 700; letter-spacing: -.5px; }
+  .stand small { font-size: 14px; font-weight: 500; color: var(--leise); }
+  .balken { height: 6px; background: var(--rand); border-radius: 3px; margin: 12px 0 0; }
+  .balken > div { height: 100%; background: var(--gruen); border-radius: 3px; width: 0; transition: width .2s; }
+  header .luft { height: 12px; }
+
+  main { max-width: 900px; margin: 0 auto; padding: 22px 20px 80px; }
+
+  .karte { background: var(--karte); border: 1px solid var(--rand);
+           border-left: 5px solid var(--grau); border-radius: 10px;
+           margin: 0 0 18px; padding: 16px 18px; }
+  .karte.fertig { border-left-color: var(--gruen); }
+  .karte.begonnen { border-left-color: var(--gelb); }
+
+  .titel { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .titel h2 { font-size: 18px; margin: 0; font-weight: 650; }
+  .marke { font-size: 13px; font-weight: 700; padding: 5px 12px; border-radius: 999px;
+           text-transform: uppercase; letter-spacing: .4px; white-space: nowrap; }
+  .marke.fertig { background: var(--gruen); color: #06210f; }
+  .marke.begonnen { background: var(--gelb); color: #2a1c00; }
+  .marke.offen { background: var(--rand); color: var(--leise); }
+  .spielen { margin-left: auto; background: #2d64d8; color: #fff; text-decoration: none;
+             font-weight: 650; padding: 9px 18px; border-radius: 8px; }
+  .spielen:hover { background: #3b76ef; }
+  .fehlt { margin-left: auto; color: var(--nein); font-weight: 650; }
+
+  /* Was den Lauf ausmacht, gehoert auf die Karte. Sonst steht dort ein Wort
+     wie "direkt", das niemand einordnen kann. */
+  .lauf { margin: 12px 0 0; background: var(--grund); border: 1px solid var(--rand);
+          border-radius: 8px; padding: 11px 13px; }
+  .lauf .zeile { display: flex; gap: 8px; flex-wrap: wrap; font-size: 13px; }
+  .lauf .stueck { color: var(--leise); }
+  .lauf .stueck b { color: var(--schrift); font-weight: 650; }
+  .lauf p { margin: 8px 0 0; font-size: 13px; color: var(--leise); line-height: 1.45; }
+  .dateien { color: var(--leise); font-size: 12.5px; margin: 10px 0 0;
+             font-family: ui-monospace, monospace; word-break: break-all; }
+
+  table { width: 100%; border-collapse: collapse; margin: 14px 0 0; }
+  td { padding: 7px 0; border-top: 1px solid var(--rand); vertical-align: middle; }
+  td.frage { font-size: 14.5px; }
+  tr.haupt td.frage { font-weight: 650; }
+  tr.offen td.frage::before { content: "?"; display: inline-block; width: 18px;
+                              color: var(--gelb); font-weight: 700; }
+  tr:not(.offen) td.frage::before { content: ""; display: inline-block; width: 18px; }
+  td.wahl { width: 240px; text-align: right; white-space: nowrap; }
+  button.w { background: transparent; color: var(--leise); border: 1px solid var(--rand);
+             padding: 5px 14px; font: inherit; font-size: 13px; cursor: pointer; }
+  button.w:first-of-type { border-radius: 7px 0 0 7px; }
+  button.w:last-of-type { border-radius: 0 7px 7px 0; border-left: none; }
+  button.w:hover { color: var(--schrift); }
+  button.w.an[data-w="ja"] { background: var(--ja); color: #fff; border-color: var(--ja); }
+  button.w.an[data-w="nein"] { background: var(--nein); color: #fff; border-color: var(--nein); }
+  button.w.an[data-w="untestbar"] { background: var(--grau); color: #fff; border-color: var(--grau); }
+
+  .fuss { display: flex; align-items: center; gap: 12px; margin: 14px 0 0; }
+  .fuss input { flex: 1; background: var(--grund); border: 1px solid var(--rand);
+                color: var(--schrift); border-radius: 7px; padding: 8px 11px; font: inherit; }
+  .gespeichert { color: var(--leise); font-size: 12px; white-space: nowrap; min-width: 92px; }
+
+  details { margin: 12px 0 0; }
+  summary { cursor: pointer; color: var(--leise); font-size: 13px; }
+  details table td { font-size: 12.5px; color: var(--leise); }
 </style>
+
 <header>
-  <h1>Agility-Spiele bewerten</h1>
-  <span class="matt">Erst spielen, dann abhaken. Jede Änderung wird sofort gespeichert.</span>
-  <span class="stand" id="stand"></span>
+  <div class="kopf">
+    <h1>Agility-Spiele</h1>
+    <span class="hinweis">Erst spielen, dann abhaken · jede Änderung wird sofort gespeichert</span>
+    <span class="stand" id="stand">– <small>fertig</small></span>
+  </div>
+  <div class="balken"><div id="balken"></div></div>
+  <div class="luft"></div>
 </header>
+
 <main id="liste"></main>
+
 <script>
-let daten = null;
+let KRIT = [], URTEILE = {};
 
-async function laden(){
-  daten = await (await fetch('/modelle')).json();
-  zeichnen();
+// Drei Zustaende: true, false, nicht vorhanden. Ein Haekchen kann das nicht --
+// leer hiesse dort gleichzeitig "nein" und "noch nicht angesehen", und dann
+// gibt es kein Fertig.
+const beantwortet = u => KRIT.filter(([k]) => u && k in u).length;
+const istFertig   = u => beantwortet(u) === KRIT.length;
+
+async function laden() {
+  const d = await (await fetch("/modelle")).json();
+  KRIT = d.kriterien; URTEILE = d.urteile || {};
+  zeichnen(d.modelle);
 }
 
-function zeichnen(){
-  const {modelle, urteile, kriterien} = daten;
-  document.getElementById('stand').textContent =
-    Object.keys(urteile).length + ' von ' + modelle.length + ' bewertet';
-  document.getElementById('liste').innerHTML = modelle.map(m => {
-    const u = urteile[m.modell] || {};
-    const krit = kriterien.map(([k, text], i) => `
-      <label class="k ${i===0?'erst':''}">
-        <input type="checkbox" data-m="${m.modell}" data-k="${k}" ${u[k]?'checked':''}>
-        <span>${text}</span>
-      </label>`).join('');
-    const prompts = (m.prompts||[]).length ? `
-      <details><summary>${m.prompts.length} angeforderte Grafiken (Weg B)</summary>
-      <table><tr><th>Datei</th><th>Größe</th><th>Prompt</th></tr>
-      ${m.prompts.map(p=>`<tr><td>${p.datei||''}</td><td>${p.groesse||''}</td><td>${p.prompt||''}</td></tr>`).join('')}
-      </table></details>` : '';
-    const dateien = m.dateien.length ? `
-      <details><summary>${m.dateien.length} Dateien im Verzeichnis</summary>
-      <div class="matt">${m.dateien.join(', ')}</div></details>` : '';
-    return `<section class="karte">
-      <div class="kopf">
-        <span class="name">${m.modell}</span>
-        <span class="marke ${m.hat_index?'':'fehlt'}">
-          ${m.hat_index ? (m.bytes/1024).toFixed(1)+' kB index.html' : 'keine index.html'}</span>
-        <span class="marke">${m.prompts.length ? 'Weg B — Bilder angefordert' : 'Weg A — im Code gezeichnet'}</span>
-        <a class="spielen" target="_blank" aria-disabled="${!m.hat_index}"
-           href="/spiel/${encodeURIComponent(m.modell)}/index.html">Spielen ▸</a>
-      </div>
-      <div class="krit">${krit}</div>
-      <textarea rows="2" data-m="${m.modell}" placeholder="Kommentar — was genau ist kaputt oder gut?">${u.kommentar||''}</textarea>
-      ${prompts}${dateien}
-    </section>`;
-  }).join('');
-
-  document.querySelectorAll('input[type=checkbox]').forEach(el =>
-    el.addEventListener('change', () =>
-      senden(el.dataset.m, {[el.dataset.k]: el.checked})));
-  document.querySelectorAll('textarea').forEach(el => {
-    let t; el.addEventListener('input', () => {
-      clearTimeout(t);
-      t = setTimeout(() => senden(el.dataset.m, {kommentar: el.value}), 500);
-    });
-  });
+function zustand(u) {
+  const n = beantwortet(u);
+  if (n === KRIT.length) return ["fertig", "fertig"];
+  if (n === 0)           return ["offen", "nicht bewertet"];
+  return ["begonnen", "noch " + (KRIT.length - n) + " offen"];
 }
 
-async function senden(modell, feld){
-  await fetch('/urteil', {method:'POST', headers:{'Content-Type':'application/json'},
-                          body: JSON.stringify({modell, ...feld})});
-  daten.urteile[modell] = {...(daten.urteile[modell]||{}), ...feld};
-  document.getElementById('stand').textContent =
-    Object.keys(daten.urteile).length + ' von ' + daten.modelle.length + ' bewertet';
+function standAktualisieren(modelle) {
+  const fertig = modelle.filter(m => istFertig(URTEILE[m.modell])).length;
+  document.getElementById("stand").innerHTML =
+    fertig + " von " + modelle.length + " <small>fertig</small>";
+  document.getElementById("balken").style.width =
+    (modelle.length ? fertig / modelle.length * 100 : 0) + "%";
 }
+
+function zeichnen(modelle) {
+  const l = document.getElementById("liste");
+  l.textContent = "";
+  for (const m of modelle) {
+    const u = URTEILE[m.modell] || {};
+    const [kl, wort] = zustand(u);
+
+    const k = document.createElement("section");
+    k.className = "karte " + kl;
+
+    const t = document.createElement("div"); t.className = "titel";
+    const kopf = m.kopf || {};
+    const h = document.createElement("h2");
+    h.textContent = kopf.model || m.modell;
+    const mk = document.createElement("span"); mk.className = "marke " + kl; mk.textContent = wort;
+    t.append(h, mk);
+    if (m.hat_index) {
+      const a = document.createElement("a");
+      a.className = "spielen"; a.href = "/spiel/" + encodeURIComponent(m.modell);
+      a.target = "_blank"; a.rel = "noopener"; a.textContent = "Spielen ▸";
+      t.append(a);
+    } else {
+      const s = document.createElement("span");
+      s.className = "fehlt"; s.textContent = "keine index.html";
+      t.append(s);
+    }
+    k.append(t);
+
+    if (kopf.harness) {
+      const lz = document.createElement("div"); lz.className = "lauf";
+      const z = document.createElement("div"); z.className = "zeile";
+      const teile = [["Prüfstand", kopf.harness], ["Laufzeit", kopf.runtime],
+                     ["Temperatur", kopf.temp],
+                     ["Vorlage", kopf.template === "gguf" ? "aus der GGUF" : kopf.template]];
+      for (const [n, v] of teile) {
+        if (v === undefined || v === null || v === "") continue;
+        const sp = document.createElement("span"); sp.className = "stueck";
+        sp.append(n + " ");
+        const b = document.createElement("b"); b.textContent = v; sp.append(b);
+        z.append(sp);
+      }
+      lz.append(z);
+      for (const t of [kopf.harness_text, kopf.runtime_text]) {
+        if (!t) continue;
+        const p = document.createElement("p"); p.textContent = t; lz.append(p);
+      }
+      k.append(lz);
+    }
+
+    const dz = document.createElement("p"); dz.className = "dateien";
+    dz.textContent = "Vom Prüfstand angelegt:  " + (m.dateien || []).join("  ")
+                     + (m.bytes ? "  ·  index.html " + m.bytes + " Bytes" : "");
+    k.append(dz);
+
+    const tab = document.createElement("table");
+    for (const [key, text] of KRIT) {
+      const tr = document.createElement("tr");
+      if (!(key in u)) tr.classList.add("offen");
+      if (key === "spielbar") tr.classList.add("haupt");
+      const td1 = document.createElement("td"); td1.className = "frage"; td1.textContent = text;
+      const td2 = document.createElement("td"); td2.className = "wahl";
+      // Untestbar ist kein Ausweichen: wenn das Spiel nicht startet, hat
+      // niemand gesehen, ob es schneller wird. Als "Nein" gezaehlt waere das
+      // eine erfundene Beobachtung.
+      const WAHL = [["ja", "Ja", true], ["nein", "Nein", false],
+                    ["untestbar", "Untestbar", "untestbar"]];
+      for (const [id, text, wert] of WAHL) {
+        const b = document.createElement("button");
+        b.className = "w" + (key in u && u[key] === wert ? " an" : "");
+        b.dataset.w = id; b.textContent = text;
+        b.onclick = () => {
+          // Nochmal auf dieselbe Antwort tippen setzt zurueck auf unbeantwortet.
+          const neu = (key in u && u[key] === wert) ? null : wert;
+          senden(m.modell, { [key]: neu });
+        };
+        td2.append(b);
+      }
+      tr.append(td1, td2); tab.append(tr);
+    }
+    k.append(tab);
+
+    const f = document.createElement("div"); f.className = "fuss";
+    const ein = document.createElement("input");
+    ein.placeholder = "Bemerkung (freiwillig)"; ein.value = u.kommentar || "";
+    let uhr; ein.oninput = () => { clearTimeout(uhr);
+      uhr = setTimeout(() => senden(m.modell, { kommentar: ein.value }, true), 600); };
+    const g = document.createElement("span"); g.className = "gespeichert";
+    g.id = "g_" + m.modell;
+    g.textContent = u.zeit ? new Date(u.zeit).toLocaleTimeString("de-DE").slice(0, 5) + " gespeichert" : "";
+    f.append(ein, g); k.append(f);
+
+    l.append(k);
+  }
+  standAktualisieren(modelle);
+}
+
+async function senden(modell, feld, still) {
+  const r = await fetch("/urteil", { method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(Object.assign({ modell }, feld)) });
+  if (!r.ok) { alert("Nicht gespeichert: " + await r.text()); return; }
+  const g = document.getElementById("g_" + modell);
+  if (g) g.textContent = new Date().toLocaleTimeString("de-DE").slice(0, 5) + " gespeichert";
+  if (!still) await laden();          // Zustand kommt vom Server, nicht aus dem Browser
+}
+
 laden();
 </script>
