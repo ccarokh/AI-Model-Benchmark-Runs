@@ -21,7 +21,7 @@ everything measured about one model across all topics.
 | **RAG — chunk position and size** | **[Chunk position](models/chunk-position.md)** | **60 % when the answer is at the start of a 3 000-char chunk, 5 % at the end. At 400 chars the effect is gone; a reranker recovers 0.05 → 0.53. A defect in our own running system** |
 | Coding | [Coding](models/coding.md) | 18 models; the ranking inverted once the harness stopped naming the file |
 | ASR — speech to text | [Transcription](models/transcription.md) | Qwen3-ASR-1.7B matches Whisper large-v3; a config fix was worth 30 points of WER; Whisper runs at 27× real time on an 8 GB card with no CUDA toolkit installed |
-| VLM — image input | [Vision](models/vision.md) | Runs permanently alongside three other models: 15.1 of 24.5 GB |
+| VLM — image input | [Vision](models/vision.md) | Runs permanently alongside three other models: 15.1 of 24.5 GB. A 27B alternative costs 1.96× the memory and **invents label text while reporting itself as certain** |
 | Image generation | [Image generation](models/image-generation.md) | 5 models; the three tasks that carry a statement rather than a motif fail on every one |
 | Fine-tuning | [Fine-tuning](models/finetuning.md) | A third-party fine-tune lost 26.7 points against its own base and doubled the non-answers |
 | **Abliteration** | **[Abliteration](models/abliteration.md)** | **Costs nothing measurable on eight axes — but generates 37 % fewer tokens for the same answers** |

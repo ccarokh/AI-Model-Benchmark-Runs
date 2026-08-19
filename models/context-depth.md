@@ -147,6 +147,31 @@ The 30B MoE lost 74.5 % of prefill across the same range. **These 35B MoEs lose 
 and the dense 27B loses 33 %. Depth scaling is not "MoE against dense" — it is the
 attention geometry of the particular model, and it has to be read per model.
 
+### Qwen3.8-27B: a hybrid that behaves exactly like the dense model it replaces
+
+Gated DeltaNet is the same architectural family as Kimi-Linear's, so the depth curve was
+the first thing measured on it — a repeat of the 87.9 % collapse would matter more for a
+RAG system than any accuracy figure.
+
+| Depth | Qwen3.8-27B (hybrid) | Qwen3.5-27B (dense) | Kimi-Linear (linear) |
+|---|---:|---:|---:|
+| Prefill 0 | 821.7 | 837.0 | 332.1 |
+| Prefill 32 768 | 572.9 | 560.9 | **40.3** |
+| **Loss** | **−30.3 %** | −33.0 % | −87.9 % |
+| Generation 0 | 39.07 | 39.09 | 20.69 |
+| Generation 32 768 | 34.43 | 34.46 | 12.31 |
+| **Loss** | **−11.9 %** | −11.8 % | −40.5 % |
+
+**No collapse — and no gain either.** Against the previous dense 27B it matches to the
+second decimal on generation at both ends. The same holds for energy: 10 566 against
+10 564 tokens per Wh on prefill, 480 against 481 on generation.
+
+**A hybrid attention mechanism that promises flatter cache growth produces a curve
+indistinguishable from the dense model it succeeds.** Whether the design does nothing or
+whether llama.cpp does not exploit it is not separable here — but the same runtime
+[discards this model's MTP head](../README.md#open) as `unused tensor`, so a runtime that
+declines part of an architecture is the more likely explanation.
+
 ## What this does not cover
 
 - **One prompt size** (2 048) at every depth. How cost splits between *prompt length* and

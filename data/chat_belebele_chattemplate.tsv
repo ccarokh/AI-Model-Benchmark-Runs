@@ -29,3 +29,9 @@ qwen3.6-35b-a3b	neu	generate	on	132	150	0.88	232101	1463	1547.3	0	0	0	0	16384	18
 kimi-linear-48b-a3b	neu	logprob	off	134	150	0.8933	150	1	1.0	0	0	0	0	1	234.6
 kimi-linear-48b-a3b	neu	generate	off	133	150	0.8867	20825	98	138.8	1	1	0	0	1024	1242.7
 kimi-linear-48b-a3b	neu	generate	on	133	150	0.8867	35893	98	239.3	0	1	0	0	16384	1969.0
+qwen3.8-27b	neu	logprob	off	143	150	0.9533	150	1	1.0	0	0	0	0	1	95.7
+qwen3.8-27b	neu	generate	off	145	150	0.9667	28884	109	192.6	4	0	0	0	1024	897.6
+qwen3.8-27b	neu	generate	on	137	150	0.9133	59044	176	393.6	0	0	0	0	16384	1718.2
+qwen3.8-27b	effort-low	generate	on	138	150	0.92	46187	-	-	-	0	-	-	16384	1364.6
+qwen3.8-27b	effort-medium	generate	on	138	150	0.92	53626	-	-	-	0	-	-	16384	1571.3
+qwen3.8-27b	effort-xhigh	generate	on	139	150	0.9267	45637	-	-	-	0	-	-	16384	1343.2

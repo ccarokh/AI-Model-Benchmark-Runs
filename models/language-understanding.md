@@ -15,6 +15,32 @@ This slot serves the German-language chat, of which RAG is the main application.
 The metric is extractive reading comprehension in German — which is what the model
 actually does in that role: read a retrieved passage, answer from it.
 
+## Since this table was written: eleven more models, and a new best
+
+The measurements below use the **letter-logprob harness**, which
+[cannot measure a model that reasons before answering](harness-effect.md) — one row here
+is a statement about the harness rather than the model. Eleven models measured since,
+through the chat-template harness:
+
+| Model | Best measured | Harness |
+|---|---:|---|
+| **Ornith-35B** | **0.9733** | logprob |
+| Qwen3.6-35B-A3B | 0.9667 | logprob |
+| **Qwen3.8-27B** | **0.9667** | generate |
+| Qwen3.5-27B | 0.9533 | logprob |
+| Qwen3.8-27B-ABLITERATED | 0.9533 | generate |
+| Gemma-4-26B-A4B | 0.9533 | generate + thinking |
+| Mistral-Small-3.2-24B | 0.9333 | generate |
+| gpt-oss-20B | 0.9267 | generate ⚠️ 0.2133 on logprob |
+| Ornith-9B | 0.9067 | generate |
+| Kimi-Linear-48B-A3B | 0.8933 | logprob |
+| Mankei-1B-Chat | 0.2267 | logprob — **at chance** |
+
+**The 5.3 GB default has been beaten**, by four points, by a model that had been sitting
+on the disk measured only for code. Full detail and the harness caveats in
+[harness effect](harness-effect.md).
+
+
 ## Results
 
 n = 150 unless noted, same harness throughout, single-token logprob evaluation.

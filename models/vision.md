@@ -77,3 +77,45 @@ noticed or mentioned it.**
 For a corpus of recorded webinars this cuts both ways: it is a gap in context
 understanding, and it is a data protection consideration for user uploads. A model
 that does not see the name will not redact it either.
+
+## A second model in the slot: Qwen3.8-27B
+
+The 27B dense model measured for [chat](harness-effect.md) and
+[coding](coding.md) is also a vision-language model, and its projector shipped with
+it. Same image, same prompt, same card.
+
+| | Gemma-4-12B | Qwen3.8-27B |
+|---|---:|---:|
+| VRAM, model plus projector | **8 837 MiB** | 17 329 MiB |
+| Answer length | — | 700 tokens (ceiling) |
+
+**It costs 1.96× the memory of the incumbent** and does not free the slot for anything
+else — the point of
+[running four models on one card](#why-this-model) was that the vision model is small.
+
+### It describes structure well and then invents text
+
+Asked to describe a spice rack **and to state explicitly what it could not make out**,
+it produced an accurate structural account: four wire shelves, the container shapes per
+shelf, the colours, the general condition. Then the list of readable labels ran on into
+
+> „… Öl, Essig, Senf, Ketchup, Mayonnaise, Joghurt, Quark, Frischkäse, Butter, Margarine,
+> Öl, Essig, Senf, Ketchup, Mayonnaise, Joghurt, Quark, Frischkäse, Butter, Margarine"
+
+— **the same ten generic groceries twice**, on a spice rack, none of them plausible
+labels for the jars described a paragraph earlier.
+
+**The part that matters is what its own uncertainty section said.** It listed one
+limitation: that it could not be sure which spice was actually *inside* each container.
+**It did not mention the labels it had just invented.** A model asked to mark its own
+uncertainty marked the wrong thing — the honest-sounding caveat covered the part it got
+right.
+
+⚠️ **This is one image and one prompt, and correctness here is a judgement rather than a
+measurement.** It is recorded because the failure is specific and repeatable to look at,
+not because one description settles the slot.
+
+**It mirrors the [image-generation finding](image-generation.md) from the other
+direction**: generating legible text in an image failed on every model tested, and
+reading text out of one produces confident fabrication. Text in images is the weak axis
+in both directions.

@@ -336,6 +336,7 @@ below. Full table in [`data/energy_tokens.tsv`](../data/energy_tokens.tsv).
 | Model | Size | **Prefill, tok/Wh** | **Generation, tok/Wh** | W under load |
 |---|---:|---:|---:|---:|
 | Llama-3.2-3B | 1.87 GiB | **99 668** ⚠️ | **3 304** | 267 |
+| Qwen3.8-27B · dense | 15.60 | 10 566 | **480** | 288 |
 | gpt-oss-20B · MoE | 11.27 | 51 235 | 2 729 | 272 |
 | Qwen3-30B-A3B · MoE | 17.28 | 36 138 | **2 501** | 278 |
 | Qwen3-Coder-30B-A3B · MoE | 17.28 | 37 349 | 2 498 | 256 |

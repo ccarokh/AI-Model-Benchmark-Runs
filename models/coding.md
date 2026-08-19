@@ -341,3 +341,35 @@ reflexively.
   repository × model × mode × cache type
 - [`scripts/coding/night_chain.sh`](../scripts/coding/night_chain.sh) — chains runs
   unattended with a deadline and a disk guard
+
+## Qwen3.8-27B: measured, and the run had to be split across evenings
+
+| | Result |
+|---|---|
+| SWE-bench `repomap`, pytest | **6 / 19** |
+| SWE-bench `repomap`, pylint | **3 / 10** (one instance unwinnable for every model) |
+| aider-polyglot | **partial — 61 and 38 of 225** |
+
+**The polyglot run is unfinished on purpose.** At 18.5 and 19.0 minutes per task against
+1.5 for a 35B MoE, the full set is roughly 70 hours on the only GPU here — and it skipped
+three other measurements three nights running before that was accepted. The remaining
+tasks now advance in idle windows.
+
+**The cause is the architecture, not the reasoning.** The thinking switch was verified
+rather than assumed: `enable_thinking: false` returns 3 completion tokens and an empty
+reasoning field where `true` returns 50 and 120 characters. Running the benchmark with it
+off changed the time per task from 18.5 to 19.0 minutes — nothing.
+
+| | Prefill | Generation |
+|---|---:|---:|
+| Qwen3.8-27B, dense | 821.7 t/s | 39.1 t/s |
+| Qwen3.6-35B-A3B, MoE | 2 631.3 t/s | 138.5 t/s |
+| Ratio | **3.2×** | **3.5×** |
+
+An aider task is several rounds, each with the full file context and repo map. **3.2×
+slower reading and 3.5× slower writing, compounded over rounds and two attempts, is where
+the factor of twelve comes from.**
+
+⚠️ **This rules out interactive and agentic use, where a person or a loop waits on each
+turn. It says nothing about batch use** — hand over a task list, collect results in the
+morning — where 225 tasks over a weekend is unremarkable. That case is untested.
