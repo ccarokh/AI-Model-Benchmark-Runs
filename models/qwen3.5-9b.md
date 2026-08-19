@@ -11,7 +11,7 @@ which is attention geometry rather than size: [context depth](../findings/contex
 
 Reasoning makes it measurably **worse** (−2.7 points) while generating 160× the text.
 
-## German comprehension (belebele, logprob harness)
+## German comprehension — belebele, answer read from the first token's probability
 
 Source: [`chat_belebele.tsv`](../data/chat_belebele.tsv) · interpreted in [language-understanding](../use-cases/language-understanding.md)
 
@@ -19,27 +19,27 @@ Source: [`chat_belebele.tsv`](../data/chat_belebele.tsv) · interpreted in [lang
 |---|---|---|---|
 | qwen3.5-9b | 140 | 150 | 0.9333 |
 
-## German comprehension, chat template from the GGUF
+## German comprehension — prompt formatted by the chat template inside the GGUF, not by a HuggingFace tokenizer
 
 Source: [`chat_belebele_chattemplate.tsv`](../data/chat_belebele_chattemplate.tsv) · interpreted in [harness-effect](../findings/harness-effect.md)
 
 | model | role | harness | thinking | correct | n | accuracy | tokens_total | tokens_median | tokens_mean | truncated | no_answer | no_letter_in_top20 | request_errors | max_tokens | seconds |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| qwen3.5-9b | eichung | logprob | off | 136 | 150 | 0.9067 | 150 | 1 | 1.0 | 0 | 0 | 0 | 0 | 1 | 34.4 |
-| qwen3.5-9b | eichung | generate | off | 136 | 150 | 0.9067 | 2458 | 4 | 16.4 | 1 | 0 | 0 | 0 | 1024 | 54.9 |
-| qwen3.5-9b | eichung | generate | on | 137 | 150 | 0.9133 | 519169 | 1119 | 3461.1 | 0 | 0 | 0 | 0 | 16384 | 5460.7 |
+| qwen3.5-9b | calibration | logprob | off | 136 | 150 | 0.9067 | 150 | 1 | 1.0 | 0 | 0 | 0 | 0 | 1 | 34.4 |
+| qwen3.5-9b | calibration | generate | off | 136 | 150 | 0.9067 | 2458 | 4 | 16.4 | 1 | 0 | 0 | 0 | 1024 | 54.9 |
+| qwen3.5-9b | calibration | generate | on | 137 | 150 | 0.9133 | 519169 | 1119 | 3461.1 | 0 | 0 | 0 | 0 | 16384 | 5460.7 |
 
-## German comprehension across three harnesses
+## German comprehension across three harnesses — one variable between each pair
 
 Source: [`chat_belebele_harness.tsv`](../data/chat_belebele_harness.tsv) · interpreted in [harness-effect](../findings/harness-effect.md)
 
 | model | harness | thinking | correct | n | accuracy | tokens_total | tokens_median | tokens_mean | truncated | no_answer | no_letter_in_top20 | thinking_switch | max_tokens | seconds |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| qwen3.5-9b | logprob | off | 136 | 150 | 0.9067 | 150 | 1 | 1.0 | 0 | 0 | 0 | angenommen | 8192 | 31.0 |
-| qwen3.5-9b | generate | off | 136 | 150 | 0.9067 | 2458 | 4 | 16.4 | 1 | 0 | 0 | angenommen | 1024 | 54.5 |
-| qwen3.5-9b | generate | on | 132 | 150 | 0.88 | 393474 | 1124 | 2623.2 | 25 | 0 | 0 | angenommen | 8192 | 4064.2 |
+| qwen3.5-9b | logprob | off | 136 | 150 | 0.9067 | 150 | 1 | 1.0 | 0 | 0 | 0 | accepted | 8192 | 31.0 |
+| qwen3.5-9b | generate | off | 136 | 150 | 0.9067 | 2458 | 4 | 16.4 | 1 | 0 | 0 | accepted | 1024 | 54.5 |
+| qwen3.5-9b | generate | on | 132 | 150 | 0.88 | 393474 | 1124 | 2623.2 | 25 | 0 | 0 | accepted | 8192 | 4064.2 |
 
-## German comprehension, generate-and-extract
+## German comprehension — model answers freely, the letter is extracted from the text
 
 Source: [`chat_belebele_reasoning.tsv`](../data/chat_belebele_reasoning.tsv) · interpreted in [harness-effect](../findings/harness-effect.md)
 
@@ -66,5 +66,5 @@ Source: [`energy_tokens.tsv`](../data/energy_tokens.tsv) · interpreted in [powe
 
 | model | phase | size_gib | tokens | reps | t_per_s | compute_s | mean_watt_chip | mwh | tokens_per_wh | samples |
 |---|---|---|---|---|---|---|---|---|---|---|
-| qwen3.5-9b | erzeugung | 5.28 | 2560 | 5 | 108.1 | 23.7 | 280.2 | 1827.1 | 1401 | 24 |
+| qwen3.5-9b | generation | 5.28 | 2560 | 5 | 108.1 | 23.7 | 280.2 | 1827.1 | 1401 | 24 |
 | qwen3.5-9b | prefill | 5.28 | 20480 | 5 | 2680.4 | 7.6 | 290.2 | 568.4 | 36031 | 8 |

@@ -26,7 +26,7 @@ Source: [`energy_tokens.tsv`](../data/energy_tokens.tsv) · interpreted in [powe
 
 | model | phase | size_gib | tokens | reps | t_per_s | compute_s | mean_watt_chip | mwh | tokens_per_wh | samples |
 |---|---|---|---|---|---|---|---|---|---|---|
-| llama-3.2-3b | erzeugung | 1.87 | 2560 | 5 | 251.5 | 10.2 | 267.3 | 774.9 | 3304 | 11 |
+| llama-3.2-3b | generation | 1.87 | 2560 | 5 | 251.5 | 10.2 | 267.3 | 774.9 | 3304 | 11 |
 | llama-3.2-3b | prefill | 1.87 | 20480 | 5 | 6126.5 | 3.3 | 227.8 | 205.5 | 99668 | 4 |
 
 ## foreign benchmark, upstream flags

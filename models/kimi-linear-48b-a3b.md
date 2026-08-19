@@ -11,15 +11,15 @@ architecture promises.** Prefill falls 332 → 40 t/s from an empty cache to 32 
 caveat that this measures one model in llama.cpp on Vulkan rather than the architecture
 in principle: [context depth](../findings/context-depth.md).
 
-## German comprehension, chat template from the GGUF
+## German comprehension — prompt formatted by the chat template inside the GGUF, not by a HuggingFace tokenizer
 
 Source: [`chat_belebele_chattemplate.tsv`](../data/chat_belebele_chattemplate.tsv) · interpreted in [harness-effect](../findings/harness-effect.md)
 
 | model | role | harness | thinking | correct | n | accuracy | tokens_total | tokens_median | tokens_mean | truncated | no_answer | no_letter_in_top20 | request_errors | max_tokens | seconds |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| kimi-linear-48b-a3b | neu | logprob | off | 134 | 150 | 0.8933 | 150 | 1 | 1.0 | 0 | 0 | 0 | 0 | 1 | 234.6 |
-| kimi-linear-48b-a3b | neu | generate | off | 133 | 150 | 0.8867 | 20825 | 98 | 138.8 | 1 | 1 | 0 | 0 | 1024 | 1242.7 |
-| kimi-linear-48b-a3b | neu | generate | on | 133 | 150 | 0.8867 | 35893 | 98 | 239.3 | 0 | 1 | 0 | 0 | 16384 | 1969.0 |
+| kimi-linear-48b-a3b | new | logprob | off | 134 | 150 | 0.8933 | 150 | 1 | 1.0 | 0 | 0 | 0 | 0 | 1 | 234.6 |
+| kimi-linear-48b-a3b | new | generate | off | 133 | 150 | 0.8867 | 20825 | 98 | 138.8 | 1 | 1 | 0 | 0 | 1024 | 1242.7 |
+| kimi-linear-48b-a3b | new | generate | on | 133 | 150 | 0.8867 | 35893 | 98 | 239.3 | 0 | 1 | 0 | 0 | 16384 | 1969.0 |
 
 ## aider-polyglot, 225 tasks
 

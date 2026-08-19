@@ -11,7 +11,7 @@ Source: [`coding_polyglot.tsv`](../data/coding_polyglot.tsv) · interpreted in [
 
 | slug | format | pass1 | pass2 | wellformed | malformed | sec_per_case | total_cases |
 |---|---|---|---|---|---|---|---|
-| olympiccoder-32b | diff | ABGEBROCHEN | ABGEBROCHEN | - | - | 2298 | 2_von_225 |
+| olympiccoder-32b | diff | ABORTED | ABORTED | - | - | 2298 | 2_of_225 |
 
 ## one 299-line project spec
 

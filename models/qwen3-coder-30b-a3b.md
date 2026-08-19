@@ -42,5 +42,5 @@ Source: [`energy_tokens.tsv`](../data/energy_tokens.tsv) · interpreted in [powe
 
 | model | phase | size_gib | tokens | reps | t_per_s | compute_s | mean_watt_chip | mwh | tokens_per_wh | samples |
 |---|---|---|---|---|---|---|---|---|---|---|
-| qwen3-coder-30b-a3b | erzeugung | 17.28 | 2560 | 5 | 183.2 | 14.1 | 255.5 | 1024.7 | 2498 | 15 |
+| qwen3-coder-30b-a3b | generation | 17.28 | 2560 | 5 | 183.2 | 14.1 | 255.5 | 1024.7 | 2498 | 15 |
 | qwen3-coder-30b-a3b | prefill | 17.28 | 20480 | 5 | 2609.6 | 7.8 | 272.2 | 548.3 | 37349 | 8 |

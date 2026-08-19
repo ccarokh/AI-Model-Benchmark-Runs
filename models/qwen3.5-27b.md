@@ -9,15 +9,15 @@ Dense, and it pays for that in prefill — 837 t/s against 2 626 for a *larger* 
 buys is **the flattest generation curve in the whole depth file, −11.8 %** from an empty
 cache to 32 768 tokens.
 
-## German comprehension, chat template from the GGUF
+## German comprehension — prompt formatted by the chat template inside the GGUF, not by a HuggingFace tokenizer
 
 Source: [`chat_belebele_chattemplate.tsv`](../data/chat_belebele_chattemplate.tsv) · interpreted in [harness-effect](../findings/harness-effect.md)
 
 | model | role | harness | thinking | correct | n | accuracy | tokens_total | tokens_median | tokens_mean | truncated | no_answer | no_letter_in_top20 | request_errors | max_tokens | seconds |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| qwen3.5-27b | neu | logprob | off | 143 | 150 | 0.9533 | 150 | 1 | 1.0 | 0 | 0 | 0 | 0 | 1 | 92.2 |
-| qwen3.5-27b | neu | generate | off | 143 | 150 | 0.9533 | 600 | 4 | 4.0 | 0 | 0 | 0 | 0 | 1024 | 106.4 |
-| qwen3.5-27b | neu | generate | on | 141 | 150 | 0.94 | 638225 | 2276 | 4254.8 | 0 | 0 | 0 | 0 | 16384 | 17370.9 |
+| qwen3.5-27b | new | logprob | off | 143 | 150 | 0.9533 | 150 | 1 | 1.0 | 0 | 0 | 0 | 0 | 1 | 92.2 |
+| qwen3.5-27b | new | generate | off | 143 | 150 | 0.9533 | 600 | 4 | 4.0 | 0 | 0 | 0 | 0 | 1024 | 106.4 |
+| qwen3.5-27b | new | generate | on | 141 | 150 | 0.94 | 638225 | 2276 | 4254.8 | 0 | 0 | 0 | 0 | 16384 | 17370.9 |
 
 ## aider-polyglot, 225 tasks
 

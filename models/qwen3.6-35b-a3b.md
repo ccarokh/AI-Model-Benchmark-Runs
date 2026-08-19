@@ -10,15 +10,15 @@ measurement — see
 [context depth](../findings/context-depth.md#the-two-best-german-readers-are-one-model).
 Fastest agentic model measured here at 1.5 min per aider task.
 
-## German comprehension, chat template from the GGUF
+## German comprehension — prompt formatted by the chat template inside the GGUF, not by a HuggingFace tokenizer
 
 Source: [`chat_belebele_chattemplate.tsv`](../data/chat_belebele_chattemplate.tsv) · interpreted in [harness-effect](../findings/harness-effect.md)
 
 | model | role | harness | thinking | correct | n | accuracy | tokens_total | tokens_median | tokens_mean | truncated | no_answer | no_letter_in_top20 | request_errors | max_tokens | seconds |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| qwen3.6-35b-a3b | neu | logprob | off | 145 | 150 | 0.9667 | 150 | 1 | 1.0 | 0 | 0 | 0 | 0 | 1 | 41.3 |
-| qwen3.6-35b-a3b | neu | generate | off | 144 | 150 | 0.96 | 29585 | 123 | 197.2 | 6 | 0 | 0 | 0 | 1024 | 272.6 |
-| qwen3.6-35b-a3b | neu | generate | on | 132 | 150 | 0.88 | 232101 | 1463 | 1547.3 | 0 | 0 | 0 | 0 | 16384 | 1853.1 |
+| qwen3.6-35b-a3b | new | logprob | off | 145 | 150 | 0.9667 | 150 | 1 | 1.0 | 0 | 0 | 0 | 0 | 1 | 41.3 |
+| qwen3.6-35b-a3b | new | generate | off | 144 | 150 | 0.96 | 29585 | 123 | 197.2 | 6 | 0 | 0 | 0 | 1024 | 272.6 |
+| qwen3.6-35b-a3b | new | generate | on | 132 | 150 | 0.88 | 232101 | 1463 | 1547.3 | 0 | 0 | 0 | 0 | 16384 | 1853.1 |
 
 ## aider-polyglot, 225 tasks
 

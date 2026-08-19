@@ -524,7 +524,7 @@ decimal place of one pass rate.
 
 Two things came out of it.
 
-**Report the partial result immediately, labelled as partial.** `61_von_225` with a
+**Report the partial result immediately, labelled as partial.** `61_of_225` with a
 measured 18.5 min/task is an honest row. Waiting for completeness meant publishing
 nothing for three days while the conclusion — *too slow for anyone waiting on it, and
 here is the throughput arithmetic that explains it* — was already supported.

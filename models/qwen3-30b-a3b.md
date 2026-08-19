@@ -13,7 +13,7 @@ does not help this model" when no reasoning took place.
 At depth it loses 74.5 % of prefill, which
 [reverses its apparent advantage over a 9B](../findings/context-depth.md).
 
-## German comprehension (belebele, logprob harness)
+## German comprehension — belebele, answer read from the first token's probability
 
 Source: [`chat_belebele.tsv`](../data/chat_belebele.tsv) · interpreted in [language-understanding](../use-cases/language-understanding.md)
 
@@ -21,15 +21,15 @@ Source: [`chat_belebele.tsv`](../data/chat_belebele.tsv) · interpreted in [lang
 |---|---|---|---|
 | qwen3-30b-a3b | 136 | 150 | 0.9067 |
 
-## German comprehension across three harnesses
+## German comprehension across three harnesses — one variable between each pair
 
 Source: [`chat_belebele_harness.tsv`](../data/chat_belebele_harness.tsv) · interpreted in [harness-effect](../findings/harness-effect.md)
 
 | model | harness | thinking | correct | n | accuracy | tokens_total | tokens_median | tokens_mean | truncated | no_answer | no_letter_in_top20 | thinking_switch | max_tokens | seconds |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| qwen3-30b-a3b | logprob | off | 136 | 150 | 0.9067 | 150 | 1 | 1.0 | 0 | 0 | 0 | angenommen | 8192 | 22.7 |
-| qwen3-30b-a3b | generate | off | 140 | 150 | 0.9333 | 878 | 5 | 5.9 | 0 | 0 | 0 | angenommen | 1024 | 29.9 |
-| qwen3-30b-a3b | generate | on | 140 | 150 | 0.9333 | 879 | 5 | 5.9 | 0 | 0 | 0 | angenommen | 8192 | 23.2 |
+| qwen3-30b-a3b | logprob | off | 136 | 150 | 0.9067 | 150 | 1 | 1.0 | 0 | 0 | 0 | accepted | 8192 | 22.7 |
+| qwen3-30b-a3b | generate | off | 140 | 150 | 0.9333 | 878 | 5 | 5.9 | 0 | 0 | 0 | accepted | 1024 | 29.9 |
+| qwen3-30b-a3b | generate | on | 140 | 150 | 0.9333 | 879 | 5 | 5.9 | 0 | 0 | 0 | accepted | 8192 | 23.2 |
 
 ## throughput and energy against cache depth
 
@@ -48,5 +48,5 @@ Source: [`energy_tokens.tsv`](../data/energy_tokens.tsv) · interpreted in [powe
 
 | model | phase | size_gib | tokens | reps | t_per_s | compute_s | mean_watt_chip | mwh | tokens_per_wh | samples |
 |---|---|---|---|---|---|---|---|---|---|---|
-| qwen3-30b-a3b | erzeugung | 17.28 | 2560 | 5 | 190.2 | 13.5 | 278.1 | 1023.7 | 2501 | 14 |
+| qwen3-30b-a3b | generation | 17.28 | 2560 | 5 | 190.2 | 13.5 | 278.1 | 1023.7 | 2501 | 14 |
 | qwen3-30b-a3b | prefill | 17.28 | 20480 | 5 | 2691.5 | 7.6 | 287.9 | 566.7 | 36138 | 8 |

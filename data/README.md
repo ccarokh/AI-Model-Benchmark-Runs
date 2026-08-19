@@ -52,8 +52,9 @@ with the rest.
 are valid; their `sec_per_case` measures PCIe latency rather than the model. See
 [METHODOLOGY](../METHODOLOGY.md#a-context-size-without-a-cache-type-is-not-a-specification).
 
-⚠️ `ABGEBROCHEN` = aborted, `DURCHGEFALLEN` = failed. Both kept in place rather than
-deleted, with the partial case count in `total_cases`.
+⚠️ `ABORTED` and `FAILED` runs are kept in place rather than deleted, with the partial
+case count in `total_cases`. `PARTIAL` marks a run that is still advancing in idle
+windows rather than one that stopped.
 
 **`coding_swebench.tsv`** — `model`, `mode`, `repo`, `cache`, `resolved`,
 `unresolved`, `empty`, `submitted`.
@@ -146,7 +147,7 @@ other, never as an electricity bill.**
 
 `llama-bench -p 4096 -n 0` and `-p 0 -n 512`, `-r 5`, `-ngl 99 -sm none -mg 0`, fresh
 process per row, card verified empty first. `phase` is `prefill` (reading) or
-`erzeugung` (generating) — **they differ by a factor of 19–30 and must never be
+`generation` — **they differ by a factor of 19–30 and must never be
 averaged together.**
 
 ⚠️ **`mwh` covers the compute window only, not model loading.** The first version of this
@@ -217,7 +218,7 @@ Uses `/v1/chat/completions`, so **the chat template comes from the GGUF** rather
 from an HF tokenizer repo — half these models have no tokenizer in the local cache, and
 it is the template that actually runs in production.
 
-- `role = eichung` are calibration rows with a known expected value; `role = neu` is the
+- `role = calibration` are calibration rows with a known expected value; `role = new` is the
   measurement. **Read the calibration before the results.**
 - ⚠️ **The `thinking` rows are not comparable with `chat_belebele_harness.tsv`** (16 384
   tokens instead of 8 192, and the reasoning field read separately — 3.3 points apart on

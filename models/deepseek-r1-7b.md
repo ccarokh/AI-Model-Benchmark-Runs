@@ -11,7 +11,7 @@ measured with letter-logprob, which
 sibling scores 0.2133 there and 0.9133 when allowed to answer. It is also a partial run
 at n = 50.
 
-## German comprehension (belebele, logprob harness)
+## German comprehension — belebele, answer read from the first token's probability
 
 Source: [`chat_belebele.tsv`](../data/chat_belebele.tsv) · interpreted in [language-understanding](../use-cases/language-understanding.md)
 

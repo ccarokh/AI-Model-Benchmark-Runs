@@ -19,10 +19,10 @@ ALIAS = {
 KEIN_MODELL = re.compile(r"^(#|GOLD-PATCH$|cuda_|cpu_)")
 
 QUELLE = {
- "chat_belebele": ("German comprehension (belebele, logprob harness)", "../use-cases/language-understanding.md"),
- "chat_belebele_harness": ("German comprehension across three harnesses", "../findings/harness-effect.md"),
- "chat_belebele_chattemplate": ("German comprehension, chat template from the GGUF", "../findings/harness-effect.md"),
- "chat_belebele_reasoning": ("German comprehension, generate-and-extract", "../findings/harness-effect.md"),
+ "chat_belebele": ("German comprehension — belebele, answer read from the first token's probability", "../use-cases/language-understanding.md"),
+ "chat_belebele_harness": ("German comprehension across three harnesses — one variable between each pair", "../findings/harness-effect.md"),
+ "chat_belebele_chattemplate": ("German comprehension — prompt formatted by the chat template inside the GGUF, not by a HuggingFace tokenizer", "../findings/harness-effect.md"),
+ "chat_belebele_reasoning": ("German comprehension — model answers freely, the letter is extracted from the text", "../findings/harness-effect.md"),
  "coding_polyglot": ("aider-polyglot, 225 tasks", "../use-cases/coding.md"),
  "coding_swebench": ("SWE-bench Verified", "../use-cases/coding.md"),
  "coding_swebench_empty_causes": ("why each empty patch was empty", "../use-cases/coding.md"),
@@ -58,12 +58,15 @@ for f in sorted(glob.glob("data/*.tsv")):
         for row in r:
             m = (row.get(sp) or "").strip()
             if not m or KEIN_MODELL.match(m): continue
-            basis = re.sub(r"-slot32k.*$|-x8$", "", m)
+                # -nothink, -slot32k and -x8 are run configurations of the same
+            # model, not different models. Without folding them, every
+            # configuration would get a file of its own.
+            basis = re.sub(r"-nothink.*$|-slot32k.*$|-x8$", "", m)
             basis = ALIAS.get(basis, basis)
             daten[basis][name].append(row)
 
 os.makedirs("models", exist_ok=True)
-NOTIZEN = json.load(open("/tmp/claude-1000/-home-arokh-KI-TrainingRAGSystem/1a56010c-112e-436e-9b1d-77e7945c6d97/scratchpad/notizen.json"))
+NOTIZEN = json.load(open("scripts/model_notes.json"))
 erzeugt = []
 for m in sorted(daten):
     slug = m.replace("/", "-")

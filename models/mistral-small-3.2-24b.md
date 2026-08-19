@@ -5,15 +5,15 @@ Everything measured about this model here. **Blank means never measured, not "fa
 Numbers link back to the document that interprets them; the raw rows are in
 [`data/`](../data/).
 
-## German comprehension, chat template from the GGUF
+## German comprehension — prompt formatted by the chat template inside the GGUF, not by a HuggingFace tokenizer
 
 Source: [`chat_belebele_chattemplate.tsv`](../data/chat_belebele_chattemplate.tsv) · interpreted in [harness-effect](../findings/harness-effect.md)
 
 | model | role | harness | thinking | correct | n | accuracy | tokens_total | tokens_median | tokens_mean | truncated | no_answer | no_letter_in_top20 | request_errors | max_tokens | seconds |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| mistral-small-3.2-24b | neu | logprob | off | 136 | 150 | 0.9067 | 150 | 1 | 1.0 | 0 | 0 | 0 | 0 | 1 | 40.0 |
-| mistral-small-3.2-24b | neu | generate | off | 140 | 150 | 0.9333 | 1092 | 5 | 7.3 | 0 | 0 | 0 | 0 | 1024 | 55.9 |
-| mistral-small-3.2-24b | neu | generate | on | 140 | 150 | 0.9333 | 1092 | 5 | 7.3 | 0 | 0 | 0 | 0 | 16384 | 56.1 |
+| mistral-small-3.2-24b | new | logprob | off | 136 | 150 | 0.9067 | 150 | 1 | 1.0 | 0 | 0 | 0 | 0 | 1 | 40.0 |
+| mistral-small-3.2-24b | new | generate | off | 140 | 150 | 0.9333 | 1092 | 5 | 7.3 | 0 | 0 | 0 | 0 | 1024 | 55.9 |
+| mistral-small-3.2-24b | new | generate | on | 140 | 150 | 0.9333 | 1092 | 5 | 7.3 | 0 | 0 | 0 | 0 | 16384 | 56.1 |
 
 ## aider-polyglot, 225 tasks
 

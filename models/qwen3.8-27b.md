@@ -28,15 +28,15 @@ Source: [`abliteration.tsv`](../data/abliteration.tsv) · interpreted in [ablite
 | qwen3.8-27b | generate | off | 145 | 150 | 0.9667 | 28884 | 109 | 4 |
 | qwen3.8-27b | generate | on | 137 | 150 | 0.9133 | 59044 | 176 | 0 |
 
-## German comprehension, chat template from the GGUF
+## German comprehension — prompt formatted by the chat template inside the GGUF, not by a HuggingFace tokenizer
 
 Source: [`chat_belebele_chattemplate.tsv`](../data/chat_belebele_chattemplate.tsv) · interpreted in [harness-effect](../findings/harness-effect.md)
 
 | model | role | harness | thinking | correct | n | accuracy | tokens_total | tokens_median | tokens_mean | truncated | no_answer | no_letter_in_top20 | request_errors | max_tokens | seconds |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| qwen3.8-27b | neu | logprob | off | 143 | 150 | 0.9533 | 150 | 1 | 1.0 | 0 | 0 | 0 | 0 | 1 | 95.7 |
-| qwen3.8-27b | neu | generate | off | 145 | 150 | 0.9667 | 28884 | 109 | 192.6 | 4 | 0 | 0 | 0 | 1024 | 897.6 |
-| qwen3.8-27b | neu | generate | on | 137 | 150 | 0.9133 | 59044 | 176 | 393.6 | 0 | 0 | 0 | 0 | 16384 | 1718.2 |
+| qwen3.8-27b | new | logprob | off | 143 | 150 | 0.9533 | 150 | 1 | 1.0 | 0 | 0 | 0 | 0 | 1 | 95.7 |
+| qwen3.8-27b | new | generate | off | 145 | 150 | 0.9667 | 28884 | 109 | 192.6 | 4 | 0 | 0 | 0 | 1024 | 897.6 |
+| qwen3.8-27b | new | generate | on | 137 | 150 | 0.9133 | 59044 | 176 | 393.6 | 0 | 0 | 0 | 0 | 16384 | 1718.2 |
 | qwen3.8-27b | effort-low | generate | on | 138 | 150 | 0.92 | 46187 | - | - | - | 0 | - | - | 16384 | 1364.6 |
 | qwen3.8-27b | effort-medium | generate | on | 138 | 150 | 0.92 | 53626 | - | - | - | 0 | - | - | 16384 | 1571.3 |
 | qwen3.8-27b | effort-xhigh | generate | on | 139 | 150 | 0.9267 | 45637 | - | - | - | 0 | - | - | 16384 | 1343.2 |
@@ -47,7 +47,8 @@ Source: [`coding_polyglot.tsv`](../data/coding_polyglot.tsv) · interpreted in [
 
 | slug | format | pass1 | pass2 | wellformed | malformed | sec_per_case | total_cases |
 |---|---|---|---|---|---|---|---|
-| qwen3.8-27b-slot32k | diff | TEILLAUF | TEILLAUF | - | - | 1110 | 61_von_225 |
+| qwen3.8-27b-slot32k | diff | PARTIAL | PARTIAL | - | - | 1110 | 61_of_225 |
+| qwen3.8-27b-nothink-slot32k | diff | PARTIAL | PARTIAL | - | - | 1140 | 38_of_225 |
 
 ## SWE-bench Verified
 
@@ -76,7 +77,7 @@ Source: [`energy_tokens.tsv`](../data/energy_tokens.tsv) · interpreted in [powe
 | model | phase | size_gib | tokens | reps | t_per_s | compute_s | mean_watt_chip | mwh | tokens_per_wh | samples |
 |---|---|---|---|---|---|---|---|---|---|---|
 | qwen3.8-27b | prefill | 15.60 | 20480 | 5 | 821.7 | - | 287.7 | 1938.3 | 10566 | 25 |
-| qwen3.8-27b | erzeugung | 15.60 | 2560 | 5 | 38.4 | - | 288.9 | 5328.8 | 480 | 67 |
+| qwen3.8-27b | generation | 15.60 | 2560 | 5 | 38.4 | - | 288.9 | 5328.8 | 480 | 67 |
 
 ## what it took to get it running
 

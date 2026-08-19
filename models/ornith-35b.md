@@ -13,15 +13,15 @@ so the two are **one finding, not two**.
 **Reasoning costs it 18.7 points** (0.9467 → 0.76) with nothing truncated — it reasons
 itself away from answers it gets right when asked directly.
 
-## German comprehension, chat template from the GGUF
+## German comprehension — prompt formatted by the chat template inside the GGUF, not by a HuggingFace tokenizer
 
 Source: [`chat_belebele_chattemplate.tsv`](../data/chat_belebele_chattemplate.tsv) · interpreted in [harness-effect](../findings/harness-effect.md)
 
 | model | role | harness | thinking | correct | n | accuracy | tokens_total | tokens_median | tokens_mean | truncated | no_answer | no_letter_in_top20 | request_errors | max_tokens | seconds |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| ornith-35b | neu | logprob | off | 146 | 150 | 0.9733 | 150 | 1 | 1.0 | 0 | 0 | 0 | 0 | 1 | 39.2 |
-| ornith-35b | neu | generate | off | 142 | 150 | 0.9467 | 32472 | 150 | 216.5 | 3 | 0 | 0 | 0 | 1024 | 290.8 |
-| ornith-35b | neu | generate | on | 114 | 150 | 0.76 | 194493 | 1264 | 1296.6 | 0 | 0 | 0 | 0 | 16384 | 1539.2 |
+| ornith-35b | new | logprob | off | 146 | 150 | 0.9733 | 150 | 1 | 1.0 | 0 | 0 | 0 | 0 | 1 | 39.2 |
+| ornith-35b | new | generate | off | 142 | 150 | 0.9467 | 32472 | 150 | 216.5 | 3 | 0 | 0 | 0 | 1024 | 290.8 |
+| ornith-35b | new | generate | on | 114 | 150 | 0.76 | 194493 | 1264 | 1296.6 | 0 | 0 | 0 | 0 | 16384 | 1539.2 |
 
 ## aider-polyglot, 225 tasks
 

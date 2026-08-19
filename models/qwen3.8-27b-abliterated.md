@@ -39,7 +39,7 @@ Source: [`energy_tokens.tsv`](../data/energy_tokens.tsv) · interpreted in [powe
 | model | phase | size_gib | tokens | reps | t_per_s | compute_s | mean_watt_chip | mwh | tokens_per_wh | samples |
 |---|---|---|---|---|---|---|---|---|---|---|
 | qwen3.8-27b-abl | prefill | 15.60 | 20480 | 5 | 817.7 | - | 285.4 | 1931.3 | 10605 | 25 |
-| qwen3.8-27b-abl | erzeugung | 15.60 | 2560 | 5 | 38.9 | - | 288.3 | 5240.8 | 488 | 66 |
+| qwen3.8-27b-abl | generation | 15.60 | 2560 | 5 | 38.9 | - | 288.3 | 5240.8 | 488 | 66 |
 
 ## what it took to get it running
 

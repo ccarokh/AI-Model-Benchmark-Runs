@@ -13,17 +13,17 @@ Its tokenizer demands `trust_remote_code` and writes that prompt **to stdout**, 
 corrupted the collector and threw away three complete 150-question runs — see
 [integration cost](../METHODOLOGY.md#record-what-it-cost-to-run-the-model-not-only-how-it-scored).
 
-## German comprehension across three harnesses
+## German comprehension across three harnesses — one variable between each pair
 
 Source: [`chat_belebele_harness.tsv`](../data/chat_belebele_harness.tsv) · interpreted in [harness-effect](../findings/harness-effect.md)
 
 | model | harness | thinking | correct | n | accuracy | tokens_total | tokens_median | tokens_mean | truncated | no_answer | no_letter_in_top20 | thinking_switch | max_tokens | seconds |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| nanbeige-4.2-3b | logprob | off | 114 | 150 | 0.760 | 150 | 1 | 1.0 | 0 | 0 | 0 | angenommen | 8192 | - |
-| nanbeige-4.2-3b | generate | off | 125 | 150 | 0.833 | - | - | - | - | - | - | angenommen | 1024 | - |
-| nanbeige-4.2-3b | generate | on | 135 | 150 | 0.900 | - | - | - | - | - | - | angenommen | 8192 | - |
+| nanbeige-4.2-3b | logprob | off | 114 | 150 | 0.760 | 150 | 1 | 1.0 | 0 | 0 | 0 | accepted | 8192 | - |
+| nanbeige-4.2-3b | generate | off | 125 | 150 | 0.833 | - | - | - | - | - | - | accepted | 1024 | - |
+| nanbeige-4.2-3b | generate | on | 135 | 150 | 0.900 | - | - | - | - | - | - | accepted | 8192 | - |
 
-## German comprehension, generate-and-extract
+## German comprehension — model answers freely, the letter is extracted from the text
 
 Source: [`chat_belebele_reasoning.tsv`](../data/chat_belebele_reasoning.tsv) · interpreted in [harness-effect](../findings/harness-effect.md)
 
@@ -70,7 +70,7 @@ Source: [`energy_tokens.tsv`](../data/energy_tokens.tsv) · interpreted in [powe
 
 | model | phase | size_gib | tokens | reps | t_per_s | compute_s | mean_watt_chip | mwh | tokens_per_wh | samples |
 |---|---|---|---|---|---|---|---|---|---|---|
-| nanbeige-4.2-3b | erzeugung | 2.50 | 2560 | 5 | 130.0 | 19.7 | 277.1 | 1502.3 | 1704 | 20 |
+| nanbeige-4.2-3b | generation | 2.50 | 2560 | 5 | 130.0 | 19.7 | 277.1 | 1502.3 | 1704 | 20 |
 | nanbeige-4.2-3b | prefill | 2.50 | 20480 | 5 | 2783.1 | 7.4 | 289.9 | 568.0 | 36056 | 8 |
 
 ## what it took to get it running

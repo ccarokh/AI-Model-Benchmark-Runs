@@ -5,7 +5,7 @@ Everything measured about this model here. **Blank means never measured, not "fa
 Numbers link back to the document that interprets them; the raw rows are in
 [`data/`](../data/).
 
-## German comprehension (belebele, logprob harness)
+## German comprehension — belebele, answer read from the first token's probability
 
 Source: [`chat_belebele.tsv`](../data/chat_belebele.tsv) · interpreted in [language-understanding](../use-cases/language-understanding.md)
 
@@ -13,15 +13,15 @@ Source: [`chat_belebele.tsv`](../data/chat_belebele.tsv) · interpreted in [lang
 |---|---|---|---|
 | qwen3.6-27b | 140 | 150 | 0.9333 |
 
-## German comprehension across three harnesses
+## German comprehension across three harnesses — one variable between each pair
 
 Source: [`chat_belebele_harness.tsv`](../data/chat_belebele_harness.tsv) · interpreted in [harness-effect](../findings/harness-effect.md)
 
 | model | harness | thinking | correct | n | accuracy | tokens_total | tokens_median | tokens_mean | truncated | no_answer | no_letter_in_top20 | thinking_switch | max_tokens | seconds |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| qwen3.6-27b | logprob | off | 140 | 150 | 0.9333 | 150 | 1 | 1.0 | 0 | 0 | 0 | angenommen | 8192 | 90.7 |
-| qwen3.6-27b | generate | off | 141 | 150 | 0.94 | 1621 | 4 | 10.8 | 0 | 0 | 0 | angenommen | 1024 | 130.8 |
-| qwen3.6-27b | generate | on | 143 | 150 | 0.9533 | 214064 | 1387 | 1427.1 | 0 | 0 | 0 | angenommen | 8192 | 5817.6 |
+| qwen3.6-27b | logprob | off | 140 | 150 | 0.9333 | 150 | 1 | 1.0 | 0 | 0 | 0 | accepted | 8192 | 90.7 |
+| qwen3.6-27b | generate | off | 141 | 150 | 0.94 | 1621 | 4 | 10.8 | 0 | 0 | 0 | accepted | 1024 | 130.8 |
+| qwen3.6-27b | generate | on | 143 | 150 | 0.9533 | 214064 | 1387 | 1427.1 | 0 | 0 | 0 | accepted | 8192 | 5817.6 |
 
 ## aider-polyglot, 225 tasks
 
@@ -63,5 +63,5 @@ Source: [`energy_tokens.tsv`](../data/energy_tokens.tsv) · interpreted in [powe
 
 | model | phase | size_gib | tokens | reps | t_per_s | compute_s | mean_watt_chip | mwh | tokens_per_wh | samples |
 |---|---|---|---|---|---|---|---|---|---|---|
-| qwen3.6-27b | erzeugung | 15.65 | 2560 | 5 | 38.3 | 66.9 | 288.7 | 5327.1 | 481 | 67 |
+| qwen3.6-27b | generation | 15.65 | 2560 | 5 | 38.3 | 66.9 | 288.7 | 5327.1 | 481 | 67 |
 | qwen3.6-27b | prefill | 15.65 | 20480 | 5 | 815.0 | 25.1 | 287.9 | 1938.7 | 10564 | 25 |
