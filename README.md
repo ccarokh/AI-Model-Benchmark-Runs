@@ -73,7 +73,7 @@ Everything above that is untested — see [open](#open).
 | **DSpark speculative decoding** — merged into llama.cpp, MIT, with draft checkpoints for Qwen and Gemma; reported 1.6–2.7× decode with unchanged output. Untested here | planned |
 | **Plain speculative decoding** (`--model-draft`) — supported by our runtime today and never measured | planned |
 | **Drift against current upstream llama.cpp** — the measurement build is 215 behind master, and there is no distribution package to carry updates in. [Standing check](SYSTEMS.md#checking-for-drift-against-current-upstream): build current alongside the pinned one, run the reference workload on both in the same session | **recurring** |
-| **Agility game — one task, every coding model, human-judged** — graphics are part of the deliverable and the model chooses whether to draw them or to write the image prompts itself. [Task](scripts/coding/game/task.md) | **built, not yet run** |
+| **Agility game — one task, every coding model, human-judged** — graphics are drawn in code, the harness is agentic, and a person plays every result. [How the task got there](use-cases/agility-game.md) | **built, not yet run** |
 | **The same task with one repair turn** — the model sees its own console errors and may fix them. The difference is what a second turn is worth | planned |
 | **The chat template as a variable in coding** — every coding run here used whatever template shipped inside the GGUF. The harness was worth up to 70 points on chat; the template has never been varied at all | planned |
 | MTP: llama.cpp discards Qwen's `nextn` tensors (`unused tensor blk.64.nextn.*`); vLLM on ROCm needs a container runtime on the GPU host | blocked |

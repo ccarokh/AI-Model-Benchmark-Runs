@@ -32,7 +32,7 @@ LAUF=$(basename "$CONF"); LAUF=${LAUF%.conf}
 # MUSS abbrechen -- ein stillschweigend auf die Vorgabe zurueckfallendes
 # tmep=0.9 waere eine erfundene Messreihe.
 model=""; gguf=""; hf=""; quant=""; harness=""; beschreibung=""; runtime=""
-temp=0.2; maxtok=16384; ctx=32768; template=gguf; zeitlimit=3600; aufgabe=task.md
+temp=0.2; maxtok=16384; ctx=32768; template=gguf; zeitlimit=3600; aufgabe=aufgabe.md
 tool_parser=""; denken=an
 while IFS= read -r zeile; do
   zeile=${zeile%%#*}
@@ -87,9 +87,13 @@ ziel=$E/game/$LAUF
 rm -rf "$ziel"; mkdir -p "$ziel/arbeit" "$ziel/occonfig" "$ziel/ocdaten"
 chown -R 1000:1000 "$ziel/arbeit" "$ziel/occonfig" "$ziel/ocdaten"
 
-# Nur den Aufgabenteil, nicht die Begruendung darunter.
-awk 'BEGIN{n=0} /^---$/{n++; next} n==1' "$AUFGABE" > "$ziel/aufgabe.txt"
-[ -s "$ziel/aufgabe.txt" ] || ende "Aufgabentext leer -- Trennlinien in $aufgabe pruefen"
+# Die Aufgabendatei enthaelt die Aufgabe und sonst nichts -- sie geht
+# unveraendert hinaus. Vorher stand der Prompt in einem Dokument zwischen zwei
+# ---Linien und wurde mit awk herausgeschnitten: ein waagerechter Strich im
+# Prompt haette ihn still abgeschnitten, und in den Ergebnissen waere nur zu
+# sehen gewesen, dass ploetzlich alle Modelle schlechter werden.
+cp "$AUFGABE" "$ziel/aufgabe.txt"
+[ -s "$ziel/aufgabe.txt" ] || ende "Aufgabendatei ist leer: $aufgabe"
 # Nicht der Dateiname zaehlt, sondern der Text. Die Aufgabe hat sich an einem
 # Nachmittag achtzehnmal geaendert; zwei Laeufe mit "task.md" in der Spalte
 # koennen voellig verschiedene Aufgaben gehabt haben. Der Fingerabdruck macht
