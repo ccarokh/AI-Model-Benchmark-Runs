@@ -618,3 +618,30 @@ Three things gate a promotion, and all three are cheap:
 
 **The measurement produces the grounds; the operator makes the call.** What the harness
 must not do is present a single throughput figure as though it settled the question.
+
+## Suspect your own setup before you blame the tool
+
+vLLM served a GGUF file on ROCm and answered. Asked for a tool call, it returned
+
+```
+content:    "[TOOL_CALLS]read_file[ARGS]{\"pfad\": \"/etc/hostname\"}"
+tool_calls: []
+```
+
+The call is there, in the response text, and the structured field is empty. The
+tempting conclusion — *vLLM cannot do tool calls with this model* — would have been
+published as a property of the runtime.
+
+It is a property of our command line. vLLM requires the call style to be **named**
+(`--tool-call-parser`), one parser per model family, and ships 29 of them. llama.cpp
+derives the same thing from the template inside the GGUF, so the flag never came up.
+We had picked one parser, on one attempt, and it did not match this model's format.
+
+**The rule: a negative result about someone else's tool is only a result once our own
+side is cleanly excluded.** Everything we control — flags, parser, template, weights,
+version — has to be ruled out first. Until then the finding is "we could not get it to
+work", which is a statement about us, and it belongs in the log rather than in a table.
+
+The cost of getting this wrong is asymmetric. A wrong positive gets corrected the next
+time someone runs the thing. A wrong negative closes a door: nobody re-tests what the
+table already says is impossible.
