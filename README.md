@@ -77,6 +77,13 @@ Everything above that is untested — see [open](#open).
 | **The same task with one repair turn** — the model sees its own console errors and may fix them. The difference is what a second turn is worth | planned |
 | **A second agent harness on the same task** — the harness is the biggest unmeasured variable here, and OpenCode is currently the only one measured | planned |
 | **LM Studio Bionic as that second harness** — an agent app for open models, released 16.07.2026. It would be the ideal comparison: same model, same task, different agent | **cannot be tested here** — preview is macOS (Apple Silicon) and Windows only, no Linux build, and it is a GUI app with no scriptable interface for unattended night runs. Our harness host is Linux |
+| **GPQA Diamond** — 198 hard science questions, multiple choice. Runs on the belebele machinery we already have, and the numbers sit next to published ones | **next** |
+| **IFBench** (Allen AI) — ~300 single-turn and 1 300 multi-turn prompts over 58 constraints, each with a verification function. Scored automatically, no human in the loop | **next** |
+| **LiveCodeBench v6** — coding problems in time windows against contamination. Needs an execution sandbox, which now exists | planned |
+| **Terminal-Bench** — agentic terminal tasks in containers. Setup failed here once, before there was a container runtime on the harness host | **retry** |
+| **SWE-bench Verified**, then **Pro** — the SWE-Agent scaffold, one container image per instance. Qwen3-Coder-Next reports 70.6 % Verified and 44.3 % Pro with it. Expensive in disk and hours; Verified first | planned |
+| **DeepSWE-Preview** — not a benchmark but a **model**: Qwen3-32B post-trained with RL for coding agents, 42.2 % pass@1 on SWE-bench-Verified. Fits 24 GB at Q4, but a 32B here already produced 38 min per task once | planned |
+| **CoWorkBench** — long-horizon office agent tasks | **not runnable here** — described as Qwen-internal, public leaderboard only, no harness to run |
 | **Dynamic quantisation** — `unsloth`'s `UD-Q4_K_XL` and similar claim to sit closer to the original at the same file size by quantising tensors unevenly. Every GGUF here is a plain `Q4_K_M`; the claim is untested on this hardware | planned |
 | **The chat template as a variable in coding** — every coding run here used whatever template shipped inside the GGUF. The harness was worth up to 70 points on chat; the template has never been varied at all | planned |
 | MTP: llama.cpp discards Qwen's `nextn` tensors (`unused tensor blk.64.nextn.*`); vLLM on ROCm needs a container runtime on the GPU host | blocked |
