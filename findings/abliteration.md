@@ -6,7 +6,7 @@ indistinguishable on context depth, and identical on energy. It also generates *
 fewer tokens** for the same task.
 
 That is worth stating plainly because this repository's only other third-party
-derivative [lost 26.7 points against its own base](finetuning.md).
+derivative [lost 26.7 points against its own base](../use-cases/finetuning.md).
 
 Measured on [System A](../SYSTEMS.md#system-a). Same quantisation as the base
 (Q4_K_M), same card, base measured the day before. Full tables in

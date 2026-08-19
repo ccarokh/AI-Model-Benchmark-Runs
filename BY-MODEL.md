@@ -1,12 +1,15 @@
 # By model
 
+**Every model with a file of its own is linked.** The files are generated from
+[`data/`](data/), so a number in one always traces to a row.
+
 The same results as the [use-case documents](README.md#measured), indexed the other
 way round: pick a model, see everything measured about it.
 
 **Blank means never measured, not "failed".**
 
 ‡ measured on the `generate` harness rather than `logprob` — see
-[harness effect](models/harness-effect.md). The two are **not** interchangeable: for a
+[harness effect](findings/harness-effect.md). The two are **not** interchangeable: for a
 reasoning model the gap reaches 70 points.
 
 ## Matrix
@@ -14,53 +17,53 @@ reasoning model the gap reaches 70 points.
 | Model | Chat (belebele) | Coding (polyglot pass2) | Coding (SWE-bench repomap) | Other |
 |---|---:|---:|---:|---|
 | [Qwen3.5-9B](#chat--language-understandingmd) | **93.3 %** | | | production chat default |
-| [**Ornith-35B**](models/harness-effect.md#part-2--eight-models-that-had-never-been-measured-on-german) | **97.3 %** | 43.1 % | 42.1 % (8/19 pytest) | **best German reader measured here**; a `qwen35moe` derivative |
-| [Qwen3.6-35B-A3B](models/context-depth.md#the-two-best-german-readers-are-one-model) | **96.7 %** | **62.7 %** | 27.6 % (8/29) | same architecture as Ornith-35B |
-| [**Qwen3.8-27B**](models/abliteration.md) | **96.7 %** ‡ | **partial — 38/225** ⚠️ | 31.0 % (9/29) | dense; 19 min/task rules out interactive use, [batch untested](README.md#open). Vision 17 329 MiB |
-| Qwen3.8-27B-ABLITERATED | 95.3 % ‡ | | | [costs nothing measurable](models/abliteration.md); 37 % fewer tokens |
-| [Qwen3.5-27B](models/context-depth.md) | 95.3 % | | | dense; flattest generation curve at depth, −11.8 % |
-| Gemma-4-26B-A4B | 94.0 % ‡ | **failed** | | only model here that *gains* from reasoning |
-| Mistral-Small-3.2-24B | 93.3 % ‡ | 1.8 % | | thinking switch has no effect — no reasoning mode |
-| [**gpt-oss-20B**](models/harness-effect.md#gpt-oss-20b-makes-the-harness-failure-a-class-not-a-curiosity) | **92.7 %** ‡ / **21.3 %** ⚠️ | | | ⚠️ the 21.3 % is the harness, not the model |
-| Kimi-Linear-48B-A3B | 89.3 % | | | linear attention — [worst of all at 32k depth](models/context-depth.md) |
-| Ornith-9B | 90.7 % ‡ | | | |
-| Mankei-326M-Embedder | — | | | German embedder, [0.875 retrieval](models/chunk-position.md) |
-| Mankei-1B-Chat | **22.7 %** ⚠️ | | | at chance; 142/150 without a parseable answer |
+| [**Ornith-35B**](findings/harness-effect.md#part-2--eight-models-that-had-never-been-measured-on-german) | **97.3 %** | 43.1 % | 42.1 % (8/19 pytest) | **best German reader measured here**; a `qwen35moe` derivative |
+| [Qwen3.6-35B-A3B](findings/context-depth.md#the-two-best-german-readers-are-one-model) | **96.7 %** | **62.7 %** | 27.6 % (8/29) | same architecture as Ornith-35B |
+| [**Qwen3.8-27B**](findings/abliteration.md) | **96.7 %** ‡ | **partial — 38/225** ⚠️ | 31.0 % (9/29) | dense; 19 min/task rules out interactive use, [batch untested](README.md#open). Vision 17 329 MiB |
+| [Qwen3.8-27B-ABLITERATED](models/qwen3.8-27b-abliterated.md) | 95.3 % ‡ | | | [costs nothing measurable](findings/abliteration.md); 37 % fewer tokens |
+| [Qwen3.5-27B](findings/context-depth.md) | 95.3 % | | | dense; flattest generation curve at depth, −11.8 % |
+| [Gemma-4-26B-A4B](models/gemma-4-26b-a4b.md) | 94.0 % ‡ | **failed** | | only model here that *gains* from reasoning |
+| [Mistral-Small-3.2-24B](models/mistral-small-3.2-24b.md) | 93.3 % ‡ | 1.8 % | | thinking switch has no effect — no reasoning mode |
+| [**gpt-oss-20B**](findings/harness-effect.md#gpt-oss-20b-makes-the-harness-failure-a-class-not-a-curiosity) | **92.7 %** ‡ / **21.3 %** ⚠️ | | | ⚠️ the 21.3 % is the harness, not the model |
+| [Kimi-Linear-48B-A3B](models/kimi-linear-48b-a3b.md) | 89.3 % | | | linear attention — [worst of all at 32k depth](findings/context-depth.md) |
+| [Ornith-9B](models/ornith-9b.md) | 90.7 % ‡ | | | |
+| [Mankei-326M-Embedder](models/mankei-326m-embedder.md) | — | | | German embedder, [0.875 retrieval](findings/chunk-position.md) |
+| [Mankei-1B-Chat](models/mankei-1b-chat.md) | **22.7 %** ⚠️ | | | at chance; 142/150 without a parseable answer |
 | [Qwen3.6-27B](#qwen36-27b) | **93.3 %** | 23.6 % · 74.2 % @32k | **38.3 %** (31/81) | |
 | [Gemma-4-12B](#gemma-4-12b) | 92.7 % | **failed** | | **vision slot** |
-| Gemma-4-E4B | 91.3 % | | | |
-| Qwen3-14B | 91.3 % | | | |
+| [Gemma-4-E4B](models/gemma-4-e4b.md) | 91.3 % | | | |
+| [Qwen3-14B](models/qwen3-14b.md) | 91.3 % | | | |
 | Qwen3-30B-A3B-2507 | 90.7 % * | | | |
 | [**Qwen2.5-Coder-32B**](#qwen25-coder-32b) | **89.3 %** | **8.4 %** | | previous coding incumbent |
-| Qwen3.5-4B | 89.3 % | | | |
+| [Qwen3.5-4B](models/qwen3.5-4b.md) | 89.3 % | | | |
 | [**Nanbeige4.2-3B**](#nanbeige42-3b) | **76.0 %** ‡ | | **13.8 %** (4/29) | looped transformer; 88.7 % on a different harness |
-| Nemotron-Nano-9B-v2 | 88.7 % | | | |
+| [Nemotron-Nano-9B-v2](models/nemotron-nano-9b-v2.md) | 88.7 % | | | |
 | Qwen3-8B | 88.7 % | | | previous chat default |
-| Qwen3-4B-Instruct | 88.0 % | | | |
+| [Qwen3-4B-Instruct](models/qwen3-4b-instruct.md) | 88.0 % | | | |
 | ERNIE-4.5-21B-A3B | 85.3 % | | | |
 | Granite-4.1-8B | 84.7 % | | | |
-| Qwen3.5-2B | 73.3 % | | | reference point |
-| EuroLLM-9B-Instruct | 66.7 % | | | |
-| DeepSeek-R1-7B | 64.0 % ⚠️ | | | partial run, n=50 |
-| OLMoE | 33.3 % | | | |
+| [Qwen3.5-2B](models/qwen3.5-2b.md) | 73.3 % | | | reference point |
+| [EuroLLM-9B-Instruct](models/eurollm-9b-instruct.md) | 66.7 % | | | |
+| [DeepSeek-R1-7B](models/deepseek-r1-7b.md) | 64.0 % ⚠️ | | | partial run, n=50 |
+| [OLMoE](models/olmoe.md) | 33.3 % | | | |
 | [Nemotron-3-Nano-30B-A3B](#the-nemotron-pair) | **aborted** | | | |
-| Qwen3.5-27B | | **49.3 %** | | |
-| ornith-35b | | 43.1 % · 61.8 % @32k | 31.0 % (9/29) | |
-| Qwen3-Coder-30B-A3B | | 22.7 % | 13.6 % (11/81) | 40.5 s/case — fastest |
+| [Qwen3.5-27B](models/qwen3.5-27b.md) | | **49.3 %** | | |
+| [ornith-35b](models/ornith-35b.md) | | 43.1 % · 61.8 % @32k | 31.0 % (9/29) | |
+| [Qwen3-Coder-30B-A3B](models/qwen3-coder-30b-a3b.md) | | 22.7 % | 13.6 % (11/81) | 40.5 s/case — fastest |
 | [Qwen3.6-35B-A3B](#qwen36-35b-a3b-and-qwopus36-35b-a3b-v1) | | 22.7 % · 62.7 % @32k | 27.6 % (8/29) | base for Qwopus |
 | [Qwopus3.6-35B-A3B-v1](#qwen36-35b-a3b-and-qwopus36-35b-a3b-v1) | | **36.0 %** @32k | 27.6 % (8/29) | fine-tune — 26.7 pts below its base |
-| ornith-9b | | 20.4 % | | |
-| Kimi-Linear-48B-A3B | | 12.0 % | | |
+| [ornith-9b](models/ornith-9b.md) | | 20.4 % | | |
+| [Kimi-Linear-48B-A3B](models/kimi-linear-48b-a3b.md) | | 12.0 % | | |
 | Devstral-Small-2507 | | 6.7 % | | |
-| Qwen2.5-Coder-14B | | 5.8 % | | |
-| Yi-Coder-9B | | 4.0 % | | |
-| Mistral-Small-3.2-24B | | 4.0 % | | |
-| DeepCoder-14B | | 2.7 % | | |
-| Codestral-22B | | 2.2 % | | |
-| DeepSeek-Coder-V2-Lite | | 1.8 % | | 633 malformed diffs |
-| Gemma-4-26B-A4B | | **failed** | | |
-| OlympicCoder-32B | | **aborted** | | |
-| BGE-M3 | | | | **embedding slot**, 96.25 % |
+| [Qwen2.5-Coder-14B](models/qwen2.5-coder-14b.md) | | 5.8 % | | |
+| [Yi-Coder-9B](models/yi-coder-9b.md) | | 4.0 % | | |
+| [Mistral-Small-3.2-24B](models/mistral-small-3.2-24b.md) | | 4.0 % | | |
+| [DeepCoder-14B](models/deepcoder-14b.md) | | 2.7 % | | |
+| [Codestral-22B](models/codestral-22b.md) | | 2.2 % | | |
+| [DeepSeek-Coder-V2-Lite](models/deepseek-coder-v2-lite.md) | | 1.8 % | | 633 malformed diffs |
+| [Gemma-4-26B-A4B](models/gemma-4-26b-a4b.md) | | **failed** | | |
+| [OlympicCoder-32B](models/olympiccoder-32b.md) | | **aborted** | | |
+| [BGE-M3](models/bge-m3.md) | | | | **embedding slot**, 96.25 % |
 | Qwen3-VL-Embedding-8B | | | | 96.25 % — exact tie |
 | **FLUX.1-schnell** Q4_K | | | | image gen: 4/8, 33.5 s, 89 % of the card, Apache-2.0 |
 | **Chroma1-HD** Q4_0 | | | | image gen: 3/8, **only model to render a required string exactly**, Apache-2.0 |
@@ -70,7 +73,7 @@ reasoning model the gap reaches 70 points.
 | Whisper large-v3 | | | | **ASR production**, 19.6 % WER |
 | Qwen3-ASR-1.7B | | | | 20.3 % WER |
 
-\* measured on System B under CPU offload — see the [provenance caveat](models/language-understanding.md#provenance-caveat).
+\* measured on System B under CPU offload — see the [provenance caveat](use-cases/language-understanding.md#provenance-caveat).
 
 ‡ the only System A v1.4 row, and the only one where the harness changes the answer —
 [below](#nanbeige42-3b).
@@ -86,9 +89,9 @@ cannot.
 
 | Use case | Result |
 |---|---|
-| [Chat](models/language-understanding.md) | 92.7 % — third of sixteen |
-| [Coding](models/coding.md) | **failed**: >29 min per task, answers up to 26 085 tokens |
-| [Vision](models/vision.md) | **chosen for the slot** — 8433 MiB, encoder confirmed on GPU under Vulkan |
+| [Chat](use-cases/language-understanding.md) | 92.7 % — third of sixteen |
+| [Coding](use-cases/coding.md) | **failed**: >29 min per task, answers up to 26 085 tokens |
+| [Vision](use-cases/vision.md) | **chosen for the slot** — 8433 MiB, encoder confirmed on GPU under Vulkan |
 
 Strong in two roles, unusable in the third. This single row is the evidence for the
 repository's most-repeated claim: **models are good at roles, not in general.**
@@ -97,9 +100,9 @@ repository's most-repeated claim: **models are good at roles, not in general.**
 
 | Use case | Result |
 |---|---|
-| [Chat](models/language-understanding.md) | 93.3 % — ties the 5.3 GB default at 3× the size, so no upgrade |
-| [Coding, polyglot](models/coding.md#part-1--aider-polyglot) | 23.6 %, 0 malformed diffs of 225; 74.2 % with 32k slots |
-| [Coding, SWE-bench](models/coding.md#part-2--swe-bench) | **38.3 % — best measured**, and unaffected by whether the file is named |
+| [Chat](use-cases/language-understanding.md) | 93.3 % — ties the 5.3 GB default at 3× the size, so no upgrade |
+| [Coding, polyglot](use-cases/coding.md#part-1--aider-polyglot) | 23.6 %, 0 malformed diffs of 225; 74.2 % with 32k slots |
+| [Coding, SWE-bench](use-cases/coding.md#part-2--swe-bench) | **38.3 % — best measured**, and unaffected by whether the file is named |
 
 Rejected for chat and best-in-class for coding, on the same measurements. Also the
 model that exposed the SWA-offload trap: it never completed an evaluation on System B
@@ -113,14 +116,14 @@ and ran straight through on System A.
 | Fine-tune | **36.0 %** | 8/29 | **18/29 = 62.1 %** |
 
 Identical SWE-bench counts, 26.7 points lost on polyglot, and twice the non-answers.
-See [fine-tuning](models/finetuning.md).
+See [fine-tuning](use-cases/finetuning.md).
 
 ### Qwen2.5-Coder-32B
 
 | Use case | Result |
 |---|---|
-| [Chat](models/language-understanding.md) | 89.3 % — mid-table, ahead of several general-purpose models |
-| [Coding](models/coding.md) | **8.4 %**, 75 malformed diffs, 881.8 s per case |
+| [Chat](use-cases/language-understanding.md) | 89.3 % — mid-table, ahead of several general-purpose models |
+| [Coding](use-cases/coding.md) | **8.4 %**, 75 malformed diffs, 881.8 s per case |
 
 A **coding** model that does respectably at German reading comprehension and badly at
 the benchmark it was bought for. It was the production coding slot before this series
@@ -134,7 +137,7 @@ a recommendation.
 
 | Model | Result |
 |---|---|
-| Nemotron-Nano-9B-v2 | 88.7 %, `/no_think` works, eval usable |
+| [Nemotron-Nano-9B-v2](models/nemotron-nano-9b-v2.md) | 88.7 %, `/no_think` works, eval usable |
 | Nemotron-3-Nano-30B-A3B | **aborted** — `/no_think` ignored, no KV cache reuse, ~39 s/example |
 
 Same family, same vendor, opposite behaviour. **Family is not a predictor.**
@@ -159,11 +162,11 @@ On coding it is the opposite of a tie — **4 of 19 on pytest against 10 of 19**
 Qwen3.6-27B, and 0 of 10 on pylint where the whole field scores 0 or 1. But five of
 its sixteen non-answers were the scaffold's, not the model's, and several more were
 fixes rejected for
-[edit-format errors](models/coding.md#a-4b-model-that-fails-on-format-not-on-diagnosis),
+[edit-format errors](use-cases/coding.md#a-4b-model-that-fails-on-format-not-on-diagnosis),
 so that number describes the model *in our scaffold*.
 
-Details in [language-understanding.md](models/language-understanding.md#a-looped-model-measured-twice--nanbeige42-3b)
-and [coding.md](models/coding.md#a-4b-model-that-fails-on-format-not-on-diagnosis).
+Details in [language-understanding.md](use-cases/language-understanding.md#a-looped-model-measured-twice--nanbeige42-3b)
+and [coding.md](use-cases/coding.md#a-4b-model-that-fails-on-format-not-on-diagnosis).
 
 ---
 
@@ -172,46 +175,46 @@ and [coding.md](models/coding.md#a-4b-model-that-fails-on-format-not-on-diagnosi
 Everything below was measured once, in one role. The number links to the document
 that produced it.
 
-### Chat — [language-understanding.md](models/language-understanding.md)
+### Chat — [language-understanding.md](use-cases/language-understanding.md)
 
 Full table there, raw data in [`data/chat_belebele.tsv`](data/chat_belebele.tsv).
 Sixteen models between 33.3 % and 93.3 %, with the top seven inside four points.
 
-### Coding — [coding.md](models/coding.md)
+### Coding — [coding.md](use-cases/coding.md)
 
 | Model | pass2 | malformed | s/case |
 |---|---:|---:|---:|
-| Qwen3.5-27B | 49.3 % | 4 | 287.5 |
-| ornith-35b | 43.1 % | 5 | 91.9 |
-| Qwen3-Coder-30B-A3B | 22.7 % | 4 | **40.5** |
-| ornith-9b | 20.4 % | 9 | 74.9 |
-| Kimi-Linear-48B-A3B | 12.0 % | 38 | 72.7 |
-| Qwen2.5-Coder-32B | 8.4 % | 75 | 881.8 |
+| [Qwen3.5-27B](models/qwen3.5-27b.md) | 49.3 % | 4 | 287.5 |
+| [ornith-35b](models/ornith-35b.md) | 43.1 % | 5 | 91.9 |
+| [Qwen3-Coder-30B-A3B](models/qwen3-coder-30b-a3b.md) | 22.7 % | 4 | **40.5** |
+| [ornith-9b](models/ornith-9b.md) | 20.4 % | 9 | 74.9 |
+| [Kimi-Linear-48B-A3B](models/kimi-linear-48b-a3b.md) | 12.0 % | 38 | 72.7 |
+| [Qwen2.5-Coder-32B](models/qwen2.5-coder-32b.md) | 8.4 % | 75 | 881.8 |
 | Devstral-Small-2507 | 6.7 % | 21 | 98.7 |
-| Qwen2.5-Coder-14B | 5.8 % | 108 | 62.9 |
-| Yi-Coder-9B | 4.0 % | 171 | 34.0 |
-| Mistral-Small-3.2-24B | 4.0 % | 54 | 79.7 |
-| DeepCoder-14B | 2.7 % | 54 | 188.8 |
-| Codestral-22B | 2.2 % | 43 | 140.2 |
-| DeepSeek-Coder-V2-Lite | 1.8 % | **633** | 221.9 |
-| Gemma-4-26B-A4B | failed | | 696 |
-| OlympicCoder-32B | aborted | | 2298 |
+| [Qwen2.5-Coder-14B](models/qwen2.5-coder-14b.md) | 5.8 % | 108 | 62.9 |
+| [Yi-Coder-9B](models/yi-coder-9b.md) | 4.0 % | 171 | 34.0 |
+| [Mistral-Small-3.2-24B](models/mistral-small-3.2-24b.md) | 4.0 % | 54 | 79.7 |
+| [DeepCoder-14B](models/deepcoder-14b.md) | 2.7 % | 54 | 188.8 |
+| [Codestral-22B](models/codestral-22b.md) | 2.2 % | 43 | 140.2 |
+| [DeepSeek-Coder-V2-Lite](models/deepseek-coder-v2-lite.md) | 1.8 % | **633** | 221.9 |
+| [Gemma-4-26B-A4B](models/gemma-4-26b-a4b.md) | failed | | 696 |
+| [OlympicCoder-32B](models/olympiccoder-32b.md) | aborted | | 2298 |
 
-### Embedding — [embedding.md](models/embedding.md)
+### Embedding — [embedding.md](use-cases/embedding.md)
 
 | Model | Retrieval (n=80) | Dim | Size |
 |---|---:|---:|---:|
-| BGE-M3 | 96.25 % | 1024 | 0.9 GB |
+| [BGE-M3](models/bge-m3.md) | 96.25 % | 1024 | 0.9 GB |
 | Qwen3-VL-Embedding-8B | 96.25 % | 4096 | 8.05 GB |
 
-### Image generation — [image-generation.md](models/image-generation.md)
+### Image generation — [image-generation.md](use-cases/image-generation.md)
 
 Five models, eight tasks, one seed each. **Three tasks fail on every model** — a sign
 with required German text, a tool that exists, and a diagram that shows a process
 rather than its parts. Licence is a first-class column there: two of the five are
 Apache-2.0, the others carry conditions.
 
-### ASR — [transcription.md](models/transcription.md)
+### ASR — [transcription.md](use-cases/transcription.md)
 
 | Model | Micro-WER | Note |
 |---|---:|---|

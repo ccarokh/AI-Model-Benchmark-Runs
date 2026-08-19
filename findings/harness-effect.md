@@ -2,7 +2,7 @@
 
 **For ordinary models, how you ask is worth 1.3 to 2.7 points. For models that reason
 before answering, it is worth up to 70.** The published
-[German comprehension table](language-understanding.md) reads the probability of a
+[German comprehension table](../use-cases/language-understanding.md) reads the probability of a
 single letter — a position where a reasoning model never puts its answer.
 
 Six models, three harnesses, same 150 belebele questions, same card, one variable

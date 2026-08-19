@@ -34,8 +34,8 @@ an 11-second run.
 
 | Benchmark | Why not |
 |---|---|
-| [lpalbou/llm-basic-benchmark](https://github.com/lpalbou/llm-basic-benchmark) | 44 models over four hand-judged tasks, measured on Apple Silicon via Ollama. The task scoring is qualitative, so the results are not mechanically comparable — but its central claim, *token generation speed ≠ task completion speed*, matches what we measured on [verbose coding models](../models/coding.md) |
-| [open-compass/VLMEvalKit](https://github.com/open-compass/VLMEvalKit) | 220+ vision-language models over 80+ benchmarks, and the obvious next step for [vision](../models/vision.md), which currently rests on a single German score plus VRAM measurements. Needs a custom model class to reach a local OpenAI-compatible endpoint, and LLM-based answer extraction — a judge model we would have to pick and document |
+| [lpalbou/llm-basic-benchmark](https://github.com/lpalbou/llm-basic-benchmark) | 44 models over four hand-judged tasks, measured on Apple Silicon via Ollama. The task scoring is qualitative, so the results are not mechanically comparable — but its central claim, *token generation speed ≠ task completion speed*, matches what we measured on [verbose coding models](../use-cases/coding.md) |
+| [open-compass/VLMEvalKit](https://github.com/open-compass/VLMEvalKit) | 220+ vision-language models over 80+ benchmarks, and the obvious next step for [vision](../use-cases/vision.md), which currently rests on a single German score plus VRAM measurements. Needs a custom model class to reach a local OpenAI-compatible endpoint, and LLM-based answer extraction — a judge model we would have to pick and document |
 
 Suggestions for others worth running are welcome — see the
 [call at the end of the main README](../README.md#what-should-we-measure-next).

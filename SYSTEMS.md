@@ -19,7 +19,7 @@ inversion explains several results that otherwise look arbitrary.
 | **OS** | Arch Linux | Garuda Linux (Arch-based) |
 | **Kernel** | 7.1.5-arch1-2 | 7.1.5-zen1-2-zen |
 | **AMD stack** | Mesa/RADV **26.1.5-arch1.1**, `vulkan-radeon 1:26.1.5-1`, Vulkan API 1.4.354 — carries all inference | — |
-| **NVIDIA stack** | `nvidia-utils` 610.43.03 for the RTX 2070 — **no CUDA toolkit installed**; CUDA compute works anyway, with cuBLAS/cuDNN as pip wheels inside a venv ([measured](models/transcription.md#part-3--faster-whisper-on-the-second-card)) | `nvidia-open-dkms` 610.43.03 + CUDA 13.3.1 |
+| **NVIDIA stack** | `nvidia-utils` 610.43.03 for the RTX 2070 — **no CUDA toolkit installed**; CUDA compute works anyway, with cuBLAS/cuDNN as pip wheels inside a venv ([measured](use-cases/transcription.md#part-3--faster-whisper-on-the-second-card)) | `nvidia-open-dkms` 610.43.03 + CUDA 13.3.1 |
 | **Compute** | ROCm 7.2.4 (`rocm-hip-runtime`), in a separate prefix | CUDA 13.3.1 |
 | **Inference** | llama.cpp **b10098** in `/opt/llama-cpp` (production), **b10273** in `/opt/llama-cpp-nb` alongside it; stable-diffusion.cpp `master-813-bfbef5b` in `/opt/sd-cpp` | llama.cpp **build 9614** |
 | **Python** | 3.14.6 | 3.14.6 |
@@ -84,19 +84,19 @@ lost their upstream repository and are marked as such.
 
 | Measurement | System | GPU BIOS |
 |---|---|---|
-| [Chat](models/language-understanding.md), [embedding](models/embedding.md), [ASR](models/transcription.md) | **B v1.0** | — |
-| [Coding, aider-polyglot](models/coding.md#part-1--aider-polyglot) | **A v1.0** | quiet |
-| [Vision](models/vision.md) | **A v1.0** | quiet |
+| [Chat](use-cases/language-understanding.md), [embedding](use-cases/embedding.md), [ASR](use-cases/transcription.md) | **B v1.0** | — |
+| [Coding, aider-polyglot](use-cases/coding.md#part-1--aider-polyglot) | **A v1.0** | quiet |
+| [Vision](use-cases/vision.md) | **A v1.0** | quiet |
 | [Power](hardware/power.md), overclocking, determinism | **A v1.0** | quiet |
-| [Coding, SWE-bench](models/coding.md#part-2--swe-bench) | **A v1.1 → v1.2** | quiet |
+| [Coding, SWE-bench](use-cases/coding.md#part-2--swe-bench) | **A v1.1 → v1.2** | quiet |
 | [Multi-GPU](hardware/multi-gpu.md), before the slot change | **A v1.1** | quiet |
 | [Multi-GPU](hardware/multi-gpu.md), after the slot change | **A v1.2** | quiet |
 | [ROCm vs Vulkan](hardware/backends.md) | **A v1.3** | **performance** |
-| [`faster-whisper` on the RTX 2070](models/transcription.md#part-3--faster-whisper-on-the-second-card) | **A v1.3** | quiet |
-| [Nanbeige4.2-3B](models/language-understanding.md#a-looped-model-measured-twice--nanbeige42-3b), and the Qwen3.5-9B run beside it | **A v1.4** | quiet |
-| [Image generation](models/image-generation.md), five models | **A v1.5** | quiet |
+| [`faster-whisper` on the RTX 2070](use-cases/transcription.md#part-3--faster-whisper-on-the-second-card) | **A v1.3** | quiet |
+| [Nanbeige4.2-3B](use-cases/language-understanding.md#a-looped-model-measured-twice--nanbeige42-3b), and the Qwen3.5-9B run beside it | **A v1.4** | quiet |
+| [Image generation](use-cases/image-generation.md), five models | **A v1.5** | quiet |
 | GPU BIOS comparison ([power.md](hardware/power.md#the-cards-dual-bios-quiet-wins)) | **A v1.3** | both |
-| [Fine-tuning](models/finetuning.md) | **A v1.3** | quiet |
+| [Fine-tuning](use-cases/finetuning.md) | **A v1.3** | quiet |
 
 **The GPU BIOS is part of the state too.** Everything except the ROCm run was
 measured on the quiet BIOS. The ROCm comparison ran on the performance BIOS — both
@@ -186,7 +186,7 @@ well, so a multi-GPU repeat on a newer bus is possible here in principle. Not do
 
 Anything measured on System B is marked as such. The place it matters most is the
 chat ranking, which is a **hardware mix** — see the
-[provenance caveat](models/language-understanding.md#provenance-caveat).
+[provenance caveat](use-cases/language-understanding.md#provenance-caveat).
 
 Rule of thumb: **chat and embedding evaluations are System B, everything from the
 coding series onwards is System A.** All hardware and operations measurements are

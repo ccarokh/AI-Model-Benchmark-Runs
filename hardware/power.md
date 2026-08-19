@@ -407,7 +407,7 @@ because they answer different questions and neither replaces the other:
 | **Watt-hours per completed task** | What does one finished answer *cost*? | Nothing about throughput; a slow-but-terse model can win |
 
 The pair is the point. A model that writes 26 085 tokens for a task others solve in a
-few hundred — [one did](../models/coding.md) — scores well on the first and badly on
+few hundred — [one did](../use-cases/coding.md) — scores well on the first and badly on
 the second, and the gap between the two columns is exactly the verbosity tax.
 
 **Both instruments logged in parallel**, not one or the other:

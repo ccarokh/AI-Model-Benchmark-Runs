@@ -18,7 +18,7 @@ actually does in that role: read a retrieved passage, answer from it.
 ## Since this table was written: eleven more models, and a new best
 
 The measurements below use the **letter-logprob harness**, which
-[cannot measure a model that reasons before answering](harness-effect.md) — one row here
+[cannot measure a model that reasons before answering](../findings/harness-effect.md) — one row here
 is a statement about the harness rather than the model. Eleven models measured since,
 through the chat-template harness:
 
@@ -38,7 +38,7 @@ through the chat-template harness:
 
 **The 5.3 GB default has been beaten**, by four points, by a model that had been sitting
 on the disk measured only for code. Full detail and the harness caveats in
-[harness effect](harness-effect.md).
+[harness effect](../findings/harness-effect.md).
 
 
 ## Results

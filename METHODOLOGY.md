@@ -457,7 +457,7 @@ In agentic coding benchmarks, "did not solve it" and "produced no patch at all" 
 different failure modes with different causes. One model produced **no patch in
 49.4 % of 81 runs** — a number that is invisible if you only report the resolved
 count, and which turned out to point at file localization rather than at code
-quality. See [coding.md](models/coding.md).
+quality. See [coding.md](use-cases/coding.md).
 
 ## Prove the harness can succeed before blaming the model
 
@@ -479,7 +479,7 @@ the agent can show up in it. One `pylint` instance produced an empty patch in **
 six runs ever made here**, across every model and cache type, because the agent
 crashes during its repository scan on a dependency conflict. Gold-patch calibration
 scored that same instance as winnable, and did so correctly:
-[the details](models/coding.md#-one-pylint-instance-is-broken-for-every-model).
+[the details](use-cases/coding.md#-one-pylint-instance-is-broken-for-every-model).
 
 **Two calibrations are needed, not one.** The gold patch proves the evaluation can
 pass. Only a per-instance look at the agent logs proves the agent can *run* — and

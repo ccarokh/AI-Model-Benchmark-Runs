@@ -80,7 +80,7 @@ that does not see the name will not redact it either.
 
 ## A second model in the slot: Qwen3.8-27B
 
-The 27B dense model measured for [chat](harness-effect.md) and
+The 27B dense model measured for [chat](../findings/harness-effect.md) and
 [coding](coding.md) is also a vision-language model, and its projector shipped with
 it. Same image, same prompt, same card.
 
