@@ -85,6 +85,9 @@ included. Every number in the documents traces back here.
 **[`scripts/`](scripts/)** — the harnesses as they ran, hosts and paths lifted into a
 config block. Bash, driving `llama-bench`/`llama-server` over SSH.
 
+**[`scripts/suite/`](scripts/suite/)** — the parameterised suite: name a llama.cpp
+version, get 30 measurements and a promotion verdict. One command per build.
+
 **Licences are recorded per model where they constrain use** — see
 [image generation](use-cases/image-generation.md#what-a-machine-measured), the first
 series here where a model's licence, not its score, decides whether it can be used.
