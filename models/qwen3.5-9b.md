@@ -1,9 +1,10 @@
 # qwen3.5-9b
 
-Everything measured about this model here. **Blank means never measured, not "failed".**
+Everything measured about this model, by topic. **Every topic is listed, including the ones with no measurement** — a gap you cannot see looks like an answer.
 
-Numbers link back to the document that interprets them; the raw rows are in
-[`data/`](../data/).
+Generated from [`data/`](../data/) by [`scripts/genmodels.py`](../scripts/genmodels.py); every number traces to a row there.
+
+**Measured in 3 of 10 topics.**
 
 The production chat default. **Unusually robust to context depth** — it loses 36 % of
 prefill and 15 % of generation across the full range where a 3B and a 30B lose 45–75 %,
@@ -11,27 +12,17 @@ which is attention geometry rather than size: [context depth](../findings/contex
 
 Reasoning makes it measurably **worse** (−2.7 points) while generating 160× the text.
 
-## German comprehension — belebele, answer read from the first token's probability
+## Language understanding — German chat
 
-Source: [`chat_belebele.tsv`](../data/chat_belebele.tsv) · interpreted in [language-understanding](../use-cases/language-understanding.md)
+Interpreted in [language-understanding](../use-cases/language-understanding.md).
+
+**[`chat_belebele.tsv`](../data/chat_belebele.tsv)** — answer read from the first token's probability
 
 | model | correct | n | accuracy |
 |---|---|---|---|
 | qwen3.5-9b | 140 | 150 | 0.9333 |
 
-## German comprehension — prompt formatted by the chat template inside the GGUF, not by a HuggingFace tokenizer
-
-Source: [`chat_belebele_chattemplate.tsv`](../data/chat_belebele_chattemplate.tsv) · interpreted in [harness-effect](../findings/harness-effect.md)
-
-| model | role | harness | thinking | correct | n | accuracy | tokens_total | tokens_median | tokens_mean | truncated | no_answer | no_letter_in_top20 | request_errors | max_tokens | seconds |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| qwen3.5-9b | calibration | logprob | off | 136 | 150 | 0.9067 | 150 | 1 | 1.0 | 0 | 0 | 0 | 0 | 1 | 34.4 |
-| qwen3.5-9b | calibration | generate | off | 136 | 150 | 0.9067 | 2458 | 4 | 16.4 | 1 | 0 | 0 | 0 | 1024 | 54.9 |
-| qwen3.5-9b | calibration | generate | on | 137 | 150 | 0.9133 | 519169 | 1119 | 3461.1 | 0 | 0 | 0 | 0 | 16384 | 5460.7 |
-
-## German comprehension across three harnesses — one variable between each pair
-
-Source: [`chat_belebele_harness.tsv`](../data/chat_belebele_harness.tsv) · interpreted in [harness-effect](../findings/harness-effect.md)
+**[`chat_belebele_harness.tsv`](../data/chat_belebele_harness.tsv)** — three harnesses, one variable between each pair
 
 | model | harness | thinking | correct | n | accuracy | tokens_total | tokens_median | tokens_mean | truncated | no_answer | no_letter_in_top20 | thinking_switch | max_tokens | seconds |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
@@ -39,17 +30,29 @@ Source: [`chat_belebele_harness.tsv`](../data/chat_belebele_harness.tsv) · inte
 | qwen3.5-9b | generate | off | 136 | 150 | 0.9067 | 2458 | 4 | 16.4 | 1 | 0 | 0 | accepted | 1024 | 54.5 |
 | qwen3.5-9b | generate | on | 132 | 150 | 0.88 | 393474 | 1124 | 2623.2 | 25 | 0 | 0 | accepted | 8192 | 4064.2 |
 
-## German comprehension — model answers freely, the letter is extracted from the text
+**[`chat_belebele_chattemplate.tsv`](../data/chat_belebele_chattemplate.tsv)** — prompt formatted by the chat template inside the GGUF
 
-Source: [`chat_belebele_reasoning.tsv`](../data/chat_belebele_reasoning.tsv) · interpreted in [harness-effect](../findings/harness-effect.md)
+| model | role | harness | thinking | correct | n | accuracy | tokens_total | tokens_median | tokens_mean | truncated | no_answer | no_letter_in_top20 | request_errors | max_tokens | seconds |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| qwen3.5-9b | calibration | logprob | off | 136 | 150 | 0.9067 | 150 | 1 | 1.0 | 0 | 0 | 0 | 0 | 1 | 34.4 |
+| qwen3.5-9b | calibration | generate | off | 136 | 150 | 0.9067 | 2458 | 4 | 16.4 | 1 | 0 | 0 | 0 | 1024 | 54.9 |
+| qwen3.5-9b | calibration | generate | on | 137 | 150 | 0.9133 | 519169 | 1119 | 3461.1 | 0 | 0 | 0 | 0 | 16384 | 5460.7 |
+
+**[`chat_belebele_reasoning.tsv`](../data/chat_belebele_reasoning.tsv)** — model answers freely, the letter extracted from the text
 
 | model | harness | thinking | correct | n | accuracy | tokens_total | tokens_median | tokens_mean | truncated_at_8192 | no_answer |
 |---|---|---|---|---|---|---|---|---|---|---|
 | qwen3.5-9b | generate | on | 135 | 150 | 0.900 | 395466 | 1131 | 2636 | 28 | 0 |
 
-## throughput and energy against cache depth
+## Coding
 
-Source: [`context_depth.tsv`](../data/context_depth.tsv) · interpreted in [context-depth](../findings/context-depth.md)
+Not measured. Interpreted in [coding](../use-cases/coding.md) where it is.
+
+## Long context — cost against cache depth
+
+Interpreted in [context-depth](../findings/context-depth.md).
+
+**[`context_depth.tsv`](../data/context_depth.tsv)** — throughput and energy at four cache depths
 
 | model | depth | flash_attn | pp2048 | tg128 | mean_watt_chip | mwh | samples |
 |---|---|---|---|---|---|---|---|
@@ -60,11 +63,37 @@ Source: [`context_depth.tsv`](../data/context_depth.tsv) · interpreted in [cont
 | qwen3.5-9b | 0 | off | 2671.7 | 106.73 | 279.5 | 394.0 | 6 |
 | qwen3.5-9b | 32768 | off | 1567.3 | 77.64 | 248.9 | 556.1 | 9 |
 
-## tokens per watt-hour
+## Retrieval — embedding and reranking
 
-Source: [`energy_tokens.tsv`](../data/energy_tokens.tsv) · interpreted in [power](../hardware/power.md)
+Not measured. Interpreted in [embedding](../use-cases/embedding.md) where it is.
+
+## Vision — image input
+
+Not measured. Interpreted in [vision](../use-cases/vision.md) where it is.
+
+## Speech to text
+
+Not measured. Interpreted in [transcription](../use-cases/transcription.md) where it is.
+
+## Image generation
+
+Not measured. Interpreted in [image-generation](../use-cases/image-generation.md) where it is.
+
+## Power and energy
+
+Interpreted in [power](../hardware/power.md).
+
+**[`energy_tokens.tsv`](../data/energy_tokens.tsv)** — tokens per watt-hour, prefill and generation separately
 
 | model | phase | size_gib | tokens | reps | t_per_s | compute_s | mean_watt_chip | mwh | tokens_per_wh | samples |
 |---|---|---|---|---|---|---|---|---|---|---|
 | qwen3.5-9b | generation | 5.28 | 2560 | 5 | 108.1 | 23.7 | 280.2 | 1827.1 | 1401 | 24 |
 | qwen3.5-9b | prefill | 5.28 | 20480 | 5 | 2680.4 | 7.6 | 290.2 | 568.4 | 36031 | 8 |
+
+## Throughput and runtime
+
+Not measured. Interpreted in [foreign](../foreign/) where it is.
+
+## What it took to run it
+
+Not measured. Interpreted in [METHODOLOGY#record-what-it-cost-to-run-the-model-not-only-how-it-scored](../METHODOLOGY.md#record-what-it-cost-to-run-the-model-not-only-how-it-scored) where it is.

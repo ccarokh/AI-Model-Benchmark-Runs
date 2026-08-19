@@ -1,21 +1,22 @@
 # qwen3.6-27b
 
-Everything measured about this model here. **Blank means never measured, not "failed".**
+Everything measured about this model, by topic. **Every topic is listed, including the ones with no measurement** — a gap you cannot see looks like an answer.
 
-Numbers link back to the document that interprets them; the raw rows are in
-[`data/`](../data/).
+Generated from [`data/`](../data/) by [`scripts/genmodels.py`](../scripts/genmodels.py); every number traces to a row there.
 
-## German comprehension — belebele, answer read from the first token's probability
+**Measured in 3 of 10 topics.**
 
-Source: [`chat_belebele.tsv`](../data/chat_belebele.tsv) · interpreted in [language-understanding](../use-cases/language-understanding.md)
+## Language understanding — German chat
+
+Interpreted in [language-understanding](../use-cases/language-understanding.md).
+
+**[`chat_belebele.tsv`](../data/chat_belebele.tsv)** — answer read from the first token's probability
 
 | model | correct | n | accuracy |
 |---|---|---|---|
 | qwen3.6-27b | 140 | 150 | 0.9333 |
 
-## German comprehension across three harnesses — one variable between each pair
-
-Source: [`chat_belebele_harness.tsv`](../data/chat_belebele_harness.tsv) · interpreted in [harness-effect](../findings/harness-effect.md)
+**[`chat_belebele_harness.tsv`](../data/chat_belebele_harness.tsv)** — three harnesses, one variable between each pair
 
 | model | harness | thinking | correct | n | accuracy | tokens_total | tokens_median | tokens_mean | truncated | no_answer | no_letter_in_top20 | thinking_switch | max_tokens | seconds |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
@@ -23,9 +24,11 @@ Source: [`chat_belebele_harness.tsv`](../data/chat_belebele_harness.tsv) · inte
 | qwen3.6-27b | generate | off | 141 | 150 | 0.94 | 1621 | 4 | 10.8 | 0 | 0 | 0 | accepted | 1024 | 130.8 |
 | qwen3.6-27b | generate | on | 143 | 150 | 0.9533 | 214064 | 1387 | 1427.1 | 0 | 0 | 0 | accepted | 8192 | 5817.6 |
 
-## aider-polyglot, 225 tasks
+## Coding
 
-Source: [`coding_polyglot.tsv`](../data/coding_polyglot.tsv) · interpreted in [coding](../use-cases/coding.md)
+Interpreted in [coding](../use-cases/coding.md).
+
+**[`coding_polyglot.tsv`](../data/coding_polyglot.tsv)** — aider-polyglot, 225 tasks
 
 | slug | format | pass1 | pass2 | wellformed | malformed | sec_per_case | total_cases |
 |---|---|---|---|---|---|---|---|
@@ -33,17 +36,7 @@ Source: [`coding_polyglot.tsv`](../data/coding_polyglot.tsv) · interpreted in [
 | qwen3.6-27b-slot32k | diff | 38.2 | 74.2 | 100.0 | 0 | 797.5 | 225 |
 | qwen3.6-27b-slot32k-q8 | diff | 34.2 | 72.9 | 100.0 | 0 | 806.9 | 225 |
 
-## one 299-line project spec
-
-Source: [`coding_real_task.tsv`](../data/coding_real_task.tsv) · interpreted in [coding](../use-cases/coding.md)
-
-| model | commits | files | lines | longest_file | entry_point | runtime | status |
-|---|---|---|---|---|---|---|---|
-| qwen3.6-27b | 3 | 21 | 662 | 147 | 33 | 36m | delivered |
-
-## SWE-bench Verified
-
-Source: [`coding_swebench.tsv`](../data/coding_swebench.tsv) · interpreted in [coding](../use-cases/coding.md)
+**[`coding_swebench.tsv`](../data/coding_swebench.tsv)** — SWE-bench Verified
 
 | model | mode | repo | cache | resolved | unresolved | empty | submitted |
 |---|---|---|---|---|---|---|---|
@@ -57,11 +50,47 @@ Source: [`coding_swebench.tsv`](../data/coding_swebench.tsv) · interpreted in [
 | qwen3.6-27b | repomap | pytest-dev-pytest | f16 | 10 | 6 | 3 | 19 |
 | qwen3.6-27b | repomap | pytest-dev-pytest | q8_0 | 10 | 6 | 3 | 19 |
 
-## tokens per watt-hour
+**[`coding_real_task.tsv`](../data/coding_real_task.tsv)** — one 299-line project spec ⚠️ only `status` is fully trustworthy
 
-Source: [`energy_tokens.tsv`](../data/energy_tokens.tsv) · interpreted in [power](../hardware/power.md)
+| model | commits | files | lines | longest_file | entry_point | runtime | status |
+|---|---|---|---|---|---|---|---|
+| qwen3.6-27b | 3 | 21 | 662 | 147 | 33 | 36m | delivered |
+
+## Long context — cost against cache depth
+
+Not measured. Interpreted in [context-depth](../findings/context-depth.md) where it is.
+
+## Retrieval — embedding and reranking
+
+Not measured. Interpreted in [embedding](../use-cases/embedding.md) where it is.
+
+## Vision — image input
+
+Not measured. Interpreted in [vision](../use-cases/vision.md) where it is.
+
+## Speech to text
+
+Not measured. Interpreted in [transcription](../use-cases/transcription.md) where it is.
+
+## Image generation
+
+Not measured. Interpreted in [image-generation](../use-cases/image-generation.md) where it is.
+
+## Power and energy
+
+Interpreted in [power](../hardware/power.md).
+
+**[`energy_tokens.tsv`](../data/energy_tokens.tsv)** — tokens per watt-hour, prefill and generation separately
 
 | model | phase | size_gib | tokens | reps | t_per_s | compute_s | mean_watt_chip | mwh | tokens_per_wh | samples |
 |---|---|---|---|---|---|---|---|---|---|---|
 | qwen3.6-27b | generation | 15.65 | 2560 | 5 | 38.3 | 66.9 | 288.7 | 5327.1 | 481 | 67 |
 | qwen3.6-27b | prefill | 15.65 | 20480 | 5 | 815.0 | 25.1 | 287.9 | 1938.7 | 10564 | 25 |
+
+## Throughput and runtime
+
+Not measured. Interpreted in [foreign](../foreign/) where it is.
+
+## What it took to run it
+
+Not measured. Interpreted in [METHODOLOGY#record-what-it-cost-to-run-the-model-not-only-how-it-scored](../METHODOLOGY.md#record-what-it-cost-to-run-the-model-not-only-how-it-scored) where it is.

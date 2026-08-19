@@ -1,9 +1,10 @@
 # mankei-326m-embedder
 
-Everything measured about this model here. **Blank means never measured, not "failed".**
+Everything measured about this model, by topic. **Every topic is listed, including the ones with no measurement** — a gap you cannot see looks like an answer.
 
-Numbers link back to the document that interprets them; the raw rows are in
-[`data/`](../data/).
+Generated from [`data/`](../data/) by [`scripts/genmodels.py`](../scripts/genmodels.py); every number traces to a row there.
+
+**Measured in 2 of 10 topics.**
 
 A German embedder, 326M, Apache-2.0, trained from scratch in Germany. **0.875 retrieval
 against BGE-M3's 0.9625 at a third the size.**
@@ -15,9 +16,23 @@ more often than at 1 600 — [chunk position](../findings/chunk-position.md).
 ⚠️ Its card names 256 tokens; the config allows 2 048, and at 2 048 it scores 0.2875 where
 the 256 cap gives 0.0. **Reading the card instead of measuring would have removed it.**
 
-## retrieval against answer position
+## Language understanding — German chat
 
-Source: [`embedding_chunk_position.tsv`](../data/embedding_chunk_position.tsv) · interpreted in [chunk-position](../findings/chunk-position.md)
+Not measured. Interpreted in [language-understanding](../use-cases/language-understanding.md) where it is.
+
+## Coding
+
+Not measured. Interpreted in [coding](../use-cases/coding.md) where it is.
+
+## Long context — cost against cache depth
+
+Not measured. Interpreted in [context-depth](../findings/context-depth.md) where it is.
+
+## Retrieval — embedding and reranking
+
+Interpreted in [embedding](../use-cases/embedding.md).
+
+**[`embedding_chunk_position.tsv`](../data/embedding_chunk_position.tsv)** — retrieval against where the answer sits in the chunk
 
 | model | pooling | variant | position | correct | n | accuracy | chunk_tokens_mean | truncated |
 |---|---|---|---|---|---|---|---|---|
@@ -27,9 +42,7 @@ Source: [`embedding_chunk_position.tsv`](../data/embedding_chunk_position.tsv) �
 | mankei-326m-embedder | last | long3000 | end | 23 | 80 | 0.2875 | 692 | 0 |
 | mankei-326m-embedder | last | long3000_trunc256 | end | 0 | 80 | 0.0000 | 692 | 80 |
 
-## retrieval against chunk size
-
-Source: [`embedding_chunk_size.tsv`](../data/embedding_chunk_size.tsv) · interpreted in [chunk-position](../findings/chunk-position.md)
+**[`embedding_chunk_size.tsv`](../data/embedding_chunk_size.tsv)** — retrieval against chunk size
 
 | model | pooling | chunk_chars | position | correct | n | accuracy | max_len | truncated |
 |---|---|---|---|---|---|---|---|---|
@@ -44,9 +57,31 @@ Source: [`embedding_chunk_size.tsv`](../data/embedding_chunk_size.tsv) · interp
 | mankei-326m-embedder | last | 6000 | start | - | 80 | 0.0125 | 2048 | 0 |
 | mankei-326m-embedder | last | 6000 | end | - | 80 | 0.4375 | 2048 | 0 |
 
-## what it took to get it running
+## Vision — image input
 
-Source: [`integration_cost.tsv`](../data/integration_cost.tsv) · interpreted in [METHODOLOGY §record-what-it-cost-to-run-the-model-not-only-how-it-scored](../METHODOLOGY.md#record-what-it-cost-to-run-the-model-not-only-how-it-scored)
+Not measured. Interpreted in [vision](../use-cases/vision.md) where it is.
+
+## Speech to text
+
+Not measured. Interpreted in [transcription](../use-cases/transcription.md) where it is.
+
+## Image generation
+
+Not measured. Interpreted in [image-generation](../use-cases/image-generation.md) where it is.
+
+## Power and energy
+
+Not measured. Interpreted in [power](../hardware/power.md) where it is.
+
+## Throughput and runtime
+
+Not measured. Interpreted in [foreign](../foreign/) where it is.
+
+## What it took to run it
+
+Interpreted in [METHODOLOGY#record-what-it-cost-to-run-the-model-not-only-how-it-scored](../METHODOLOGY.md#record-what-it-cost-to-run-the-model-not-only-how-it-scored).
+
+**[`integration_cost.tsv`](../data/integration_cost.tsv)** — shipped format, steps needed, blockers hit
 
 | model | shipped_as | steps_to_run | blockers_hit | notes |
 |---|---|---|---|---|

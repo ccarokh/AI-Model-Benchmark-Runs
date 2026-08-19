@@ -36,6 +36,7 @@ paths, and add nothing a reader can check.
 | [`embedding_chunk_position.tsv`](embedding_chunk_position.tsv) | 12 runs | retrieval against the position of the answer inside the chunk |
 | [`embedding_chunk_size.tsv`](embedding_chunk_size.tsv) | 14 runs | the same against chunk size, plus the reranker |
 | [`abliteration.tsv`](abliteration.tsv) | 6 runs | a de-refused model against its own base, same quantisation |
+| [`vision.tsv`](vision.tsv) | 2 models | memory and behaviour with a vision projector loaded |
 
 ## Columns
 

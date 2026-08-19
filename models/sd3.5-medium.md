@@ -1,38 +1,53 @@
 # sd3.5-medium
 
-Everything measured about this model here. **Blank means never measured, not "failed".**
+Everything measured about this model, by topic. **Every topic is listed, including the ones with no measurement** — a gap you cannot see looks like an answer.
 
-Numbers link back to the document that interprets them; the raw rows are in
-[`data/`](../data/).
+Generated from [`data/`](../data/) by [`scripts/genmodels.py`](../scripts/genmodels.py); every number traces to a row there.
 
-## time, VRAM and licence
+**Measured in 1 of 10 topics.**
 
-Source: [`image_generation.tsv`](../data/image_generation.tsv) · interpreted in [image-generation](../use-cases/image-generation.md)
+## Language understanding — German chat
+
+Not measured. Interpreted in [language-understanding](../use-cases/language-understanding.md) where it is.
+
+## Coding
+
+Not measured. Interpreted in [coding](../use-cases/coding.md) where it is.
+
+## Long context — cost against cache depth
+
+Not measured. Interpreted in [context-depth](../findings/context-depth.md) where it is.
+
+## Retrieval — embedding and reranking
+
+Not measured. Interpreted in [embedding](../use-cases/embedding.md) where it is.
+
+## Vision — image input
+
+Not measured. Interpreted in [vision](../use-cases/vision.md) where it is.
+
+## Speech to text
+
+Not measured. Interpreted in [transcription](../use-cases/transcription.md) where it is.
+
+## Image generation
+
+Interpreted in [image-generation](../use-cases/image-generation.md).
+
+**[`image_generation.tsv`](../data/image_generation.tsv)** — time, VRAM and licence
 
 | model | quant | licence | commercial | steps | cfg | seconds_per_image | n_runs | params_mb | peak_vram_mib | card_share_pct |
 |---|---|---|---|---|---|---|---|---|---|---|
 | sd3.5-medium | Q4_K_M-allinone | Stability Community | under 1M revenue | 28 | 4.5 | 69.5 | 8 | 15980.96 | 18878 | 77 |
 
-## energy per image
-
-Source: [`image_generation_energy.tsv`](../data/image_generation_energy.tsv) · interpreted in [image-generation](../use-cases/image-generation.md)
-
-| model | seconds | mean_watt_chip | peak_watt_chip | wh_per_image | samples |
-|---|---|---|---|---|---|
-| sd3.5-medium | 74.3 | 188.6 | 294.0 | 3.896 | 74 |
-
-## text rendered into the image
-
-Source: [`image_generation_ocr.tsv`](../data/image_generation_ocr.tsv) · interpreted in [image-generation](../use-cases/image-generation.md)
+**[`image_generation_ocr.tsv`](../data/image_generation_ocr.tsv)** — text rendered into the image
 
 | model | task | metric | value | detail |
 |---|---|---|---|---|
 | sd3.5-medium | 02_sign_text | edit_distance_to_target | 10 | AG EN E TZER |
 | sd3.5-medium | 05_schematic | real_word_share | 0.39 | 28 of 72 tokens |
 
-## the OCR measures across five seeds
-
-Source: [`image_generation_seeds.tsv`](../data/image_generation_seeds.tsv) · interpreted in [image-generation](../use-cases/image-generation.md)
+**[`image_generation_seeds.tsv`](../data/image_generation_seeds.tsv)** — the OCR measures across five seeds
 
 | model | task | seed | metric | value | denominator |
 |---|---|---|---|---|---|
@@ -57,9 +72,13 @@ Source: [`image_generation_seeds.tsv`](../data/image_generation_seeds.tsv) · in
 | sd3.5-medium | 05_schematic | 1234 | real_words | 8 | 53 |
 | sd3.5-medium | 05_schematic | 2026 | real_words | 3 | 34 |
 
-## operator judgements, not measurements
+**[`image_generation_energy.tsv`](../data/image_generation_energy.tsv)** — energy per image
 
-Source: [`image_generation_verdicts.tsv`](../data/image_generation_verdicts.tsv) · interpreted in [image-generation](../use-cases/image-generation.md)
+| model | seconds | mean_watt_chip | peak_watt_chip | wh_per_image | samples |
+|---|---|---|---|---|---|
+| sd3.5-medium | 74.3 | 188.6 | 294.0 | 3.896 | 74 |
+
+**[`image_generation_verdicts.tsv`](../data/image_generation_verdicts.tsv)** — ⚠️ operator judgements, not measurements
 
 | model | task | verdict | operator_note |
 |---|---|---|---|
@@ -69,3 +88,15 @@ Source: [`image_generation_verdicts.tsv`](../data/image_generation_verdicts.tsv)
 | sd3.5-medium | 04_hands_tool | fail | da sind 2 Hände ineinander verschmolzen |
 | sd3.5-medium | 05_schematic | fail | Text ist teilweise nonsense, Diagram beschreibt nicht das was gefordert wurde |
 | sd3.5-medium | 06_dog | fail | all four legs visible, <-- wurde nicht eingehalten |
+
+## Power and energy
+
+Not measured. Interpreted in [power](../hardware/power.md) where it is.
+
+## Throughput and runtime
+
+Not measured. Interpreted in [foreign](../foreign/) where it is.
+
+## What it took to run it
+
+Not measured. Interpreted in [METHODOLOGY#record-what-it-cost-to-run-the-model-not-only-how-it-scored](../METHODOLOGY.md#record-what-it-cost-to-run-the-model-not-only-how-it-scored) where it is.

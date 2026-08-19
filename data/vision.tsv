@@ -1,0 +1,3 @@
+model	projector	vram_mib_solo	image_tokens	answer_tokens	note
+gemma-4-12b	mmproj-F16	8837	284	-	holds the vision slot; four models share one card
+qwen3.8-27b	mmproj-F16	17329	-	700	1.96x the memory; fabricated label text while reporting itself certain

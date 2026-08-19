@@ -1,38 +1,53 @@
 # sdxl-1.0-base
 
-Everything measured about this model here. **Blank means never measured, not "failed".**
+Everything measured about this model, by topic. **Every topic is listed, including the ones with no measurement** — a gap you cannot see looks like an answer.
 
-Numbers link back to the document that interprets them; the raw rows are in
-[`data/`](../data/).
+Generated from [`data/`](../data/) by [`scripts/genmodels.py`](../scripts/genmodels.py); every number traces to a row there.
 
-## time, VRAM and licence
+**Measured in 1 of 10 topics.**
 
-Source: [`image_generation.tsv`](../data/image_generation.tsv) · interpreted in [image-generation](../use-cases/image-generation.md)
+## Language understanding — German chat
+
+Not measured. Interpreted in [language-understanding](../use-cases/language-understanding.md) where it is.
+
+## Coding
+
+Not measured. Interpreted in [coding](../use-cases/coding.md) where it is.
+
+## Long context — cost against cache depth
+
+Not measured. Interpreted in [context-depth](../findings/context-depth.md) where it is.
+
+## Retrieval — embedding and reranking
+
+Not measured. Interpreted in [embedding](../use-cases/embedding.md) where it is.
+
+## Vision — image input
+
+Not measured. Interpreted in [vision](../use-cases/vision.md) where it is.
+
+## Speech to text
+
+Not measured. Interpreted in [transcription](../use-cases/transcription.md) where it is.
+
+## Image generation
+
+Interpreted in [image-generation](../use-cases/image-generation.md).
+
+**[`image_generation.tsv`](../data/image_generation.tsv)** — time, VRAM and licence
 
 | model | quant | licence | commercial | steps | cfg | seconds_per_image | n_runs | params_mb | peak_vram_mib | card_share_pct |
 |---|---|---|---|---|---|---|---|---|---|---|
 | sdxl-1.0-base | fp16 | CreativeML OpenRAIL++-M | with conditions | 25 | 7.0 | 37.0 | 8 | 6624.11 | 12503 | 51 |
 
-## energy per image
-
-Source: [`image_generation_energy.tsv`](../data/image_generation_energy.tsv) · interpreted in [image-generation](../use-cases/image-generation.md)
-
-| model | seconds | mean_watt_chip | peak_watt_chip | wh_per_image | samples |
-|---|---|---|---|---|---|
-| sdxl-1.0-base | 39.4 | 137.2 | 285.0 | 1.515 | 40 |
-
-## text rendered into the image
-
-Source: [`image_generation_ocr.tsv`](../data/image_generation_ocr.tsv) · interpreted in [image-generation](../use-cases/image-generation.md)
+**[`image_generation_ocr.tsv`](../data/image_generation_ocr.tsv)** — text rendered into the image
 
 | model | task | metric | value | detail |
 |---|---|---|---|---|
 | sdxl-1.0-base | 02_sign_text | edit_distance_to_target | 6 | ACHUTING BELLER |
 | sdxl-1.0-base | 05_schematic | real_word_share | 0.25 | 3 of 12 tokens |
 
-## the OCR measures across five seeds
-
-Source: [`image_generation_seeds.tsv`](../data/image_generation_seeds.tsv) · interpreted in [image-generation](../use-cases/image-generation.md)
+**[`image_generation_seeds.tsv`](../data/image_generation_seeds.tsv)** — the OCR measures across five seeds
 
 | model | task | seed | metric | value | denominator |
 |---|---|---|---|---|---|
@@ -57,9 +72,13 @@ Source: [`image_generation_seeds.tsv`](../data/image_generation_seeds.tsv) · in
 | sdxl-1.0-base | 05_schematic | 1234 | real_words | 0 | 0 |
 | sdxl-1.0-base | 05_schematic | 2026 | real_words | 1 | 3 |
 
-## operator judgements, not measurements
+**[`image_generation_energy.tsv`](../data/image_generation_energy.tsv)** — energy per image
 
-Source: [`image_generation_verdicts.tsv`](../data/image_generation_verdicts.tsv) · interpreted in [image-generation](../use-cases/image-generation.md)
+| model | seconds | mean_watt_chip | peak_watt_chip | wh_per_image | samples |
+|---|---|---|---|---|---|
+| sdxl-1.0-base | 39.4 | 137.2 | 285.0 | 1.515 | 40 |
+
+**[`image_generation_verdicts.tsv`](../data/image_generation_verdicts.tsv)** — ⚠️ operator judgements, not measurements
 
 | model | task | verdict | operator_note |
 |---|---|---|---|
@@ -71,3 +90,15 @@ Source: [`image_generation_verdicts.tsv`](../data/image_generation_verdicts.tsv)
 | sdxl-1.0-base | 06_dog | fail | vierte Pfote ohne Verbindung zum Koerper, dazu fellfreie Schaedeldecke |
 | sdxl-1.0-base | 07_cat | pass | — |
 | sdxl-1.0-base | 08_horse | fail | fuenf Beine |
+
+## Power and energy
+
+Not measured. Interpreted in [power](../hardware/power.md) where it is.
+
+## Throughput and runtime
+
+Not measured. Interpreted in [foreign](../foreign/) where it is.
+
+## What it took to run it
+
+Not measured. Interpreted in [METHODOLOGY#record-what-it-cost-to-run-the-model-not-only-how-it-scored](../METHODOLOGY.md#record-what-it-cost-to-run-the-model-not-only-how-it-scored) where it is.
