@@ -36,11 +36,15 @@ TABELLE = os.path.join(HIER, "spiel_urteile.tsv")
 KRITERIEN = [
     ("spielbar",   "Öffnet und ist spielbar"),
     ("hund",       "Der Hund ist als Hund erkennbar"),
+    ("objekte",    "Hürden und Tunnel sehen aus wie Hürden und Tunnel"),
     ("huerde",     "Hürden lassen sich überspringen"),
+    ("dreier",     "Drei Hürden hintereinander sind mit einem Sprung zu schaffen"),
     ("tunnel",     "Tunnel lassen sich durchducken"),
     ("getrennt",   "Springen hilft am Tunnel NICHT (und umgekehrt)"),
     ("punkte",     "Punktestand läuft"),
     ("schneller",  "Wird mit der Zeit schneller"),
+    ("highscore",  "Highscore steht daneben und überlebt den Neustart"),
+    ("tagnacht",   "Tag- und Nachtwechsel findet statt"),
     ("neustart",   "Game Over und Neustart funktionieren"),
 ]
 

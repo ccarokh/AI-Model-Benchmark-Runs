@@ -32,16 +32,32 @@ Das Spiel ist ein Agility-Parcours mit einem **Hund**, der von links nach rechts
   sichtbar auf die Seite.**
 - Springen hilft beim Tunnel **nicht**, Ducken hilft bei der Hürde **nicht**
 - Punktestand, der mit der Zeit steigt
+- **Highscore neben dem laufenden Stand.** Er überlebt den Neustart: wer 40 Punkte
+  schafft, neu startet und bei 12 stirbt, sieht weiterhin 40 als besten Wert.
 - Die Geschwindigkeit nimmt im Laufe des Spiels zu
+- **Tag- und Nachtwechsel:** im Verlauf schlägt die Darstellung von hell nach dunkel
+  um und wieder zurück
 - Kollision beendet das Spiel und zeigt das Ergebnis an
 - **Neustart, erst nach dem Spielende:** die Tasten **R** und **Enter** *und* eine
-  anklickbare Schaltfläche. Mit der Maus allein muss ein neuer Lauf möglich sein.
-  Während gespielt wird, ist die Schaltfläche nicht da — sie zieht sonst nur den
-  Tastaturfokus vom Spiel weg.
+  anklickbare Schaltfläche **im Spielfeld**, nicht darunter. Mit der Maus allein muss
+  ein neuer Lauf möglich sein. Während gespielt wird, ist die Schaltfläche nicht da —
+  sie zieht sonst nur den Tastaturfokus vom Spiel weg.
 
 **Die Grafik gehört zur Aufgabe.** Hund, Hürden und Tunnel entstehen im Code — Canvas,
-SVG oder CSS. Der Hund muss als Hund erkennbar sein und beim Ducken anders aussehen als
-beim Laufen.
+SVG oder CSS.
+
+- Der **Hund** muss als Hund erkennbar sein und beim Ducken anders aussehen als beim Laufen.
+- **Hürde und Tunnel** müssen als das erkennbar sein, was sie sind, und voneinander
+  unterscheidbar. Zwei gleich aussehende Rechtecke erfüllen das nicht — man muss auf einen
+  Blick wissen, ob zu springen oder zu ducken ist.
+
+**Das Spiel muss spielbar sein.** Die Sprunghöhe muss zur Hürdenhöhe passen und die
+Tunnelöffnung zur geduckten Haltung, mit genug Spielraum, dass ein Mensch es zur richtigen
+Zeit schafft — nicht nur rechnerisch in einem Zeitfenster von Millisekunden.
+
+**Bis zu drei Hürden können direkt hintereinander stehen, und eine Gruppe muss mit einem
+Sprung zu schaffen sein.** Das gilt auch bei der höchsten Geschwindigkeit, die im Spiel
+vorkommt. Rechne die Sprungweite gegen die Gruppenbreite, statt es zu schätzen.
 
 **Technische Vorgaben:**
 
@@ -51,6 +67,15 @@ beim Laufen.
 - Kein Build-Schritt. Die Datei im Browser öffnen muss reichen.
 
 ---
+
+## Where the requirements come from
+
+The reference point is the Chrome dinosaur game, and several requirements were added
+after looking at it rather than at our own draft: **groups of up to three obstacles**, a
+**high score that survives a restart**, a **day/night switch**, and the restart control
+sitting **inside the play field**. Each is countable, and each demands something the
+minimum viable jump loop does not have — state that outlives a run, a second visual mode,
+and a jump whose *length* is sized against a group rather than a single obstacle.
 
 ## Why the task is shaped this way
 
