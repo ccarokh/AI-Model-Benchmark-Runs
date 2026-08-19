@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Agility — Referenz</title>
+<style>
+  html,body{margin:0;height:100%;background:#20242c;color:#e8ecf4;
+            font:15px/1.5 system-ui,sans-serif;display:flex;flex-direction:column;
+            align-items:center;justify-content:center;gap:12px}
+  canvas{background:#bfe3f7;border-radius:10px;box-shadow:0 6px 24px #0007;max-width:96vw}
+  .hilfe{opacity:.8}
+  /* Neustart muss auch ohne Tastatur gehen -- deshalb eine echte Schaltflaeche
+     und zusaetzlich ein Klick auf die Flaeche, wenn das Spiel vorbei ist. */
+  button{font:inherit;font-weight:600;padding:9px 20px;border-radius:8px;border:0;
+         background:#2d64d8;color:#fff;cursor:pointer}
+  button:hover{background:#3b76ef}
+  b{color:#ffd479}
+</style>
+</head>
+<body>
+<canvas id="c" width="900" height="320"></canvas>
+<div class="hilfe"><b>Leertaste</b> oder <b>W</b> springen ·
+<b>Strg</b> oder <b>S</b> ducken (halten) ·
+<b>R</b> oder <b>Enter</b> neu</div>
+<button id="neustart" hidden>Neu starten</button>
+<script>
+const c = document.getElementById('c'), g = c.getContext('2d');
+const BODEN = 250;
+
+// --- Zustand ---------------------------------------------------------------
+let hund, hindernisse, punkte, tempo, laeuft, weg, zeit, spawn;
+
+function neu() {
+  hund = { y: 0, vy: 0, springt: false, duckt: false };
+  hindernisse = [];
+  punkte = 0; tempo = 260; laeuft = true; weg = 0; zeit = 0; spawn = 60;
+}
+neu();
+
+// --- Eingabe ---------------------------------------------------------------
+const DUCKTASTEN = ['ControlLeft', 'ControlRight', 'KeyS'];
+// Springen und Ducken sind streng getrennt: in der Luft wird nicht geduckt,
+// und geduckt wird nicht gesprungen. Genau das ist die Anforderung.
+addEventListener('keydown', e => {
+  // Pflicht plus die in der Aufgabe erlaubten Alternativen -- und nichts sonst.
+  if (e.code === 'Space' || e.code === 'KeyW') {
+    e.preventDefault();
+    if (laeuft && !hund.springt && !hund.duckt) { hund.vy = -560; hund.springt = true; }
+  }
+  if (DUCKTASTEN.includes(e.code)) {
+    e.preventDefault();
+    if (laeuft && !hund.springt) hund.duckt = true;
+  }
+  // Enter loest zusaetzlich aus. Liegt der Fokus auf der Schaltflaeche, klickt
+  // der Browser sie ohnehin -- dann startet zweimal neu, was nichts schadet.
+  if (e.code === 'KeyR' || e.code === 'Enter' || e.code === 'NumpadEnter') neu();
+});
+const knopf = document.getElementById('neustart');
+knopf.onclick = () => { neu(); knopf.blur(); };
+c.addEventListener('click', () => { if (!laeuft) neu(); });
+addEventListener('keyup', e => { if (DUCKTASTEN.includes(e.code)) hund.duckt = false; });
+
+// --- Hindernisse -----------------------------------------------------------
+// Huerde: steht auf dem Boden, oben offen  -> nur Springen hilft.
+// Tunnel: haengt oben, unten offen         -> nur Ducken hilft.
+function setzen() {
+  const huerde = Math.random() < 0.5;
+  hindernisse.push(huerde
+    ? { art: 'huerde', x: c.width + 40, breite: 26, hoehe: 52 }
+    : { art: 'tunnel', x: c.width + 40, breite: 120, lichte: 46 });
+}
+
+const HUND_X = 120;
+function rahmen() {
+  // Der Koerper des Hundes, in Weltkoordinaten. Beim Ducken flacher UND laenger.
+  const h = hund.duckt ? 30 : 52;
+  const b = hund.duckt ? 92 : 68;
+  return { x: HUND_X, y: BODEN - h + hund.y, b, h };
+}
+function stoss(o) {
+  const r = rahmen();
+  if (o.art === 'huerde') {
+    const hx = o.x, hb = o.breite, hy = BODEN - o.hoehe;
+    return r.x < hx + hb && r.x + r.b > hx && r.y + r.h > hy;
+  }
+  // Tunnel: Decke bei BODEN-lichte. Wer zu hoch ist, stoesst an.
+  const dy = BODEN - o.lichte;
+  return r.x < o.x + o.breite && r.x + r.b > o.x && r.y < dy;
+}
+
+// --- Zeichnen --------------------------------------------------------------
+function hundZeichnen(t) {
+  const r = rahmen(), x = r.x, y = r.y, duckt = hund.duckt;
+  const beinPhase = Math.sin(t * 14), beinPhase2 = Math.sin(t * 14 + Math.PI);
+  g.save();
+  g.translate(x, y);
+  const koerperH = duckt ? 22 : 30, koerperB = duckt ? 62 : 46;
+
+  // Schwanz
+  g.strokeStyle = '#8a5a2b'; g.lineWidth = 6; g.lineCap = 'round';
+  g.beginPath();
+  g.moveTo(2, koerperH * 0.35);
+  g.quadraticCurveTo(-16, koerperH * 0.1 - Math.sin(t * 10) * 6, -20, -10 + (duckt ? 14 : 0));
+  g.stroke();
+
+  // Beine, mit Laufbewegung
+  g.strokeStyle = '#7b4f26'; g.lineWidth = 7;
+  const beinLen = duckt ? 10 : 22, by = koerperH;
+  for (const [bx, ph] of [[10, beinPhase], [koerperB - 12, beinPhase2]]) {
+    g.beginPath(); g.moveTo(bx, by);
+    g.lineTo(bx + ph * 7, by + beinLen);
+    g.stroke();
+    g.beginPath(); g.moveTo(bx + 12, by);
+    g.lineTo(bx + 12 - ph * 7, by + beinLen);
+    g.stroke();
+  }
+
+  // Rumpf
+  g.fillStyle = '#a9702f';
+  g.beginPath();
+  g.roundRect(0, 0, koerperB, koerperH, duckt ? 11 : 14);
+  g.fill();
+
+  // Kopf, Schnauze, Ohr, Auge
+  const kx = koerperB - (duckt ? 6 : 10), ky = duckt ? 0 : -14;
+  g.beginPath(); g.roundRect(kx, ky, 26, 22, 9); g.fill();
+  g.beginPath(); g.roundRect(kx + 20, ky + 9, 16, 10, 5); g.fill();   // Schnauze
+  g.fillStyle = '#2a1a0c';
+  g.beginPath(); g.ellipse(kx + 35, ky + 14, 3.2, 3, 0, 0, 7); g.fill();  // Nase
+  g.beginPath(); g.ellipse(kx + 12, ky + 9, 2.6, 3, 0, 0, 7); g.fill();   // Auge
+  g.fillStyle = '#8a5a2b';                                                // Schlappohr
+  g.beginPath();
+  g.moveTo(kx + 4, ky + 2);
+  g.quadraticCurveTo(kx - 6, ky + 8, kx + 2, ky + 20);
+  g.quadraticCurveTo(kx + 10, ky + 12, kx + 10, ky + 2);
+  g.fill();
+  g.restore();
+}
+
+function zeichnen(t) {
+  g.clearRect(0, 0, c.width, c.height);
+  // Himmel und Wiese
+  g.fillStyle = '#bfe3f7'; g.fillRect(0, 0, c.width, BODEN);
+  g.fillStyle = '#6fbf5e'; g.fillRect(0, BODEN, c.width, c.height - BODEN);
+  g.strokeStyle = '#59a349'; g.lineWidth = 3;
+  for (let i = -(weg % 60); i < c.width; i += 60) {
+    g.beginPath(); g.moveTo(i, BODEN + 12); g.lineTo(i + 14, BODEN + 4); g.stroke();
+  }
+
+  for (const o of hindernisse) {
+    if (o.art === 'huerde') {
+      const y = BODEN - o.hoehe;
+      g.fillStyle = '#e2e6ee';
+      g.fillRect(o.x, y, 5, o.hoehe); g.fillRect(o.x + o.breite - 5, y, 5, o.hoehe);
+      g.fillStyle = '#d4382f';
+      g.fillRect(o.x - 4, y, o.breite + 8, 8);
+      g.fillRect(o.x - 4, y + 20, o.breite + 8, 6);
+    } else {
+      const dy = BODEN - o.lichte;
+      g.fillStyle = '#3f6fb5';
+      g.beginPath();
+      g.moveTo(o.x, BODEN);
+      g.lineTo(o.x, dy);
+      g.quadraticCurveTo(o.x + o.breite / 2, dy - 40, o.x + o.breite, dy);
+      g.lineTo(o.x + o.breite, BODEN);
+      g.fill();
+      g.fillStyle = '#2b4e80';
+      for (let i = 0; i < 4; i++) {
+        g.fillRect(o.x + 8 + i * (o.breite - 16) / 4, dy - 6 - i * 2, 4, BODEN - dy + 6);
+      }
+      g.fillStyle = '#17253c';
+      g.beginPath(); g.ellipse(o.x + o.breite, dy + 8, 10, o.lichte * 0.42, 0, 0, 7); g.fill();
+    }
+  }
+
+  hundZeichnen(t);
+
+  g.fillStyle = '#123'; g.font = 'bold 20px system-ui';
+  g.fillText('Punkte: ' + punkte, 16, 32);
+  g.font = '14px system-ui';
+  g.fillText('Tempo: ' + Math.round(tempo), 16, 54);
+
+  // Die Schaltflaeche erscheint erst nach dem Spielende. Waehrend gespielt wird,
+  // zoege sie nur den Tastaturfokus vom Spiel weg.
+  knopf.hidden = laeuft;
+  if (!laeuft) {
+    g.fillStyle = 'rgba(10,14,20,.72)';
+    g.fillRect(0, 0, c.width, c.height);
+    g.fillStyle = '#fff'; g.textAlign = 'center';
+    g.font = 'bold 34px system-ui';
+    g.fillText('Vorbei', c.width / 2, 130);
+    g.font = '20px system-ui';
+    g.fillText(punkte + ' Punkte', c.width / 2, 168);
+    g.font = '16px system-ui';
+    g.fillText('R oder Enter drücken, klicken oder die Schaltfläche nehmen', c.width / 2, 204);
+    g.textAlign = 'left';
+  }
+}
+
+// --- Schleife --------------------------------------------------------------
+let vorher = performance.now();
+function schritt(jetzt) {
+  const dt = Math.min((jetzt - vorher) / 1000, 0.05);
+  vorher = jetzt;
+  if (laeuft) {
+    zeit += dt;
+    tempo += dt * 9;                    // wird mit der Zeit schneller
+    weg += tempo * dt;
+    punkte = Math.floor(weg / 20);
+
+    hund.vy += 1750 * dt;
+    hund.y += hund.vy * dt;
+    if (hund.y >= 0) { hund.y = 0; hund.vy = 0; hund.springt = false; }
+
+    spawn -= tempo * dt;
+    if (spawn <= 0) { setzen(); spawn = 260 + Math.random() * 220; }
+
+    for (const o of hindernisse) o.x -= tempo * dt;
+    hindernisse = hindernisse.filter(o => o.x + (o.breite || 0) > -60);
+    for (const o of hindernisse) if (stoss(o)) { laeuft = false; break; }
+  }
+  zeichnen(zeit);
+  requestAnimationFrame(schritt);
+}
+requestAnimationFrame(schritt);
+</script>
+</body>
+</html>

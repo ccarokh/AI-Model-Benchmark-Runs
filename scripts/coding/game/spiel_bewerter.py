@@ -48,12 +48,20 @@ KRITERIEN = [
 # ein Wort wie "direkt", das niemand einordnen kann -- und dann bewertet man das
 # Modell fuer etwas, das der Pruefstand ihm gar nicht ermoeglicht hat.
 PRUEFSTAND = {
+    "claudecode": "Vergleichspunkt, kein Wettbewerber: Claude Opus 5 ueber Claude Code in "
+                  "VS Code -- ein Modell aus der Cloud auf fremder Hardware, mit einem "
+                  "anderen Pruefstand und unbekannter Quantisierung. Gegen die lokalen "
+                  "Laeufe ist das in KEINER Hinsicht ein fairer Vergleich, weder bei "
+                  "Geschwindigkeit noch bei Groesse. Er existiert fuer genau eine Frage: "
+                  "sind die acht Kriterien ueberhaupt gleichzeitig erfuellbar? Ohne diese "
+                  "Antwort saehen zu schwache Modelle und eine zu harte Aufgabe gleich aus.",
     "opencode": "Voller Pruefstand: das Modell arbeitet in OpenCode in einem leeren "
                 "Verzeichnis, darf Dateien anlegen, Befehle ausfuehren und deren "
                 "Ausgabe lesen -- gekapselt in einem Behaelter. Was am Ende dort "
                 "liegt, ist das Ergebnis.",
 }
 LAUFZEIT = {
+    "Anthropic-API (Cloud)": "Fremde Hardware, unbekannte Groesse, unbekannte Quantisierung.",
     "llamacpp": "llama-server, Chat-Vorlage aus der GGUF",
     "vllm": "vLLM auf ROCm, im Behaelter",
 }

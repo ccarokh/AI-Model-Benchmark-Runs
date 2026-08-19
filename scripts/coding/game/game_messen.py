@@ -31,20 +31,18 @@ for wurzel, _, namen in os.walk(arbeit):
 low = "\n".join(text).lower()
 hat_index = os.path.isfile(os.path.join(arbeit, "index.html"))
 
-# Auf zitierte Tastennamen festgemacht, nicht auf Wortfragmente. Zweimal hat
-# hier der Erkenner und nicht das Modell versagt: die Leertaste kommt als
-# keys[' '] -- ein blankes Zeichen, nicht das Wort "space" -- und das Ducken lag
-# auf "ControlLeft", worin "ctrl" nicht vorkommt. Beide Male stand "kann das
-# nicht" an einem Spiel, das es konnte.
+# Die Aufgabe schreibt die Tasten vor: Leertaste springt, Strg duckt. Geprueft
+# wird deshalb genau darauf -- eine abweichende Belegung ist eine verfehlte
+# Anforderung, keine Geschmacksfrage. Vorher stand die Wahl frei, und dann
+# konnte "Huerde nicht ueberspringbar" schlicht heissen, dass der Bewerter die
+# falsche Taste gedrueckt hat.
 #
-# Das bleibt eine Beobachtung, kein Urteil: ob sich die Huerde WIRKLICH
-# ueberspringen laesst, sagt nur ein Mensch, der gespielt hat.
-# Kein re.X hier: im ausfuehrlichen Modus wirft Python Leerzeichen aus dem
-# Muster -- ausgerechnet das Zeichen, um das es bei der Leertaste geht.
-SPRUNG = r"""'space'|"space"|'arrowup'|"arrowup"|'keyw'|"keyw"|\[\s*' '\s*\]|"""  \
-         r"""==\s*' '|' '\s*==|(?:keycode|which)\s*===?\s*32"""
-DUCKEN = r"""'arrowdown'|"arrowdown"|'control|"control|'shift|"shift|'keys'|"keys"|"""  \
-         r"""(?:keycode|which)\s*===?\s*(?:40|17|16)"""
+# Kein re.X: im ausfuehrlichen Modus wirft Python Leerzeichen aus dem Muster --
+# ausgerechnet das Zeichen, um das es bei der Leertaste geht.
+SPRUNG = r"""'space'|"space"|'keyw'|"keyw"|\[\s*' '\s*\]|==\s*' '|' '\s*==|"""  \
+         r"""(?:keycode|which)\s*===?\s*(?:32|87)"""
+DUCKEN = r"""'control|"control|'keys'|"keys"|\bctrlkey\b|"""  \
+         r"""(?:keycode|which)\s*===?\s*(?:17|83)"""
 sprung = bool(re.search(SPRUNG, low))
 ducken = bool(re.search(DUCKEN, low))
 

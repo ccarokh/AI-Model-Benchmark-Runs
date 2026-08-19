@@ -66,6 +66,9 @@ case "$runtime" in
   llamacpp) [ -n "$gguf" ] || ende "runtime=llamacpp braucht 'gguf'"
             [ -s "$(ssh -n $MESS "readlink -f '$gguf'" 2>/dev/null)" ] 2>/dev/null || true ;;
   vllm) [ -n "$hf" ] || ende "runtime=vllm braucht 'hf' (Pfad oder HF-Kennung)"
+        # OFFEN heisst: noch nicht gemessen, welche Gewichte vLLM hier lesen kann.
+        # Lieber sichtbar abbrechen als still etwas Beliebiges laden.
+        [ "$hf" = OFFEN ] && ende "Gewichte fuer vLLM noch nicht bestimmt (hf = OFFEN)"
         [ -n "$(ssh -n $MESS 'command -v docker' 2>/dev/null)" ] || ende "vLLM braucht Docker auf $MESS" ;;
   *) ende "Laufzeit '$runtime' unbekannt" ;;
 esac
@@ -115,11 +118,24 @@ case "$runtime" in
     ssh -n "$MESS" "export LD_LIBRARY_PATH=/opt/llama-cpp-nb/lib; setsid nohup /opt/llama-cpp-nb/bin/llama-server -m '$gguf' --host 0.0.0.0 --port $PORT -c $ctx -np 1 -ngl 99 -sm none -mg 0 $TPL > /root/eval/game_srv.log 2>&1 < /dev/null & echo ok" >/dev/null
     ;;
   vllm)
-    ende "vLLM-Abbild ist noch nicht gebaut" ;;
+    # Der Behaelter braucht die Karte durchgereicht -- anders als der Pruefstand,
+    # der nur ueber HTTP redet. Kein --rm hier: bricht der Start ab, soll das
+    # Protokoll noch da sein.
+    ssh -n "$MESS" "docker rm -f vllm-mess >/dev/null 2>&1; setsid nohup docker run --name vllm-mess \
+      --device=/dev/kfd --device=/dev/dri --group-add video \
+      --security-opt seccomp=unconfined --shm-size 8g --ipc=host \
+      -v /opt/llm-infra/models:/models -p $PORT:8000 \
+      rocm/vllm:latest vllm serve '$hf' \
+        --max-model-len $ctx --gpu-memory-utilization 0.85 \
+      > /root/eval/vllm_srv.log 2>&1 < /dev/null & echo ok" >/dev/null
+    ;;
 esac
 ok=nein
-for i in $(seq 1 120); do
-  curl -s -m 3 "http://$MESS:$PORT/health" 2>/dev/null | grep -q ok && { ok=ja; break; }
+# llama.cpp antwortet auf /health mit einem Text, vLLM mit leerem 200. Deshalb
+# auf den Statuscode pruefen und nicht auf den Inhalt.
+for i in $(seq 1 180); do
+  code=$(curl -s -o /dev/null -m 3 -w "%{http_code}" "http://$MESS:$PORT/health" 2>/dev/null)
+  [ "$code" = 200 ] && { ok=ja; break; }
   sleep 5; done
 [ $ok = ja ] || ende "Modellserver kam nicht hoch"
 

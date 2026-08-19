@@ -1,0 +1,9 @@
+{"lauf": "claude-opus-5-referenz-claudecode",
+ "model": "claude-opus-5",
+ "beschreibung": "referenz",
+ "harness": "claudecode",
+ "runtime": "Anthropic-API (Cloud)",
+ "quant": "unbekannt, beim Anbieter",
+ "temp": null, "maxtok": null, "ctx": null, "template": "keine",
+ "zeitlimit": null, "aufgabe": "task.md", "gguf": "", "hf": "",
+ "messrechner": "keiner"}

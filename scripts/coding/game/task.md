@@ -19,11 +19,25 @@ Das Spiel ist ein Agility-Parcours mit einem **Hund**, der von links nach rechts
 
 **Spielanforderungen:**
 
-- Steuerung über Tastatur: eine Taste zum Springen, eine zum Ducken
+- **Tastenbelegung. Jede einzelne dieser Tasten muss funktionieren:**
+
+  | Aktion | Tasten |
+  |---|---|
+  | Springen | **Leertaste**, **W** |
+  | Ducken (gedrückt halten) | **Strg**, **S** |
+  | Neustart | **R**, **Enter** |
+
+  Das ist keine Auswahl, sondern eine Liste: alle genannten Tasten sind Pflicht.
+  Andere Tasten für diese Aktionen sind nicht erlaubt. **Schreibe die Belegung
+  sichtbar auf die Seite.**
 - Springen hilft beim Tunnel **nicht**, Ducken hilft bei der Hürde **nicht**
 - Punktestand, der mit der Zeit steigt
 - Die Geschwindigkeit nimmt im Laufe des Spiels zu
-- Kollision beendet das Spiel, mit Anzeige des Ergebnisses und Neustart-Möglichkeit
+- Kollision beendet das Spiel und zeigt das Ergebnis an
+- **Neustart, erst nach dem Spielende:** die Tasten **R** und **Enter** *und* eine
+  anklickbare Schaltfläche. Mit der Maus allein muss ein neuer Lauf möglich sein.
+  Während gespielt wird, ist die Schaltfläche nicht da — sie zieht sonst nur den
+  Tastaturfokus vom Spiel weg.
 
 **Die Grafik gehört zur Aufgabe.** Hund, Hürden und Tunnel entstehen im Code — Canvas,
 SVG oder CSS. Der Hund muss als Hund erkennbar sein und beim Ducken anders aussehen als
@@ -47,6 +61,18 @@ input that must *not* solve the other obstacle.
 
 **"Jumping does not help at the tunnel"** is stated explicitly because it is the rule most
 likely to be omitted, and its absence is countable rather than a matter of taste.
+
+**The keys are named in the task, and that was a correction.** The first version left the
+choice to the model. Every model then picked its own — space, arrow keys, W and S — and a
+rater who pressed the wrong one would record "the hurdle cannot be jumped" for a game that
+jumps perfectly well. **The measurement would have been of the rater's guess.** Naming the
+keys also makes a wrong binding countable instead of invisible.
+
+**Every key in the table is mandatory, and that is deliberate.** An earlier version made
+space and control mandatory and the rest optional — which puts the rater back where they
+started: pressing W, getting nothing, and not knowing whether the game is broken or merely
+minimal. With the whole list mandatory, a key that does nothing is a failed requirement,
+countable, and the same for every model.
 
 **Graphics are drawn in code, and that is not a simplification.** An earlier version let
 the model delegate the artwork to an image model by writing its own prompts. It was
