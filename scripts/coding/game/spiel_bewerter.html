@@ -1,0 +1,102 @@
+<meta charset="utf-8">
+<title>Agility-Spiele bewerten</title>
+<style>
+ :root{--bg:#14161a;--karte:#1c1f26;--rand:#2c313b;--text:#e6e8ec;--matt:#9aa3b2;
+       --ja:#3fa66a;--nein:#c1523f;--akzent:#5b8def}
+ *{box-sizing:border-box}
+ body{margin:0;background:var(--bg);color:var(--text);
+      font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+ header{padding:14px 20px;border-bottom:1px solid var(--rand);display:flex;
+        gap:16px;align-items:baseline;position:sticky;top:0;background:var(--bg);z-index:5}
+ h1{font-size:17px;margin:0}
+ .matt{color:var(--matt);font-size:13px}
+ main{padding:20px;display:grid;gap:18px;max-width:1100px}
+ .karte{background:var(--karte);border:1px solid var(--rand);border-radius:10px;padding:16px}
+ .kopf{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+ .name{font-weight:600;font-size:16px}
+ .marke{font-size:12px;padding:2px 8px;border-radius:99px;border:1px solid var(--rand);color:var(--matt)}
+ .fehlt{color:var(--nein);border-color:var(--nein)}
+ a.spielen{margin-left:auto;background:var(--akzent);color:#fff;text-decoration:none;
+           padding:8px 16px;border-radius:7px;font-weight:600}
+ a.spielen[aria-disabled=true]{background:#3a3f4a;color:var(--matt);pointer-events:none}
+ .krit{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:6px}
+ label.k{display:flex;gap:9px;align-items:center;padding:7px 9px;border-radius:7px;cursor:pointer}
+ label.k:hover{background:#22262e}
+ label.k input{width:17px;height:17px;accent-color:var(--ja)}
+ .erst{border:1px solid var(--akzent);background:#1a2030}
+ textarea{width:100%;margin-top:10px;background:#0f1116;color:var(--text);
+          border:1px solid var(--rand);border-radius:7px;padding:9px;font:inherit;resize:vertical}
+ details{margin-top:10px}
+ summary{cursor:pointer;color:var(--matt);font-size:13px}
+ table{border-collapse:collapse;width:100%;margin-top:8px;font-size:13px}
+ td,th{border:1px solid var(--rand);padding:5px 8px;text-align:left;vertical-align:top}
+ .stand{font-size:13px;color:var(--matt)}
+</style>
+<header>
+  <h1>Agility-Spiele bewerten</h1>
+  <span class="matt">Erst spielen, dann abhaken. Jede Änderung wird sofort gespeichert.</span>
+  <span class="stand" id="stand"></span>
+</header>
+<main id="liste"></main>
+<script>
+let daten = null;
+
+async function laden(){
+  daten = await (await fetch('/modelle')).json();
+  zeichnen();
+}
+
+function zeichnen(){
+  const {modelle, urteile, kriterien} = daten;
+  document.getElementById('stand').textContent =
+    Object.keys(urteile).length + ' von ' + modelle.length + ' bewertet';
+  document.getElementById('liste').innerHTML = modelle.map(m => {
+    const u = urteile[m.modell] || {};
+    const krit = kriterien.map(([k, text], i) => `
+      <label class="k ${i===0?'erst':''}">
+        <input type="checkbox" data-m="${m.modell}" data-k="${k}" ${u[k]?'checked':''}>
+        <span>${text}</span>
+      </label>`).join('');
+    const prompts = (m.prompts||[]).length ? `
+      <details><summary>${m.prompts.length} angeforderte Grafiken (Weg B)</summary>
+      <table><tr><th>Datei</th><th>Größe</th><th>Prompt</th></tr>
+      ${m.prompts.map(p=>`<tr><td>${p.datei||''}</td><td>${p.groesse||''}</td><td>${p.prompt||''}</td></tr>`).join('')}
+      </table></details>` : '';
+    const dateien = m.dateien.length ? `
+      <details><summary>${m.dateien.length} Dateien im Verzeichnis</summary>
+      <div class="matt">${m.dateien.join(', ')}</div></details>` : '';
+    return `<section class="karte">
+      <div class="kopf">
+        <span class="name">${m.modell}</span>
+        <span class="marke ${m.hat_index?'':'fehlt'}">
+          ${m.hat_index ? (m.bytes/1024).toFixed(1)+' kB index.html' : 'keine index.html'}</span>
+        <span class="marke">${m.prompts.length ? 'Weg B — Bilder angefordert' : 'Weg A — im Code gezeichnet'}</span>
+        <a class="spielen" target="_blank" aria-disabled="${!m.hat_index}"
+           href="/spiel/${encodeURIComponent(m.modell)}/index.html">Spielen ▸</a>
+      </div>
+      <div class="krit">${krit}</div>
+      <textarea rows="2" data-m="${m.modell}" placeholder="Kommentar — was genau ist kaputt oder gut?">${u.kommentar||''}</textarea>
+      ${prompts}${dateien}
+    </section>`;
+  }).join('');
+
+  document.querySelectorAll('input[type=checkbox]').forEach(el =>
+    el.addEventListener('change', () =>
+      senden(el.dataset.m, {[el.dataset.k]: el.checked})));
+  document.querySelectorAll('textarea').forEach(el => {
+    let t; el.addEventListener('input', () => {
+      clearTimeout(t);
+      t = setTimeout(() => senden(el.dataset.m, {kommentar: el.value}), 500);
+    });
+  });
+}
+
+async function senden(modell, feld){
+  await fetch('/urteil', {method:'POST', headers:{'Content-Type':'application/json'},
+                          body: JSON.stringify({modell, ...feld})});
+  daten.urteile[modell] = {...(daten.urteile[modell]||{}), ...feld};
+  document.getElementById('stand').textContent =
+    Object.keys(daten.urteile).length + ' von ' + daten.modelle.length + ' bewertet';
+}
+laden();
+</script>

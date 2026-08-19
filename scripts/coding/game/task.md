@@ -41,6 +41,14 @@ Die Bilder werden erzeugt und **neben die HTML-Datei gelegt**; dein Code muss si
 genau diesen Dateinamen laden. Denk daran, was ein Spiel braucht: mehrere Laufphasen für
 eine Animation, eine Duckhaltung, die Hindernisse, gegebenenfalls Hintergrund.
 
+Zwei Eigenschaften des Bildwerkzeugs, mit denen du rechnen musst:
+
+- **Es gibt keinen Alpha-Kanal.** Jedes Bild kommt als vollflächiges Rechteck mit
+  undurchsichtigem Hintergrund zurück. Ein Sprite, das du unbesehen auf die Spielfläche
+  zeichnest, erscheint als farbiger Kasten. Wie du damit umgehst, ist Teil der Aufgabe.
+- **Gleicher Prompt heißt ähnliches Bild.** Zwei Laufphasen brauchen zwei verschiedene
+  Prompts, sonst unterscheiden sie sich kaum und die Animation steht still.
+
 **Technische Vorgaben:**
 
 - Eine HTML-Datei plus die Bilddateien, die du selbst angefordert hast. Sonst nichts.
