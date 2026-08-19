@@ -5,11 +5,27 @@ way round: pick a model, see everything measured about it.
 
 **Blank means never measured, not "failed".**
 
+‡ measured on the `generate` harness rather than `logprob` — see
+[harness effect](models/harness-effect.md). The two are **not** interchangeable: for a
+reasoning model the gap reaches 70 points.
+
 ## Matrix
 
 | Model | Chat (belebele) | Coding (polyglot pass2) | Coding (SWE-bench repomap) | Other |
 |---|---:|---:|---:|---|
 | [Qwen3.5-9B](#chat--language-understandingmd) | **93.3 %** | | | production chat default |
+| [**Ornith-35B**](models/harness-effect.md#part-2--eight-models-that-had-never-been-measured-on-german) | **97.3 %** | 43.1 % | 42.1 % (8/19 pytest) | **best German reader measured here**; a `qwen35moe` derivative |
+| [Qwen3.6-35B-A3B](models/context-depth.md#the-two-best-german-readers-are-one-model) | **96.7 %** | **62.7 %** | 27.6 % (8/29) | same architecture as Ornith-35B |
+| [**Qwen3.8-27B**](models/abliteration.md) | **96.7 %** ‡ | **partial — 38/225** ⚠️ | 31.0 % (9/29) | dense; 19 min/task rules out interactive use, [batch untested](README.md#open). Vision 17 329 MiB |
+| Qwen3.8-27B-ABLITERATED | 95.3 % ‡ | | | [costs nothing measurable](models/abliteration.md); 37 % fewer tokens |
+| [Qwen3.5-27B](models/context-depth.md) | 95.3 % | | | dense; flattest generation curve at depth, −11.8 % |
+| Gemma-4-26B-A4B | 94.0 % ‡ | **failed** | | only model here that *gains* from reasoning |
+| Mistral-Small-3.2-24B | 93.3 % ‡ | 1.8 % | | thinking switch has no effect — no reasoning mode |
+| [**gpt-oss-20B**](models/harness-effect.md#gpt-oss-20b-makes-the-harness-failure-a-class-not-a-curiosity) | **92.7 %** ‡ / **21.3 %** ⚠️ | | | ⚠️ the 21.3 % is the harness, not the model |
+| Kimi-Linear-48B-A3B | 89.3 % | | | linear attention — [worst of all at 32k depth](models/context-depth.md) |
+| Ornith-9B | 90.7 % ‡ | | | |
+| Mankei-326M-Embedder | — | | | German embedder, [0.875 retrieval](models/chunk-position.md) |
+| Mankei-1B-Chat | **22.7 %** ⚠️ | | | at chance; 142/150 without a parseable answer |
 | [Qwen3.6-27B](#qwen36-27b) | **93.3 %** | 23.6 % · 74.2 % @32k | **38.3 %** (31/81) | |
 | [Gemma-4-12B](#gemma-4-12b) | 92.7 % | **failed** | | **vision slot** |
 | Gemma-4-E4B | 91.3 % | | | |

@@ -63,7 +63,9 @@ Everything above that is untested — see [open](#open).
 | Below 84.5 W on the throttle curve — [down to 84.5 W is done](hardware/power.md#there-is-an-optimum-and-it-sits-at-1200-mhz), efficiency worsens monotonically past the 1 200 MHz optimum | low priority |
 | **Batch coding: a slow model given a task list overnight** — the latency numbers rule out interactive use and say nothing about this | planned |
 | **Three-way runtime comparison: Ollama vs llama.cpp vs vLLM** on one card and one model — [two of the three are done](models/../data/ollama_vs_llamacpp.tsv) | planned |
-| **MTP / speculative decoding** — llama.cpp discards Qwen's `nextn` tensors; whether vLLM on ROCm uses them here is untested | planned |
+| **DSpark speculative decoding** — merged into llama.cpp, MIT, with draft checkpoints for Qwen and Gemma; reported 1.6–2.7× decode with unchanged output. Untested here | planned |
+| **Plain speculative decoding** (`--model-draft`) — supported by our runtime today and never measured | planned |
+| MTP: llama.cpp discards Qwen's `nextn` tensors (`unused tensor blk.64.nextn.*`); vLLM on ROCm needs a container runtime on the GPU host | blocked |
 | Lowering the memory clock | [abandoned](hardware/power.md#the-memory-clock-is-not-a-knob-you-can-turn-down) — took the card off the bus |
 
 ## Data and scripts
