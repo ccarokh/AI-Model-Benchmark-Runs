@@ -62,15 +62,27 @@
   tr.offen td.frage::before { content: "?"; display: inline-block; width: 18px;
                               color: var(--gelb); font-weight: 700; }
   tr:not(.offen) td.frage::before { content: ""; display: inline-block; width: 18px; }
-  td.wahl { width: 240px; text-align: right; white-space: nowrap; }
-  button.w { background: transparent; color: var(--leise); border: 1px solid var(--rand);
-             padding: 5px 14px; font: inherit; font-size: 13px; cursor: pointer; }
-  button.w:first-of-type { border-radius: 7px 0 0 7px; }
-  button.w:last-of-type { border-radius: 0 7px 7px 0; border-left: none; }
-  button.w:hover { color: var(--schrift); }
-  button.w.an[data-w="ja"] { background: var(--ja); color: #fff; border-color: var(--ja); }
-  button.w.an[data-w="nein"] { background: var(--nein); color: #fff; border-color: var(--nein); }
-  button.w.an[data-w="untestbar"] { background: var(--grau); color: #fff; border-color: var(--grau); }
+  td.wahl { width: 268px; text-align: right; white-space: nowrap; }
+
+  /* Umschaltgruppe statt drei nackter Schaltflaechen. Der erste Entwurf sah
+     nicht klickbar aus und zeigte die Auswahl kaum -- beides ist bei einem
+     Werkzeug, das nur aus Klicken besteht, kein Schoenheitsfehler. */
+  .gruppe { display: inline-flex; gap: 3px; padding: 3px;
+            background: var(--grund); border: 1px solid var(--rand);
+            border-radius: 11px; }
+  button.w { appearance: none; border: 0; border-radius: 8px;
+             padding: 7px 15px; font: inherit; font-size: 13px; font-weight: 600;
+             color: var(--leise); background: transparent; cursor: pointer;
+             transition: background .12s, color .12s, transform .06s; }
+  button.w:hover { background: #ffffff14; color: var(--schrift); }
+  button.w:active { transform: scale(.96); }
+  button.w:focus-visible { outline: 2px solid #4a8bff; outline-offset: 2px; }
+  button.w.an { color: #fff; box-shadow: 0 1px 0 #0004, inset 0 1px 0 #ffffff26; }
+  button.w.an[data-w="ja"] { background: #22a55c; color: #04240f; }
+  button.w.an[data-w="nein"] { background: #d24a4a; color: #2b0808; }
+  button.w.an[data-w="untestbar"] { background: #6b7688; color: #fff; }
+  /* Die getroffene Wahl bleibt auch beim Ueberfahren stehen. */
+  button.w.an:hover { filter: brightness(1.08); }
 
   .fuss { display: flex; align-items: center; gap: 12px; margin: 14px 0 0; }
   .fuss input { flex: 1; background: var(--grund); border: 1px solid var(--rand);
@@ -124,25 +136,41 @@ function standAktualisieren(modelle) {
     (modelle.length ? fertig / modelle.length * 100 : 0) + "%";
 }
 
+let zeilenAuffrischer = [], kartenAuffrischer = [], MODELLE = [];
+
+function auffrischen() {
+  for (const f of zeilenAuffrischer) f();
+  for (const f of kartenAuffrischer) f();
+  standAktualisieren(MODELLE);
+}
+
 function zeichnen(modelle) {
+  MODELLE = modelle;
+  zeilenAuffrischer = []; kartenAuffrischer = [];
   const l = document.getElementById("liste");
   l.textContent = "";
   for (const m of modelle) {
-    const u = URTEILE[m.modell] || {};
-    const [kl, wort] = zustand(u);
+    const [kl, wort] = zustand(URTEILE[m.modell] || {});
 
     const k = document.createElement("section");
     k.className = "karte " + kl;
 
     const t = document.createElement("div"); t.className = "titel";
     const kopf = m.kopf || {};
+    const u = URTEILE[m.modell] || {};
     const h = document.createElement("h2");
     h.textContent = kopf.model || m.modell;
     const mk = document.createElement("span"); mk.className = "marke " + kl; mk.textContent = wort;
+    kartenAuffrischer.push(() => {
+      const [k2, w2] = zustand(URTEILE[m.modell] || {});
+      k.className = "karte " + k2; mk.className = "marke " + k2; mk.textContent = w2;
+    });
     t.append(h, mk);
     if (m.hat_index) {
       const a = document.createElement("a");
-      a.className = "spielen"; a.href = "/spiel/" + encodeURIComponent(m.modell);
+      // Schraegstrich am Ende ist Pflicht, sonst zeigen relative Verweise
+      // im Spiel eine Ebene zu hoch.
+      a.className = "spielen"; a.href = "/spiel/" + encodeURIComponent(m.modell) + "/";
       a.target = "_blank"; a.rel = "noopener"; a.textContent = "Spielen ▸";
       t.append(a);
     } else {
@@ -185,23 +213,44 @@ function zeichnen(modelle) {
       if (key === "spielbar") tr.classList.add("haupt");
       const td1 = document.createElement("td"); td1.className = "frage"; td1.textContent = text;
       const td2 = document.createElement("td"); td2.className = "wahl";
+      const gruppe = document.createElement("div"); gruppe.className = "gruppe";
       // Untestbar ist kein Ausweichen: wenn das Spiel nicht startet, hat
       // niemand gesehen, ob es schneller wird. Als "Nein" gezaehlt waere das
       // eine erfundene Beobachtung.
       const WAHL = [["ja", "Ja", true], ["nein", "Nein", false],
                     ["untestbar", "Untestbar", "untestbar"]];
+      const knoepfe = [];
       for (const [id, text, wert] of WAHL) {
         const b = document.createElement("button");
-        b.className = "w" + (key in u && u[key] === wert ? " an" : "");
+        // Die Grundklasse MUSS hier stehen. Sie ist beim Umbau auf punktgenaue
+        // Auffrischung verlorengegangen, der Auffrischer setzt nur noch "an" --
+        // und "button.w" traf danach nichts. Ergebnis: Standardknoepfe des
+        // Browsers, keine sichtbare Auswahl, und ein Bewertungswerkzeug, das
+        // nicht zeigt, was bewertet wurde.
+        b.className = "w";
         b.dataset.w = id; b.textContent = text;
         b.onclick = () => {
-          // Nochmal auf dieselbe Antwort tippen setzt zurueck auf unbeantwortet.
-          const neu = (key in u && u[key] === wert) ? null : wert;
+          // Zustand IMMER frisch aus URTEILE lesen, nie aus einer beim Zeichnen
+          // eingefrorenen Kopie -- sonst rechnet ein zweiter Klick gegen einen
+          // veralteten Wert.
+          const jetzt = URTEILE[m.modell] || {};
+          const neu = (key in jetzt && jetzt[key] === wert) ? null : wert;
           senden(m.modell, { [key]: neu });
         };
-        td2.append(b);
+        knoepfe.push([b, wert]);
+        gruppe.append(b);
       }
+      td2.append(gruppe);
       tr.append(td1, td2); tab.append(tr);
+      // Diese Zeile aktualisiert sich selbst -- ohne dass die Liste neu entsteht.
+      // Ein Neuaufbau unter dem Mauszeiger war der Grund, warum ein Klick auf
+      // "Ja" gelegentlich als "Nein" in der Nachbarzelle landete.
+      zeilenAuffrischer.push(() => {
+        const jetzt = URTEILE[m.modell] || {};
+        tr.classList.toggle("offen", !(key in jetzt));
+        for (const [b, wert] of knoepfe)
+          b.classList.toggle("an", key in jetzt && jetzt[key] === wert);
+      });
     }
     k.append(tab);
 
@@ -225,9 +274,13 @@ async function senden(modell, feld, still) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(Object.assign({ modell }, feld)) });
   if (!r.ok) { alert("Nicht gespeichert: " + await r.text()); return; }
+  const antwort = await r.json();
+  // Der Server bleibt die Wahrheit, aber die Liste wird NICHT neu gebaut --
+  // nur die betroffenen Stellen frischen sich auf.
+  if (antwort.urteil) URTEILE[modell] = antwort.urteil;
+  auffrischen();
   const g = document.getElementById("g_" + modell);
   if (g) g.textContent = new Date().toLocaleTimeString("de-DE").slice(0, 5) + " gespeichert";
-  if (!still) await laden();          // Zustand kommt vom Server, nicht aus dem Browser
 }
 
 laden();

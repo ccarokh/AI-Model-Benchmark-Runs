@@ -51,7 +51,7 @@ ducken = bool(re.search(DUCKEN, low))
 extern = len(re.findall(r"(?:src|href)\s*=\s*[\"']https?://", low))
 
 spalten = [
-    c["lauf"], c["model"], c["beschreibung"], c["harness"], c["runtime"], c["quant"],
+    c["lauf"], c["model"], c["beschreibung"], c["harness"], c["runtime"], c["quant"], c.get("aufgabe_id", ""),
     c["temp"], c["maxtok"], c["ctx"], c["template"], c["zeitlimit"],
     abgebrochen, dauer, len(dateien), groesse, hat_index,
     ("canvas" in low) or ("<svg" in low), sprung, ducken,

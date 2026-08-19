@@ -30,28 +30,46 @@ SPIELE = os.path.join(HIER, "game")
 URTEILE = os.path.join(HIER, "spiel_urteile.json")
 TABELLE = os.path.join(HIER, "spiel_urteile.tsv")
 
-# Abzaehlbare Kriterien, die der Mensch nach dem Spielen abhakt. Bewusst
-# Ja/Nein und bewusst wenige -- bei der Bildreihe hat genau das die Haelfte der
-# Urteile objektiv gemacht statt Geschmackssache.
+# Abzaehlbare Kriterien, die der Mensch nach dem Spielen abhakt.
+#
+# JEDE FRAGE FRAGT GENAU EINE SACHE. "Huerden und Tunnel sehen aus wie Huerden
+# und Tunnel" war zusammengeklebt: bei "nein" weiss hinterher niemand, welches
+# von beiden schuld war. Dasselbe galt fuer "Game Over und Neustart", fuer
+# "Highscore steht daneben und ueberlebt den Neustart" und fuer "Springen hilft
+# am Tunnel nicht (und umgekehrt)". Lieber siebzehn scharfe Fragen als zwoelf,
+# deren Antworten sich nicht zurueckverfolgen lassen.
 KRITERIEN = [
-    ("spielbar",   "Öffnet und ist spielbar"),
-    ("hund",       "Der Hund ist als Hund erkennbar"),
-    ("objekte",    "Hürden und Tunnel sehen aus wie Hürden und Tunnel"),
-    ("huerde",     "Hürden lassen sich überspringen"),
-    ("dreier",     "Drei Hürden hintereinander sind mit einem Sprung zu schaffen"),
-    ("tunnel",     "Tunnel lassen sich durchducken"),
-    ("getrennt",   "Springen hilft am Tunnel NICHT (und umgekehrt)"),
-    ("punkte",     "Punktestand läuft"),
-    ("schneller",  "Wird mit der Zeit schneller"),
-    ("highscore",  "Highscore steht daneben und überlebt den Neustart"),
-    ("tagnacht",   "Tag- und Nachtwechsel findet statt"),
-    ("neustart",   "Game Over und Neustart funktionieren"),
+    ("oeffnet",       "Öffnet ohne Fehler"),
+    ("spielbar",      "Ist spielbar"),
+    ("hund",          "Der Hund ist als Hund erkennbar"),
+    ("huerde_optik",  "Hürden sehen aus wie Hürden"),
+    ("tunnel_optik",  "Tunnel sehen aus wie Tunnel"),
+    ("huerde",        "Hürden lassen sich überspringen"),
+    ("dreier",        "Drei Hürden hintereinander sind mit einem Sprung zu schaffen"),
+    ("tunnel",        "Tunnel lassen sich durchducken"),
+    ("tunnel_verdeckt", "Der Hund verschwindet im Tunnel"),
+    ("sprung_nutzlos", "Springen hilft am Tunnel NICHT"),
+    ("ducken_nutzlos", "Ducken hilft an der Hürde NICHT"),
+    ("ducken_gehalten", "Ducktaste in der Luft gedrückt wirkt beim Aufsetzen"),
+    ("punkte",        "Punktestand läuft"),
+    ("schneller",     "Wird mit der Zeit schneller"),
+    ("highscore",     "Highscore wird angezeigt"),
+    ("highscore_bleibt", "Highscore überlebt den Neustart"),
+    ("tagnacht",      "Tag- und Nachtwechsel findet statt"),
+    ("gameover",      "Kollision beendet das Spiel und zeigt das Ergebnis"),
+    ("neustart",      "Neustart funktioniert"),
 ]
 
 # Im Klartext, was das Spiel erzeugt hat. Ohne diese Saetze steht auf der Seite
 # ein Wort wie "direkt", das niemand einordnen kann -- und dann bewertet man das
 # Modell fuer etwas, das der Pruefstand ihm gar nicht ermoeglicht hat.
 PRUEFSTAND = {
+    "claudecode_blind":
+        "BLINDLAUF, der einzige faire Vergleichspunkt: eine leere Sitzung in einem leeren "
+        "Verzeichnis ausserhalb des Projekts, eine einzige Nachricht -- der Aufgabentext, "
+        "sonst nichts. Kein Verlauf, keine Bewertungsfragen, keine Rueckfrage. Dasselbe "
+        "Blatt, das jedes lokale Modell bekommt. Trotzdem fremde Hardware und anderer "
+        "Pruefstand: bei Geschwindigkeit und Groesse ist das kein Vergleich.",
     "claudecode": "Vergleichspunkt, kein Wettbewerber: Claude Opus 5 ueber Claude Code in "
                   "VS Code -- ein Modell aus der Cloud auf fremder Hardware, mit einem "
                   "anderen Pruefstand und unbekannter Quantisierung. Gegen die lokalen "
@@ -98,7 +116,11 @@ def modelle():
                     "model": c.get("model", ""),
                     "beschreibung": c.get("beschreibung", ""),
                     "harness": c.get("harness", ""),
-                    "harness_text": PRUEFSTAND.get(c.get("harness", ""), ""),
+                    # Blindlauf und kontaminierter Lauf teilen sich den Pruefstand,
+                    # unterscheiden sich aber im Entscheidenden -- also am Text trennen.
+                    "harness_text": PRUEFSTAND.get(
+                        c.get("harness", "") + ("_blind" if c.get("beschreibung") == "blind" else ""),
+                        PRUEFSTAND.get(c.get("harness", ""), "")),
                     "runtime": c.get("runtime", ""),
                     "runtime_text": LAUFZEIT.get(c.get("runtime", ""), ""),
                     "temp": c.get("temp"), "maxtok": c.get("maxtok"),
@@ -168,7 +190,11 @@ class H(http.server.BaseHTTPRequestHandler):
         if w.startswith("/spiel/"):
             rest = urllib.parse.unquote(w[len("/spiel/"):])
             teile = rest.split("/", 1)
-            if len(teile) == 1: teile.append("index.html")
+            # Ohne Schraegstrich am Ende loest der Browser relative Verweise eine
+            # Ebene zu hoch auf: aus game.js wird /spiel/game.js. Solange jedes
+            # Spiel aus einer einzigen Datei bestand, fiel das nicht auf.
+            if len(teile) == 1 or not teile[1]:
+                teile = [teile[0], "index.html"]
             modell, datei = teile
             # Kein Ausbrechen aus dem Spielverzeichnis.
             basis = os.path.realpath(os.path.join(SPIELE, modell, "arbeit"))
@@ -208,7 +234,10 @@ class H(http.server.BaseHTTPRequestHandler):
             else: e.pop("kommentar", None)
         e["zeit"] = datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds")
         d[m] = e; speichern(d)
-        return self._send(200, "application/json; charset=utf-8", json.dumps({"ok": True}))
+        # Das gespeicherte Urteil zurueckgeben: die Oberflaeche aktualisiert damit
+        # genau eine Karte, statt die ganze Liste neu zu zeichnen.
+        return self._send(200, "application/json; charset=utf-8",
+                          json.dumps({"ok": True, "urteil": e}, ensure_ascii=False))
 
 class S(socketserver.ThreadingTCPServer):
     allow_reuse_address = True

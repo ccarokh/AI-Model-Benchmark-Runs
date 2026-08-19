@@ -18,6 +18,13 @@ RUN curl -fsSL -o /tmp/oc.tar.gz \
 
 # Nicht als root arbeiten: der Agent fuehrt Code aus, den ein Modell geschrieben hat.
 RUN useradd -m -u 1000 pruef
+# Die Heimatverzeichnisse im Abbild anlegen, nicht dem Einhaengen ueberlassen.
+# Docker legt fehlende Einhaengepunkte als root an -- dann gehoert
+# /home/pruef/.local root, und opencode scheitert an mkdir .local/state mit
+# EACCES. Das hat drei Laeufe gekostet, die wie Modellversagen aussahen.
+RUN mkdir -p /home/pruef/.local/share/opencode /home/pruef/.local/state \
+             /home/pruef/.config/opencode /home/pruef/.cache \
+ && chown -R pruef:pruef /home/pruef
 USER pruef
 WORKDIR /arbeit
 ENV HOME=/home/pruef

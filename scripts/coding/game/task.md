@@ -31,6 +31,9 @@ Das Spiel ist ein Agility-Parcours mit einem **Hund**, der von links nach rechts
   Andere Tasten für diese Aktionen sind nicht erlaubt. **Schreibe die Belegung
   sichtbar auf die Seite.**
 - Springen hilft beim Tunnel **nicht**, Ducken hilft bei der Hürde **nicht**
+- **Ducken ist ein gehaltener Zustand, kein einzelner Tastendruck.** Wer die Ducktaste
+  schon in der Luft drückt und gedrückt hält, duckt sich beim Aufsetzen — er darf nicht
+  darauf angewiesen sein, die Taste erneut zu drücken.
 - Punktestand, der mit der Zeit steigt
 - **Highscore neben dem laufenden Stand.** Er überlebt den Neustart: wer 40 Punkte
   schafft, neu startet und bei 12 stirbt, sieht weiterhin 40 als besten Wert.
@@ -47,17 +50,34 @@ Das Spiel ist ein Agility-Parcours mit einem **Hund**, der von links nach rechts
 SVG oder CSS.
 
 - Der **Hund** muss als Hund erkennbar sein und beim Ducken anders aussehen als beim Laufen.
+  Dabei gilt:
+  - **Eine zusammenhängende Figur, keine schwebenden Teile.** Beine sitzen am Rumpf, der
+    Kopf sitzt am Hals, der Schwanz am Hinterteil — sichtbare Lücken zwischen Körperteilen
+    sind ein Fehler.
+  - **Vier Beine, davon zwei vorn und zwei hinten.** Ein Hund mit allen Beinen unter dem
+    Hinterteil ist keiner. Vorderbeine sitzen unter der Brust, Hinterbeine an der Hüfte.
+  - **Proportionen bleiben stimmig**, auch in der Duckhaltung: der Kopf ist deutlich
+    kleiner als der Rumpf, die Beine sind kürzer als der Rumpf lang ist, und die Schnauze
+    ist kein zweiter Kopf. Ein gestauchter Hund ist flacher, nicht anders gebaut.
 - **Hürde und Tunnel** müssen als das erkennbar sein, was sie sind, und voneinander
   unterscheidbar. Zwei gleich aussehende Rechtecke erfüllen das nicht — man muss auf einen
   Blick wissen, ob zu springen oder zu ducken ist.
+- **Der Hund verschwindet im Tunnel.** Läuft er geduckt hindurch, ist er darin nicht mehr
+  zu sehen — der Tunnel liegt vor ihm, nicht hinter ihm. Ein Hund, der über den Tunnel
+  hinweg gezeichnet wird, läuft sichtbar davor vorbei statt hindurch.
 
 **Das Spiel muss spielbar sein.** Die Sprunghöhe muss zur Hürdenhöhe passen und die
 Tunnelöffnung zur geduckten Haltung, mit genug Spielraum, dass ein Mensch es zur richtigen
 Zeit schafft — nicht nur rechnerisch in einem Zeitfenster von Millisekunden.
 
-**Bis zu drei Hürden können direkt hintereinander stehen, und eine Gruppe muss mit einem
-Sprung zu schaffen sein.** Das gilt auch bei der höchsten Geschwindigkeit, die im Spiel
+**Hürden treten in Gruppen von einer, zwei oder drei auf, und alle drei Gruppengrößen
+müssen tatsächlich vorkommen** — nicht nur theoretisch möglich sein. Eine Gruppe muss mit
+**einem** Sprung zu schaffen sein, auch bei der höchsten Geschwindigkeit, die im Spiel
 vorkommt. Rechne die Sprungweite gegen die Gruppenbreite, statt es zu schätzen.
+
+Die einzelnen Hürden einer Gruppe müssen **als einzelne erkennbar** sein. Lückenlos
+aneinandergesetzt sehen drei Hürden aus wie eine breite, und dann ist die Gruppe
+unsichtbar statt selten.
 
 **Technische Vorgaben:**
 
@@ -67,6 +87,23 @@ vorkommt. Rechne die Sprungweite gegen die Gruppenbreite, statt es zu schätzen.
 - Kein Build-Schritt. Die Datei im Browser öffnen muss reichen.
 
 ---
+
+## The reference run, and why it needs an empty room
+
+A reference exists for one question: are the criteria simultaneously satisfiable? Without
+it, a table full of "no" cannot be read — weak models and an over-hard or under-specified
+task look identical.
+
+**The first reference was written inside the session that also wrote the task.** Its author
+knew twenty rounds of feedback — the stuck duck key, the legs at the wrong end, the tunnel
+mouth on the wrong side — and knew the eighteen rating questions. That measures the
+conversation, not the task.
+
+**A blind reference has to run in an empty directory outside the project.** A fresh window
+in the project folder is not enough: it loads the project instructions, the memory index
+and, at first glance, the repository files — in which the task, the rating questions and
+every correction are written down. Both runs are kept, labelled, and the difference between
+them is itself a measurement: what prior knowledge is worth.
 
 ## Where the requirements come from
 

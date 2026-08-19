@@ -43,10 +43,17 @@ const BODEN = 250;
 // der Hoehe: der Hund (56 breit) plus drei Huerden a 26 sind 134 px, die bei
 // niedrigstem Tempo 0,52 s zum Durchqueren brauchen. Ueber Huerdenhoehe ist er
 // 0,74 s. Nachgerechnet, nicht geschaetzt.
-const SPRUNGKRAFT = -760, SCHWERKRAFT = 1750;
+const SPRUNGKRAFT = -850, SCHWERKRAFT = 1750;
+// Huerden einer Gruppe stehen mit Luecke, nicht auf Stoss. Lueckenlos sahen
+// drei 26 px breite Huerden aus wie EINE breite -- die Gruppe war unsichtbar,
+// nicht selten. Abstand 32 bei Breite 26 laesst 6 px Luft; drei ergeben 90 px.
+// Hund 68 + 90 = 158 px Durchquerung, bei niedrigstem Tempo 0,61 s gegen 0,86 s
+// ueber Huerdenhoehe. Nachgerechnet.
+const HUERDE_ABSTAND = 32;
 
 // --- Zustand ---------------------------------------------------------------
 let hund, hindernisse, punkte, tempo, laeuft, weg, zeit, spawn;
+let beutel = [];
 
 let best = 0;
 try { best = parseInt(localStorage.getItem('agility_best') || '0', 10) || 0; } catch (e) {}
@@ -60,17 +67,23 @@ neu();
 
 // --- Eingabe ---------------------------------------------------------------
 const DUCKTASTEN = ['ControlLeft', 'ControlRight', 'KeyS'];
+// Ducken ist ein ZUSTAND, kein Ereignis. Erster Entwurf verwarf ein keydown,
+// das waehrend eines Sprungs kam -- und wer die Taste gedrueckt HAELT, bekommt
+// beim Aufsetzen kein zweites keydown. Der Hund duckte sich dann nie wieder,
+// solange die Taste unten blieb. Jetzt wird nur gemerkt, ob die Taste liegt;
+// ob geduckt wird, entscheidet die Schleife beim Aufsetzen.
+let duckTasteLiegt = false;
 // Springen und Ducken sind streng getrennt: in der Luft wird nicht geduckt,
 // und geduckt wird nicht gesprungen. Genau das ist die Anforderung.
 addEventListener('keydown', e => {
   // Pflicht plus die in der Aufgabe erlaubten Alternativen -- und nichts sonst.
   if (e.code === 'Space' || e.code === 'KeyW') {
     e.preventDefault();
-    if (laeuft && !hund.springt && !hund.duckt) { hund.vy = SPRUNGKRAFT; hund.springt = true; }
+    if (laeuft && !hund.springt) { hund.vy = SPRUNGKRAFT; hund.springt = true; }
   }
   if (DUCKTASTEN.includes(e.code)) {
     e.preventDefault();
-    if (laeuft && !hund.springt) hund.duckt = true;
+    duckTasteLiegt = true;
   }
   // Enter loest zusaetzlich aus. Liegt der Fokus auf der Schaltflaeche, klickt
   // der Browser sie ohnehin -- dann startet zweimal neu, was nichts schadet.
@@ -79,7 +92,10 @@ addEventListener('keydown', e => {
 const knopf = document.getElementById('neustart');
 knopf.onclick = () => { neu(); knopf.blur(); };
 c.addEventListener('click', () => { if (!laeuft) neu(); });
-addEventListener('keyup', e => { if (DUCKTASTEN.includes(e.code)) hund.duckt = false; });
+addEventListener('keyup', e => { if (DUCKTASTEN.includes(e.code)) duckTasteLiegt = false; });
+// Verliert das Fenster den Fokus, kommt das keyup nie an -- und eine haengende
+// Modifikatortaste wuerde das Spiel lahmlegen.
+addEventListener('blur', () => { duckTasteLiegt = false; });
 
 // --- Hindernisse -----------------------------------------------------------
 // Huerde: steht auf dem Boden, oben offen  -> nur Springen hilft.
@@ -94,8 +110,8 @@ function setzen() {
 const HUND_X = 120;
 function rahmen() {
   // Der Koerper des Hundes, in Weltkoordinaten. Beim Ducken flacher UND laenger.
-  const h = hund.duckt ? 30 : 52;
-  const b = hund.duckt ? 92 : 56;
+  const h = hund.duckt ? 29 : 42;      // Rumpfhoehe plus Beine
+  const b = hund.duckt ? 84 : 68;      // Rumpflaenge plus Kopf
   return { x: HUND_X, y: BODEN - h + hund.y, b, h };
 }
 function stoss(o) {
@@ -111,59 +127,72 @@ function stoss(o) {
 
 // --- Zeichnen --------------------------------------------------------------
 function hundZeichnen(t) {
-  const r = rahmen(), x = r.x, y = r.y, duckt = hund.duckt;
-  const beinPhase = Math.sin(t * 14), beinPhase2 = Math.sin(t * 14 + Math.PI);
+  const r = rahmen(), duckt = hund.duckt;
+  const L = duckt ? 66 : 54;              // Rumpflaenge, alles andere leitet sich ab
+  const H = duckt ? 17 : 22;              // Rumpfhoehe
+  const beinL = duckt ? 12 : 20;          // kuerzer als der Rumpf lang ist
+  const kopfB = L * 0.34, kopfH = H * 0.82;
+  const takt = t * 13, a1 = Math.sin(takt), a2 = Math.sin(takt + Math.PI);
+
   g.save();
-  g.translate(x, y);
-  const koerperH = duckt ? 22 : 30, koerperB = duckt ? 62 : 46;
+  g.translate(r.x, r.y);
 
-  // Schwanz
-  g.strokeStyle = '#8a5a2b'; g.lineWidth = 6; g.lineCap = 'round';
+  // Vier Beine, als HINTER- und VORDERPAAR -- nicht alle am Hinterteil. Das
+  // hintere Paar sitzt an der Huefte, das vordere unter der Brust kurz vor dem
+  // Kopf. Die abgewandte Seite wird zuerst und dunkler gezeichnet, damit man
+  // vier Beine in zwei Ebenen sieht statt zwei dicker Striche.
+  // Sie beginnen 6 px INNERHALB des Rumpfes, dann kann keine Luecke entstehen.
+  const bein = (bx, ph, farbe) => {
+    g.strokeStyle = farbe;
+    g.beginPath();
+    g.moveTo(bx, H - 6);
+    g.lineTo(bx + ph * 6, H + beinL);
+    g.stroke();
+  };
+  g.lineWidth = 6; g.lineCap = 'round';
+  bein(L * 0.20, a2, '#6b4320');     // hinten, abgewandt
+  bein(L * 0.78, a1, '#6b4320');     // vorne,  abgewandt
+
+  // Schwanz, am Hinterteil angesetzt
+  g.strokeStyle = '#8a5a2b'; g.lineWidth = 5;
   g.beginPath();
-  g.moveTo(2, koerperH * 0.35);
-  g.quadraticCurveTo(-16, koerperH * 0.1 - Math.sin(t * 10) * 6, -20, -10 + (duckt ? 14 : 0));
+  g.moveTo(4, H * 0.3);
+  g.quadraticCurveTo(-14, H * 0.1 - Math.sin(t * 9) * 5, -16, -H * 0.5);
   g.stroke();
-
-  // Beine, mit Laufbewegung
-  g.strokeStyle = '#7b4f26'; g.lineWidth = 7;
-  const beinLen = duckt ? 10 : 22, by = koerperH;
-  for (const [bx, ph] of [[10, beinPhase], [koerperB - 12, beinPhase2]]) {
-    g.beginPath(); g.moveTo(bx, by);
-    g.lineTo(bx + ph * 7, by + beinLen);
-    g.stroke();
-    g.beginPath(); g.moveTo(bx + 12, by);
-    g.lineTo(bx + 12 - ph * 7, by + beinLen);
-    g.stroke();
-  }
 
   // Rumpf
   g.fillStyle = '#a9702f';
-  g.beginPath();
-  g.roundRect(0, 0, koerperB, koerperH, duckt ? 11 : 14);
-  g.fill();
+  g.beginPath(); g.roundRect(0, 0, L, H, H / 2); g.fill();
 
-  // Kopf, Schnauze, Ohr, Auge
-  const kx = koerperB - (duckt ? 6 : 10), ky = duckt ? 0 : -14;
-  g.beginPath(); g.roundRect(kx, ky, 26, 22, 9); g.fill();
-  g.beginPath(); g.roundRect(kx + 20, ky + 9, 16, 10, 5); g.fill();   // Schnauze
+  // Zugewandtes Beinpaar ueber dem Rumpf, heller
+  bein(L * 0.26, a1, '#7b4f26');     // hinten, zugewandt
+  bein(L * 0.72, a2, '#7b4f26');     // vorne,  zugewandt
+
+  // Hals und Kopf sitzen am Rumpf an, mit Ueberlappung statt Kante an Kante
+  const kx = L - kopfB * 0.9, ky = duckt ? -kopfH * 0.25 : -kopfH * 0.62;
+  g.beginPath();
+  g.moveTo(L - kopfB * 1.1, H * 0.2);
+  g.lineTo(kx + kopfB * 0.25, ky + kopfH * 0.5);
+  g.lineTo(kx + kopfB * 0.8, ky + kopfH);
+  g.lineTo(L - kopfB * 0.3, H * 0.7);
+  g.closePath(); g.fill();
+  g.beginPath(); g.roundRect(kx, ky, kopfB, kopfH, kopfH * 0.42); g.fill();
+  // Schnauze: deutlich kleiner als der Kopf, kein zweiter Kopf
+  g.beginPath();
+  g.roundRect(kx + kopfB * 0.72, ky + kopfH * 0.42, kopfB * 0.5, kopfH * 0.4, kopfH * 0.2);
+  g.fill();
+  // Schlappohr
+  g.fillStyle = '#8a5a2b';
+  g.beginPath();
+  g.moveTo(kx + kopfB * 0.22, ky + kopfH * 0.12);
+  g.quadraticCurveTo(kx - kopfB * 0.18, ky + kopfH * 0.45, kx + kopfB * 0.14, ky + kopfH * 0.95);
+  g.quadraticCurveTo(kx + kopfB * 0.44, ky + kopfH * 0.55, kx + kopfB * 0.44, ky + kopfH * 0.1);
+  g.fill();
+  // Auge und Nase
   g.fillStyle = '#2a1a0c';
-  g.beginPath(); g.ellipse(kx + 35, ky + 14, 3.2, 3, 0, 0, 7); g.fill();  // Nase
-  g.beginPath(); g.ellipse(kx + 12, ky + 9, 2.6, 3, 0, 0, 7); g.fill();   // Auge
-  g.fillStyle = '#8a5a2b';                                                // Schlappohr
-  g.beginPath();
-  g.moveTo(kx + 4, ky + 2);
-  g.quadraticCurveTo(kx - 6, ky + 8, kx + 2, ky + 20);
-  g.quadraticCurveTo(kx + 10, ky + 12, kx + 10, ky + 2);
-  g.fill();
+  g.beginPath(); g.ellipse(kx + kopfB * 0.62, ky + kopfH * 0.38, 2.4, 2.7, 0, 0, 7); g.fill();
+  g.beginPath(); g.ellipse(kx + kopfB * 1.16, ky + kopfH * 0.6, 2.8, 2.6, 0, 0, 7); g.fill();
   g.restore();
-}
-
-// Tag und Nacht wechseln alle 300 Punkte, mit weichem Uebergang statt Sprung.
-let nacht = false;
-function mischen(a, b, f) {
-  const p = x => [parseInt(x.slice(1, 3), 16), parseInt(x.slice(3, 5), 16), parseInt(x.slice(5, 7), 16)];
-  const [r1, g1, b1] = p(a), [r2, g2, b2] = p(b);
-  return `rgb(${r1 + (r2 - r1) * f | 0},${g1 + (g2 - g1) * f | 0},${b1 + (b2 - b1) * f | 0})`;
 }
 
 function zeichnen(t) {
@@ -179,6 +208,8 @@ function zeichnen(t) {
     g.beginPath(); g.moveTo(i, BODEN + 12); g.lineTo(i + 14, BODEN + 4); g.stroke();
   }
 
+  // Huerden zuerst, dann der Hund, dann die Tunnel -- so verschwindet er darin,
+  // statt sichtbar davor vorbeizulaufen. Reihenfolge ist hier die ganze Wirkung.
   for (const o of hindernisse) {
     if (o.art === 'huerde') {
       const y = BODEN - o.hoehe;
@@ -187,25 +218,40 @@ function zeichnen(t) {
       g.fillStyle = '#d4382f';
       g.fillRect(o.x - 4, y, o.breite + 8, 8);
       g.fillRect(o.x - 4, y + 20, o.breite + 8, 6);
-    } else {
-      const dy = BODEN - o.lichte;
-      g.fillStyle = '#3f6fb5';
-      g.beginPath();
-      g.moveTo(o.x, BODEN);
-      g.lineTo(o.x, dy);
-      g.quadraticCurveTo(o.x + o.breite / 2, dy - 40, o.x + o.breite, dy);
-      g.lineTo(o.x + o.breite, BODEN);
-      g.fill();
-      g.fillStyle = '#2b4e80';
-      for (let i = 0; i < 4; i++) {
-        g.fillRect(o.x + 8 + i * (o.breite - 16) / 4, dy - 6 - i * 2, 4, BODEN - dy + 6);
-      }
-      g.fillStyle = '#17253c';
-      g.beginPath(); g.ellipse(o.x + o.breite, dy + 8, 10, o.lichte * 0.42, 0, 0, 7); g.fill();
     }
   }
 
   hundZeichnen(t);
+
+  for (const o of hindernisse) {
+    if (o.art === 'tunnel') {
+      // Roehre in Seitenansicht: Rundbogen ueber der ganzen Breite, Reifen
+      // quer darueber, und die dunkle Muendung LINKS -- dort laeuft der Hund
+      // hinein. Vorher lag sie rechts, und dann sah es aus wie ein Huegel.
+      const dy = BODEN - o.lichte, mitte = BODEN - o.lichte / 2, rx = 13;
+      g.fillStyle = '#e6663a';
+      g.beginPath();
+      g.moveTo(o.x + rx, BODEN);
+      g.lineTo(o.x + rx, dy);
+      g.quadraticCurveTo(o.x + o.breite / 2, dy - 26, o.x + o.breite, dy);
+      g.lineTo(o.x + o.breite, BODEN);
+      g.fill();
+      // Reifen quer ueber die Roehre
+      g.strokeStyle = '#c24f28'; g.lineWidth = 4;
+      for (let i = 1; i <= 4; i++) {
+        const bx = o.x + rx + i * (o.breite - rx) / 5;
+        g.beginPath();
+        g.moveTo(bx, BODEN);
+        g.quadraticCurveTo(bx - 3, dy + 4, bx - 4, dy - 6 * (1 - Math.abs(i - 2.5) / 2.5));
+        g.stroke();
+      }
+      // Muendung: heller Rand, dunkles Inneres
+      g.fillStyle = '#f08a5d';
+      g.beginPath(); g.ellipse(o.x + rx, mitte, rx, o.lichte / 2, 0, 0, 7); g.fill();
+      g.fillStyle = '#20140f';
+      g.beginPath(); g.ellipse(o.x + rx, mitte, rx - 5, o.lichte / 2 - 5, 0, 0, 7); g.fill();
+    }
+  }
 
   g.fillStyle = nacht ? '#e8ecf4' : '#123';
   g.font = 'bold 20px system-ui';
@@ -250,6 +296,9 @@ function schritt(jetzt) {
     hund.vy += SCHWERKRAFT * dt;
     hund.y += hund.vy * dt;
     if (hund.y >= 0) { hund.y = 0; hund.vy = 0; hund.springt = false; }
+    // In der Luft wird nicht geduckt -- aber die gedrueckte Taste bleibt gemerkt
+    // und greift, sobald der Hund wieder steht.
+    hund.duckt = duckTasteLiegt && !hund.springt;
 
     spawn -= tempo * dt;
     if (spawn <= 0) { setzen(); spawn = 260 + Math.random() * 220; }
