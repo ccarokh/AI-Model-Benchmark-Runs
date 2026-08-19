@@ -31,7 +31,7 @@ LAUF=$(basename "$CONF"); LAUF=${LAUF%.conf}
 # Kein `source`: das sind Daten, keine Befehle. Und ein Tippfehler im Schluessel
 # MUSS abbrechen -- ein stillschweigend auf die Vorgabe zurueckfallendes
 # tmep=0.9 waere eine erfundene Messreihe.
-model=""; gguf=""; harness=""; beschreibung=""; runtime=""
+model=""; gguf=""; hf=""; quant=""; harness=""; beschreibung=""; runtime=""
 temp=0.2; maxtok=16384; ctx=32768; template=gguf; zeitlimit=3600; aufgabe=task.md
 while IFS= read -r zeile; do
   zeile=${zeile%%#*}
@@ -40,12 +40,12 @@ while IFS= read -r zeile; do
   k=${zeile%%=*}; v=${zeile#*=}
   k=$(echo "$k" | tr -d '[:space:]'); v=$(echo "$v" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
   case "$k" in
-    model|gguf|harness|beschreibung|runtime|temp|maxtok|ctx|template|zeitlimit|aufgabe)
+    model|gguf|hf|quant|harness|beschreibung|runtime|temp|maxtok|ctx|template|zeitlimit|aufgabe)
       printf -v "$k" '%s' "$v" ;;
     *) ende "Konfiguration: unbekannter Schluessel '$k'" ;;
   esac
 done < "$CONF"
-for pflicht in model gguf harness beschreibung runtime; do
+for pflicht in model quant harness beschreibung runtime; do
   [ -n "${!pflicht}" ] || ende "Konfiguration: '$pflicht' fehlt"
 done
 # Der Dateiname MUSS den Inhalt wiedergeben. Ein Etikett, das nachtraeglich
@@ -57,9 +57,16 @@ case "$harness" in
   opencode) ;;
   *) ende "Pruefstand '$harness' unbekannt" ;;
 esac
+# Die beiden Laufzeiten lesen nicht dieselbe Datei: llama.cpp will GGUF, vLLM
+# will HF-Format. Wo dazu eine andere Quantisierung noetig ist, macht das den
+# Lauf nicht ungueltig -- es macht ihn zu einem anderen Lauf, und deshalb steht
+# `quant` in jeder Ergebniszeile. Verglichen wird dann Laufzeit UND Gewicht,
+# und wer die Tabelle liest, sieht es.
 case "$runtime" in
-  llamacpp) ;;
-  vllm) [ -n "$(ssh -n $MESS 'command -v docker' 2>/dev/null)" ] || ende "vLLM braucht Docker auf $MESS" ;;
+  llamacpp) [ -n "$gguf" ] || ende "runtime=llamacpp braucht 'gguf'"
+            [ -s "$(ssh -n $MESS "readlink -f '$gguf'" 2>/dev/null)" ] 2>/dev/null || true ;;
+  vllm) [ -n "$hf" ] || ende "runtime=vllm braucht 'hf' (Pfad oder HF-Kennung)"
+        [ -n "$(ssh -n $MESS 'command -v docker' 2>/dev/null)" ] || ende "vLLM braucht Docker auf $MESS" ;;
   *) ende "Laufzeit '$runtime' unbekannt" ;;
 esac
 AUFGABE=$HIER/$aufgabe
@@ -78,10 +85,11 @@ cat > "$ziel/lauf.json" <<J
 {"lauf": "$LAUF", "model": "$model", "beschreibung": "$beschreibung",
  "harness": "$harness", "runtime": "$runtime", "temp": $temp, "maxtok": $maxtok,
  "ctx": $ctx, "template": "$template", "zeitlimit": $zeitlimit,
- "aufgabe": "$aufgabe", "gguf": "$gguf", "messrechner": "$MESS"}
+ "aufgabe": "$aufgabe", "quant": "$quant", "gguf": "$gguf", "hf": "$hf",
+ "messrechner": "$MESS"}
 J
 
-[ -f "$E/ergebnis.tsv" ] || printf 'lauf\tmodel\tbeschreibung\tharness\truntime\ttemperature\tmax_tokens\tctx\ttemplate\tzeitlimit\tabgebrochen\tsekunden\tdateien\tbytes\that_index\tcanvas_or_svg\tjump_key\tduck_key\tscore\trestart\tspeedup\textern\n' > "$E/ergebnis.tsv"
+[ -f "$E/ergebnis.tsv" ] || printf 'lauf\tmodel\tbeschreibung\tharness\truntime\tquant\ttemperature\tmax_tokens\tctx\ttemplate\tzeitlimit\tabgebrochen\tsekunden\tdateien\tbytes\that_index\tcanvas_or_svg\tjump_key\tduck_key\tscore\trestart\tspeedup\textern\n' > "$E/ergebnis.tsv"
 
 # --- Modellserver auf dem Messrechner ---------------------------------------
 server_stop(){
