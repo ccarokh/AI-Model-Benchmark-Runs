@@ -47,8 +47,9 @@ eine Animation, eine Duckhaltung, die Hindernisse, gegebenenfalls Hintergrund.
 - Kein externes CSS oder JavaScript, keine CDN-Einbindung, keine Schriftarten von außen.
   Das Spiel muss offline laufen.
 - Kein Build-Schritt. Im Browser öffnen muss reichen.
-- Gib zuerst **nur** den Dateiinhalt aus, beginnend mit `<!DOCTYPE html>`, ohne
-  Erklärung. Der Bilderblock, falls du Weg B wählst, kommt danach.
+- Das Spiel ist eine **HTML-Datei**. Wie du sie in deiner Antwort formatierst, ist
+  gleichgültig — roh, in einem Markdown-Block, mit Erklärung davor oder danach. Der
+  Bilderblock, falls du Weg B wählst, kommt ans Ende.
 
 ---
 
@@ -82,8 +83,21 @@ Our image models already have
 [measured limits](../../../use-cases/image-generation.md) — three tasks nobody passed —
 so a bad asset is not automatically the coder's fault.
 
-**Output the file first** so the harness does not have to guess where code starts. Models
-that ignore that are informative in themselves — a countable failure, like an empty patch.
+**The answer format is not part of the task.** An earlier version demanded the raw file
+with no explanation, which is a convenience for the collector dressed up as a requirement:
+wrapping an answer in a markdown fence is ordinary behaviour, and a model doing it would
+have lost to the parser rather than on ability.
+
+**The extraction is not a regular expression over HTML.** Markdown fences are stripped as
+text — that much is a string operation — but the document itself is located by its outer
+bounds (first `<!doctype`/`<html>` to the **last** `</html>`) and then validated with
+`html.parser`. The failure this avoids is concrete: a game that builds a game-over screen
+can contain `"</html>"` inside a JavaScript string, and a non-greedy pattern truncates
+there. **The parser decides whether it is a document; the pattern only finds where to
+look.**
+
+`raw_or_fenced` is still recorded — as an observation about how models answer, not as a
+score.
 
 ## This measures the harness as well as the model
 

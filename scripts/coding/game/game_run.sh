@@ -51,7 +51,7 @@ HARNESS_MAXTOK=16384
 HARNESS_TEMP=0.2
 HARNESS_ID="oneshot-t${HARNESS_TEMP}-m${HARNESS_MAXTOK}"
 
-[ -f "$E/ergebnis.tsv" ] || printf 'model\tharness\tturns\ttemperature\tmax_tokens\ttruncated\tseconds\ttokens\thtml_bytes\tstarts_with_doctype\troute\timages_requested\tcanvas_or_svg\tjump_key\tduck_key\tscore\trestart\tspeedup\n' > $E/ergebnis.tsv
+[ -f "$E/ergebnis.tsv" ] || printf 'model\tharness\tturns\ttemperature\tmax_tokens\ttruncated\tseconds\ttokens\thtml_bytes\traw_or_fenced\thtml_closed\troute\timages_requested\tcanvas_or_svg\tjump_key\tduck_key\tscore\trestart\tspeedup\n' > $E/ergebnis.tsv
 
 for name in "${AUSWAHL[@]}"; do
   g="${MODELLE[$name]:-}"
@@ -82,10 +82,56 @@ text = (m.get("content") or "")
 ziel = sys.argv[2]
 open(ziel + "/roh.txt", "w").write(text)
 
-# HTML herausloesen: ab <!DOCTYPE oder <html, bis </html>
-h = re.search(r"(<!DOCTYPE html.*?</html>)", text, re.S | re.I) or \
-    re.search(r"(<html.*?</html>)", text, re.S | re.I)
-html = h.group(1) if h else ""
+# HTML herausloesen -- robust, weil das Format des Modells KEINE Anforderung ist.
+# Eine Antwort in einen Markdown-Block zu setzen ist normales Verhalten; wer
+# daran scheitert, scheitert an unserem Parser und nicht am Koennen. Deshalb:
+# Zaeune entfernen, Prosa davor und danach ignorieren, groesstes HTML nehmen.
+def html_finden(t):
+    """Dokument im Antworttext finden. Grob lokalisieren, dann PARSEN.
+
+    Regex allein bricht hier an einer realistischen Stelle: ein Spiel, das eine
+    Game-Over-Seite zusammenbaut, kann "</html>" in einem JS-String enthalten,
+    und ein nicht-gieriges Muster schneidet dort ab. Deshalb wird die aeussere
+    Grenze genommen (erstes <!doctype/<html> bis LETZTES </html>) und das
+    Ergebnis mit html.parser geprueft -- der Parser sagt, ob es ein Dokument ist,
+    nicht das Muster.
+    """
+    from html.parser import HTMLParser
+
+    class Pruefer(HTMLParser):
+        def __init__(self):
+            super().__init__(convert_charrefs=True)
+            self.hat_html = self.hat_body = self.hat_script = False
+        def handle_starttag(self, tag, attrs):
+            if tag == "html": self.hat_html = True
+            elif tag == "body": self.hat_body = True
+            elif tag == "script": self.hat_script = True
+
+    def ist_dokument(k):
+        if not k.strip(): return False
+        p = Pruefer()
+        try: p.feed(k)
+        except Exception: return False
+        return p.hat_html and p.hat_body
+
+    # Markdown-Zaeune sind reine Textverpackung -- die duerfen weg, bevor
+    # irgendetwas geparst wird.
+    bloecke = re.findall(r"```(?:[a-zA-Z]*)\s*\n(.*?)```", t, re.S)
+    bloecke.append(t)
+
+    kandidaten = []
+    for k in bloecke:
+        low = k.lower()
+        a = low.find("<!doctype html")
+        if a < 0: a = low.find("<html")
+        if a < 0: continue
+        e = low.rfind("</html>")          # LETZTES, nicht erstes
+        kandidaten.append(k[a:e + 7] if e > a else k[a:])
+    gueltig = [k for k in kandidaten if ist_dokument(k)]
+    if gueltig: return max(gueltig, key=len)
+    return max(kandidaten, key=len) if kandidaten else ""
+
+html = html_finden(text)
 open(ziel + "/spiel.html", "w").write(html)
 
 # Bilderblock, falls Weg B
@@ -106,7 +152,10 @@ print(json.dumps({
     # sieht ein halbes Spiel wie ein schlechtes Spiel aus.
     "truncated": tok >= 16384,
     "html_bytes": len(html),
-    "starts_with_doctype": text.strip().lower().startswith("<!doctype"),
+    # Beobachtung, KEINE Bewertung: ob die Antwort roh oder in einem Block kam.
+    # Das Ausgabeformat ist keine Anforderung der Aufgabe.
+    "raw_or_fenced": "raw" if text.strip().lower().startswith("<!doctype") else "fenced_or_prose",
+    "html_closed": html.rstrip().lower().endswith("</html>"),
     "route": "B_images" if bilder else ("A_code" if html else "none"),
     "images_requested": len(bilder),
     # Abzaehlbares, kein Urteil: taucht es im Code ueberhaupt auf?
@@ -125,7 +174,7 @@ PY
     HARNESS_MAXTOK="$HARNESS_MAXTOK" /root/evalvenv/bin/python - "$ziel/meta.json" "$name" "$dauer" >> $E/ergebnis.tsv <<'PY'
 import json, sys
 d = json.load(open(sys.argv[1]))
-f = ["truncated","tokens","html_bytes","starts_with_doctype","route","images_requested",
+f = ["truncated","tokens","html_bytes","raw_or_fenced","html_closed","route","images_requested",
      "canvas_or_svg","jump_key","duck_key","score","restart","speedup"]
 import os
 kopf = [sys.argv[2], os.environ.get("HARNESS_ID",""), os.environ.get("HARNESS_TURNS",""),
