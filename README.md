@@ -72,6 +72,7 @@ Everything above that is untested — see [open](#open).
 | **Three-way runtime comparison: Ollama vs llama.cpp vs vLLM** on one card and one model — [two of the three are done](models/../data/ollama_vs_llamacpp.tsv) | planned |
 | **DSpark speculative decoding** — merged into llama.cpp, MIT, with draft checkpoints for Qwen and Gemma; reported 1.6–2.7× decode with unchanged output. Untested here | planned |
 | **Plain speculative decoding** (`--model-draft`) — supported by our runtime today and never measured | planned |
+| **Drift against current upstream llama.cpp** — the measurement build is 215 behind master, and there is no distribution package to carry updates in. [Standing check](SYSTEMS.md#checking-for-drift-against-current-upstream): build current alongside the pinned one, run the reference workload on both in the same session | **recurring** |
 | **The chat template as a variable in coding** — every coding run here used whatever template shipped inside the GGUF. The harness was worth up to 70 points on chat; the template has never been varied at all | planned |
 | MTP: llama.cpp discards Qwen's `nextn` tensors (`unused tensor blk.64.nextn.*`); vLLM on ROCm needs a container runtime on the GPU host | blocked |
 | Lowering the memory clock | [abandoned](hardware/power.md#the-memory-clock-is-not-a-knob-you-can-turn-down) — took the card off the bus |

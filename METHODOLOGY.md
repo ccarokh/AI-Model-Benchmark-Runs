@@ -589,3 +589,32 @@ This repository has an [open list](README.md#open) and a
 [Failed table](README.md#failed) for that purpose. **The rule is that an evaluation ends
 in a written line, whichever way it went**, and the line names what was checked, what
 was found, and what would change the answer.
+
+## A benchmark that decides a deployment has to test the deployed configuration
+
+These measurements are not an exercise. **They are the basis on which a build is chosen
+for production**, and that raises two requirements a throughput comparison does not meet
+on its own.
+
+**Measure the build production actually runs.** Two llama.cpp builds live on this host —
+`b10098` behind the production supervisor and `b10273` behind every benchmark here, 175
+apart. A comparison between the benchmark build and current upstream answers a question
+nobody asked; the decision is *should the production build be replaced*, and the
+production build has to be in the table.
+
+**Measure the flags production actually uses.** `llama-bench` runs without KV
+quantisation, without `--parallel` and at depth 0. Under production flags one 9B model
+[collapsed by a factor of 6.8](hardware/power.md#the-load-case-that-counts--under-production-flags),
+and [depth alone](findings/context-depth.md) moves prefill by 30–75 %. A recommendation
+resting on synthetic flags is a recommendation about a configuration nobody runs.
+
+Three things gate a promotion, and all three are cheap:
+
+| | Why it is not optional |
+|---|---|
+| **Output hash unchanged** | a build that got faster and answers differently did not get faster at the same thing |
+| **No kernel messages** | [a throughput test will pass a card that has already reset itself](#a-throughput-test-will-pass-a-broken-card) |
+| **Production-shaped numbers no worse** | the synthetic ones can improve while the real case regresses |
+
+**The measurement produces the grounds; the operator makes the call.** What the harness
+must not do is present a single throughput figure as though it settled the question.
