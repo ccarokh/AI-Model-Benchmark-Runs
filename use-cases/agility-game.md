@@ -74,6 +74,26 @@ result was then half ours — opaque beige boxes on a blue field — and the one
 rating that belonged to the model alone ("the hurdle cannot be jumped") drowned in it.
 **A test whose outcome is half the harness's artwork does not measure the model.**
 
+## Every row is a combination, not a model
+
+A result here is never "what this model can do". It is **model × harness × runtime ×
+parameters**, and a comparison is only valid where exactly **one** of those differs. That
+is not a caveat bolted on afterwards — it decides which questions this series can answer
+at all:
+
+| Comparison | Available here |
+|---|---|
+| Model vs model, same harness and runtime | **yes** — the local field, OpenCode on llama.cpp |
+| Runtime vs runtime, same model and harness | **one model only** — mistral-small-3.2-24b is the only one vLLM loads from our GGUF weights |
+| Harness vs harness, same model and runtime | **no** — OpenCode is the only agent running locally |
+| Cloud model vs cloud model, same harness | **yes** — Claude Code, one generation against another |
+| Cloud vs local, any configuration | **no** — see the [limitation in the README](../README.md#open) |
+
+The third row is the expensive gap. The harness is the largest unmeasured variable in this
+repository — on belebele it was worth [up to 70 points](../findings/harness-effect.md) —
+and it is exactly the axis where we have a single data point. A second agent on the same
+seven models would be worth more than seven more models on the same agent.
+
 ## What is measured here besides the model
 
 Not a caveat added afterwards — it is why every harness parameter travels in every result
