@@ -15,7 +15,9 @@ set -u
 HIER=$(dirname "$(readlink -f "$0")")
 E=${PRUEF_DIR:-/root/pruef}
 MESS=${MESSRECHNER:-192.168.40.192}
-PORT=18099
+# NICHT 18099: dort haengt llm-runtime.service, der On-Demand-Server der
+# laufenden Infrastruktur. Der Pruefstand weicht aus, statt dazwischenzugehen.
+PORT=18199
 mkdir -p "$E/game"
 L=$E/game.log
 sag(){ echo "[$(date '+%d.%m. %H:%M:%S')] $*" | tee -a "$L"; }
@@ -33,7 +35,7 @@ LAUF=$(basename "$CONF"); LAUF=${LAUF%.conf}
 # tmep=0.9 waere eine erfundene Messreihe.
 model=""; gguf=""; hf=""; quant=""; harness=""; beschreibung=""; runtime=""
 temp=0.2; maxtok=16384; ctx=32768; template=gguf; zeitlimit=3600; aufgabe=aufgabe.md
-tool_parser=""; denken=an
+tool_parser=""; denken=an; tokenizer=""; tokenizer_mode=""
 while IFS= read -r zeile; do
   zeile=${zeile%%#*}
   [ -z "${zeile// }" ] && continue
@@ -41,7 +43,7 @@ while IFS= read -r zeile; do
   k=${zeile%%=*}; v=${zeile#*=}
   k=$(echo "$k" | tr -d '[:space:]'); v=$(echo "$v" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
   case "$k" in
-    model|gguf|hf|quant|harness|beschreibung|runtime|temp|maxtok|ctx|template|zeitlimit|aufgabe|tool_parser|denken)
+    model|gguf|hf|quant|harness|beschreibung|runtime|temp|maxtok|ctx|template|zeitlimit|aufgabe|tool_parser|denken|tokenizer|tokenizer_mode)
       printf -v "$k" '%s' "$v" ;;
     *) ende "Konfiguration: unbekannter Schluessel '$k'" ;;
   esac
@@ -54,10 +56,16 @@ done
 # erzeugt -- hier bricht es ab.
 [ "$LAUF" = "$model-$beschreibung-$harness" ] || \
   ende "Dateiname und Inhalt weichen ab: '$LAUF.conf' muesste '$model-$beschreibung-$harness.conf' heissen"
-case "$harness" in
-  opencode) ;;
-  *) ende "Pruefstand '$harness' unbekannt" ;;
-esac
+# Der Pruefstand ist eine Datei unter harness/, keine Fallunterscheidung hier.
+# Einen weiteren Agenten aufzunehmen heisst: eine Datei anlegen und eine
+# Konfiguration schreiben, die im Namen auf ihn endet. Dieses Skript kennt
+# keinen einzigen Agentennamen.
+ADAPTER=$HIER/harness/$harness.sh
+[ -f "$ADAPTER" ] || ende "Pruefstand '$harness' unbekannt -- es gibt kein harness/$harness.sh"
+. "$ADAPTER"
+for f in agent_vorbereiten agent_ausfuehren; do
+  command -v "$f" >/dev/null || ende "harness/$harness.sh liefert '$f' nicht"
+done
 # Die beiden Laufzeiten lesen nicht dieselbe Datei: llama.cpp will GGUF, vLLM
 # will HF-Format. Wo dazu eine andere Quantisierung noetig ist, macht das den
 # Lauf nicht ungueltig -- es macht ihn zu einem anderen Lauf, und deshalb steht
@@ -105,11 +113,12 @@ cat > "$ziel/lauf.json" <<J
  "harness": "$harness", "runtime": "$runtime", "temp": $temp, "maxtok": $maxtok,
  "ctx": $ctx, "template": "$template", "zeitlimit": $zeitlimit,
  "aufgabe": "$aufgabe", "aufgabe_id": "$aufgabe_id", "quant": "$quant",
- "tool_parser": "$tool_parser", "denken": "$denken", "gguf": "$gguf", "hf": "$hf",
+ "tool_parser": "$tool_parser", "denken": "$denken",
+ "tokenizer": "$tokenizer", "tokenizer_mode": "$tokenizer_mode", "gguf": "$gguf", "hf": "$hf",
  "messrechner": "$MESS"}
 J
 
-[ -f "$E/ergebnis.tsv" ] || printf 'lauf\tmodel\tbeschreibung\tharness\truntime\tquant\taufgabe_id\ttemperature\tmax_tokens\tctx\ttemplate\tzeitlimit\tabgebrochen\tsekunden\tdateien\tbytes\that_index\tcanvas_or_svg\tjump_key\tduck_key\tscore\trestart\tspeedup\textern\n' > "$E/ergebnis.tsv"
+[ -f "$E/ergebnis.tsv" ] || printf 'lauf\tmodel\tbeschreibung\tharness\truntime\tquant\taufgabe_id\ttemperature\tmax_tokens\tctx\ttemplate\tzeitlimit\tabgebrochen\tsekunden\tdateien\tbytes\that_index\tausserhalb\tcanvas_or_svg\tjump_key\tduck_key\tscore\trestart\tspeedup\textern\n' > "$E/ergebnis.tsv"
 
 # --- Modellserver auf dem Messrechner ---------------------------------------
 server_stop(){
@@ -120,10 +129,13 @@ server_stop(){
 }
 trap 'server_stop' EXIT INT TERM
 
+# Kartenwaechter nur ueber den Speicher. Auf "kein llama-server" zu pruefen
+# geht nicht mehr: llm-runtime.service haelt dort dauerhaft einen, meist mit
+# einem kleinen Einbettungsmodell. Entscheidend ist, ob die Karte frei genug
+# ist -- ein grosses Modell belegt Gigabyte, nicht Megabyte.
 frei(){ for i in $(seq 1 45); do
-    r=$(ssh -n "$MESS" 'echo $(( $(cat /sys/class/drm/card1/device/mem_info_vram_used)/1048576 )) $(pgrep -x llama-server|wc -l)' 2>/dev/null)
-    set -- $r
-    [ "${1:-9999}" -lt 500 ] && [ "${2:-1}" -eq 0 ] && return 0
+    v=$(ssh -n "$MESS" 'echo $(( $(cat /sys/class/drm/card1/device/mem_info_vram_used)/1048576 ))' 2>/dev/null)
+    [ "${v:-99999}" -lt 2000 ] && return 0
     sleep 20; done
   return 1; }
 frei || ende "Karte auf $MESS belegt -- uebersprungen"
@@ -136,19 +148,32 @@ case "$runtime" in
     # Werkzeugaufruf abschliesst, sieht aus wie ein Modell, das nichts kann.
     # Ob das an ihm liegt oder daran, dass wir den Modus anlassen, entscheidet
     # ein Lauf mit "aus" -- und beide Zeilen bleiben in der Tabelle stehen.
-    [ "$denken" = aus ] && TPL="$TPL --chat-template-kwargs {\"enable_thinking\":false}"
+    # Einfache Anfuehrungszeichen sind Pflicht: der ganze Befehl reist als
+    # doppelt gequotete Zeichenkette durch ssh, und ein nacktes JSON zerfaellt
+    # dabei zu {enable_thinking:false} -- llama-server startet dann nicht.
+    [ "$denken" = aus ] && TPL="$TPL --chat-template-kwargs '{\"enable_thinking\":false}'"
     ssh -n "$MESS" "export LD_LIBRARY_PATH=/opt/llama-cpp-nb/lib; setsid nohup /opt/llama-cpp-nb/bin/llama-server -m '$gguf' --host 0.0.0.0 --port $PORT -c $ctx -np 1 -ngl 99 -sm none -mg 0 $TPL > /root/eval/game_srv.log 2>&1 < /dev/null & echo ok" >/dev/null
     ;;
   vllm)
+    # Werkzeugaufrufe aus GGUF-Gewichten: der mitgelieferte Texterkenner reicht
+    # nicht immer. Mistral schreibt [TOOL_CALLS]name[ARGS]{...}, und keiner der
+    # 29 Parser im Abbild kennt den [ARGS]-Trenner -- der Aufruf landet dann als
+    # Fliesstext in der Antwort, und der Agent sieht gar keinen. Mit dem
+    # Mistral-Tokenisierer, getrennt von den Gewichten geholt, wird er erkannt.
+    # Das ist eine Betriebsanleitung, kein Scheitern, und gehoert deshalb in die
+    # Konfiguration.
+    TOK=""
+    [ -n "$tokenizer" ] && TOK="--tokenizer $tokenizer"
+    [ -n "$tokenizer_mode" ] && TOK="$TOK --tokenizer-mode $tokenizer_mode"
     # Der Behaelter braucht die Karte durchgereicht -- anders als der Pruefstand,
     # der nur ueber HTTP redet. Kein --rm hier: bricht der Start ab, soll das
     # Protokoll noch da sein.
     ssh -n "$MESS" "docker rm -f vllm-mess >/dev/null 2>&1; setsid nohup docker run --name vllm-mess \
       --device=/dev/kfd --device=/dev/dri --group-add video \
       --security-opt seccomp=unconfined --shm-size 8g --ipc=host \
-      -v /opt/llm-infra/models:/models -p $PORT:8000 \
+      -v /opt/llm-infra/models:/opt/llm-infra/models:ro -p $PORT:8000 \
       rocm/vllm:latest vllm serve '$hf' \
-        --served-model-name '$model' \
+        --served-model-name '$model' $TOK \
         --max-model-len $ctx --gpu-memory-utilization 0.85 \
         --enable-auto-tool-choice --tool-call-parser '$tool_parser' \
       > /root/eval/vllm_srv.log 2>&1 < /dev/null & echo ok" >/dev/null
@@ -157,41 +182,40 @@ esac
 ok=nein
 # llama.cpp antwortet auf /health mit einem Text, vLLM mit leerem 200. Deshalb
 # auf den Statuscode pruefen und nicht auf den Inhalt.
+#
+# Und: einen toten Server erkennen, statt 15 Minuten auf ihn zu warten. vLLM
+# bricht bei einer nicht unterstuetzten Architektur nach zwei Minuten ab -- die
+# uebrigen dreizehn Minuten waren reine Wartezeit, sechsmal in einer Nacht.
 for i in $(seq 1 180); do
   code=$(curl -s -o /dev/null -m 3 -w "%{http_code}" "http://$MESS:$PORT/health" 2>/dev/null)
   [ "$code" = 200 ] && { ok=ja; break; }
+  if [ "$runtime" = vllm ] && [ $i -gt 6 ]; then
+    ssh -n "$MESS" 'docker ps --filter name=vllm-mess --format "{{.Names}}" | grep -q vllm-mess' || { ok=tot; break; }
+  fi
   sleep 5; done
+# Das Protokoll des Modellservers gehoert zum Lauf, nicht in eine Datei, die der
+# naechste Lauf ueberschreibt. Ohne das war nach sechs Fehlschlaegen nur der
+# letzte Grund bekannt.
+if [ "$runtime" = vllm ]; then
+  ssh -n "$MESS" 'tail -200 /root/eval/vllm_srv.log' > "$ziel/server.log" 2>/dev/null
+else
+  ssh -n "$MESS" 'tail -200 /root/eval/game_srv.log' > "$ziel/server.log" 2>/dev/null
+fi
+if [ "$ok" = tot ]; then
+  grund=$(grep -aoE "(ValueError|OSError|RuntimeError|NotImplementedError):.*" "$ziel/server.log" | tail -1 | cut -c1-160)
+  ende "Modellserver beendet sich: ${grund:-Grund siehe server.log}"
+fi
 [ $ok = ja ] || ende "Modellserver kam nicht hoch"
 
 # --- Pruefstand -------------------------------------------------------------
-cat > "$ziel/occonfig/opencode.json" <<J
-{
-  "\$schema": "https://opencode.ai/config.json",
-  "provider": {
-    "lokal": {
-      "npm": "@ai-sdk/openai-compatible",
-      "name": "$runtime auf $MESS",
-      "options": { "baseURL": "http://$MESS:$PORT/v1", "apiKey": "egal" },
-      "models": { "$model": { "name": "$model" } }
-    }
-  },
-  "model": "lokal/$model",
-  "small_model": "lokal/$model"
-}
-J
-chown 1000:1000 "$ziel/occonfig/opencode.json"
+# Ab hier gehoert die Arbeit dem Adapter. Was fuer alle gilt, steht in
+# harness/README.md -- insbesondere, dass die Grenzen in JEDE Konfiguration
+# gehoeren: ohne sie raten die Agenten, und ein geratenes max_tokens hat hier
+# schon wie Modellversagen ausgesehen.
+agent_vorbereiten
 
 t0=$(date +%s)
-# Das eigene Protokoll des Agenten mit herausfuehren. Ohne es blieb bei einem
-# Modell 731 Sekunden lang unklar, was passiert ist: der Modellserver zeigte
-# Anfragen ueber 13733 Token, das Behaelterprotokoll drei Zeilen. Wer nicht
-# mitschreibt, kann hinterher nur raten.
-timeout "$zeitlimit" docker run --rm \
-  -v "$ziel/occonfig":/home/pruef/.config/opencode \
-  -v "$ziel/ocdaten":/home/pruef/.local/share/opencode \
-  -v "$ziel/arbeit":/arbeit \
-  -e OPENCODE_TEMPERATURE="$temp" \
-  pruefstand:1 opencode run "$(cat "$ziel/aufgabe.txt")" > "$ziel/agent.log" 2>&1
+agent_ausfuehren
 rc=$?; dauer=$(( $(date +%s) - t0 ))
 abgebrochen=nein; [ $rc -eq 124 ] && abgebrochen=zeitlimit
 server_stop

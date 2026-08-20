@@ -31,6 +31,17 @@ for wurzel, _, namen in os.walk(arbeit):
 low = "\n".join(text).lower()
 hat_index = os.path.isfile(os.path.join(arbeit, "index.html"))
 
+# Abzaehlbar festhalten, WO geschrieben wurde. Dreimal hat ein Modell nach
+# /index.html gegriffen statt ins Arbeitsverzeichnis; als blosse Null bei den
+# Dateien sieht das aus wie "nichts zustande gebracht" und ist doch etwas
+# anderes -- naemlich am falschen Ort abgeliefert.
+protokoll = ""
+for name in ("agent.log",):
+    pfad = os.path.join(ziel, name)
+    if os.path.exists(pfad):
+        protokoll += open(pfad, encoding="utf-8", errors="replace").read()
+ausserhalb = bool(re.search(r"external_directory|Write /[A-Za-z0-9_.-]+\.html", protokoll))
+
 # Die Aufgabe schreibt die Tasten vor: Leertaste springt, Strg duckt. Geprueft
 # wird deshalb genau darauf -- eine abweichende Belegung ist eine verfehlte
 # Anforderung, keine Geschmacksfrage. Vorher stand die Wahl frei, und dann
@@ -53,7 +64,7 @@ extern = len(re.findall(r"(?:src|href)\s*=\s*[\"']https?://", low))
 spalten = [
     c["lauf"], c["model"], c["beschreibung"], c["harness"], c["runtime"], c["quant"], c.get("aufgabe_id", ""),
     c["temp"], c["maxtok"], c["ctx"], c["template"], c["zeitlimit"],
-    abgebrochen, dauer, len(dateien), groesse, hat_index,
+    abgebrochen, dauer, len(dateien), groesse, hat_index, ausserhalb,
     ("canvas" in low) or ("<svg" in low), sprung, ducken,
     ("score" in low) or ("punkt" in low),
     ("restart" in low) or ("neustart" in low) or ("again" in low),

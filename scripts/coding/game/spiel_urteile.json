@@ -1,0 +1,25 @@
+{
+ "claude-opus-5-blind2-claudecode": {
+  "oeffnet": true,
+  "zeit": "2026-08-19T23:24:00+02:00",
+  "spielbar": true,
+  "hund": true,
+  "huerde_optik": true,
+  "tunnel_optik": true,
+  "huerde": true,
+  "dreier": true,
+  "tunnel": true,
+  "tunnel_verdeckt": true,
+  "sprung_nutzlos": true,
+  "ducken_nutzlos": true,
+  "ducken_gehalten": true,
+  "punkte": true,
+  "schneller": true,
+  "highscore": true,
+  "highscore_bleibt": true,
+  "tagnacht": true,
+  "gameover": true,
+  "neustart": true,
+  "kommentar": "Super, auch wenn ich im zweiten durchlauf den Tunnel noch mal überareiten lassen würde"
+ }
+}
