@@ -645,3 +645,34 @@ work", which is a statement about us, and it belongs in the log rather than in a
 The cost of getting this wrong is asymmetric. A wrong positive gets corrected the next
 time someone runs the thing. A wrong negative closes a door: nobody re-tests what the
 table already says is impossible.
+
+## A measurement that does not check its own preconditions silently agrees
+
+The drift check compares a fresh llama.cpp build against the pinned one and only
+recommends a switch if the numbers hold up. On the night of 21.08. it ran for 122
+minutes and reported all three criteria met: output hash identical, no kernel messages,
+production-shaped numbers not worse.
+
+Both builds had measured **3.3 tokens/s where the established figure is 103**.
+
+The card was contended the whole time. The production chat supervisor tried to load a
+model every hour and was refused — *"needs ~7150MiB, only ~3776MiB free"* — which is the
+only reason the run got any GPU at all. And because **both** sides were crippled equally,
+"not worse" was true. A wrong build would have been waved through on numbers that were
+off by a factor of thirty.
+
+The host had a coordination mechanism for exactly this: the runtime exposes a GPU lease
+(`POST /_manager/lease`), refuses interactive requests while it is held, and was
+configured with its own secret. **Nothing ever requested it.** What looked like
+cooperation was the accident of a full card.
+
+Two rules follow, and the second is the general one:
+
+**A benchmark takes the lease, or it does not run.** Not "waits politely", not "checks
+VRAM first" — those are workarounds for a mechanism that already exists. The window is
+re-checked before every step, and losing the lease ends the chain instead of continuing.
+
+**Comparing two runs to each other is not a check that either is valid.** A regression
+test that only asks "is B worse than A" passes when A and B are equally broken. Some
+absolute anchor has to be in the comparison — here, the recorded reference figure from a
+healthy session — or the test can only detect *differences*, never *breakage*.
