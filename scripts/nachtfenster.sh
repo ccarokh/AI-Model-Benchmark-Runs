@@ -122,12 +122,31 @@ while read -r zeile; do
   fi
   # Karte frei? Kurz warten, dann MIT Meldung ueberspringen. Ein stummes
   # Ueberspringen ist von Erfolg nicht zu unterscheiden.
+  # Mit Pacht entfaellt der Speicherwaechter: llm-runtime ist dann die
+  # zustaendige Stelle. Es gewaehrt die Pacht nur, wenn die Karte frei genug ist
+  # (Schwelle 1024 MiB), und weist danach interaktive Anfragen ab.
+  #
+  # Ein zweiter, strengerer Schwellwert daneben hat in der Nacht zum 22.08. ALLE
+  # vier Schritte ausgesperrt: er verlangte unter 500 MiB, waehrend der Leerlauf
+  # dieses Rechners bei rund 700 liegt -- ein dauerhaft geladenes
+  # Erkennungsmodell. Die Bedingung konnte nie wahr werden. Die Pacht wurde
+  # genommen, gehalten und ungenutzt zurueckgegeben.
   frei=nein
+  [ -n "$PACHT_ID" ] && frei=ja
   for i in $(seq 1 30); do
+    [ $frei = ja ] && break
     v=$(( $(cat $D/mem_info_vram_used)/1048576 )); s=$(pgrep -x llama-server|wc -l)
     [ "$v" -lt 500 ] && [ "$s" -eq 0 ] && { frei=ja; break; }
     sleep 20
   done
+  # (Hinweis unten, vor der Schleife.)
+  # Der Speicherwaechter gilt nur OHNE Pacht. Mit Pacht ist llm-runtime die
+  # zustaendige Stelle: es gewaehrt sie nur, wenn die Karte frei genug ist, und
+  # weist danach interaktive Anfragen ab. Ein zweiter, strengerer Schwellwert
+  # daneben hat in der Nacht zum 22.08. ALLE vier Schritte ausgesperrt -- er
+  # verlangte unter 500 MiB, waehrend der Leerlauf dieses Rechners bei rund
+  # 700 liegt (ein dauerhaft geladenes Erkennungsmodell). Die Bedingung konnte
+  # nie wahr werden, und die Pacht lag ungenutzt daneben.
   [ $frei = ja ] || { sag "  Karte belegt -- uebersprungen: $zeile"; continue; }
   # Vor JEDEM Schritt: gilt die Pacht noch? Eine verlorene Pacht heisst, dass
   # jemand anders die Karte hat -- weitermessen wuerde Zahlen erzeugen, die wie
