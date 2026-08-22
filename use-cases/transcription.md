@@ -1,7 +1,7 @@
 # Transcription
 
-> Parts 1 and 2 measured on **[System B](../SYSTEMS.md#system-b) v1.0**, Part 3 on
-> **[System A](../SYSTEMS.md#system-a) v1.3**. ⚠️ The word error rates carry a known
+> Parts 1 and 2 measured on **[System B](../systems/system-b.md) v1.0**, Part 3 on
+> **[System A](../systems/system-a.md) v1.3**. ⚠️ The word error rates carry a known
 > bias described below: the ground truth itself has omissions baked in, which inflates
 > both models' scores by roughly the same amount.
 
@@ -93,7 +93,7 @@ Until then Whisper stays in production.
 
 ## Part 3 — `faster-whisper` on the second card
 
-> Measured on **[System A](../SYSTEMS.md#system-a) v1.3**, RTX 2070, 2026-08-04.
+> Measured on **[System A](../systems/system-a.md) v1.3**, RTX 2070, 2026-08-04.
 
 This card was called untested here for weeks. It is now measured.
 

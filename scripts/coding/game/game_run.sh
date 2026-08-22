@@ -118,7 +118,7 @@ cat > "$ziel/lauf.json" <<J
  "messrechner": "$MESS"}
 J
 
-[ -f "$E/ergebnis.tsv" ] || printf 'lauf\tmodel\tbeschreibung\tharness\truntime\tquant\taufgabe_id\ttemperature\tmax_tokens\tctx\ttemplate\tzeitlimit\tabgebrochen\tsekunden\tdateien\tbytes\that_index\tausserhalb\tcanvas_or_svg\tjump_key\tduck_key\tscore\trestart\tspeedup\textern\n' > "$E/ergebnis.tsv"
+[ -f "$E/ergebnis.tsv" ] || printf 'lauf\tmodel\tbeschreibung\tharness\truntime\tquant\taufgabe_id\ttemperature\tmax_tokens\tctx\ttemplate\tzeitlimit\tabgebrochen\tsekunden\tdateien\tbytes\that_index\tausserhalb\tagenten_dateien\tsyntax_ok\tgeoeffnet\tlaufzeit_fehler\tkonsole_fehler\tfehlende_dateien\tcanvas_bemalt\tcanvas_or_svg\tjump_key\tduck_key\tscore\trestart\tspeedup\textern\n' > "$E/ergebnis.tsv"
 
 # --- Modellserver auf dem Messrechner ---------------------------------------
 server_stop(){
@@ -217,6 +217,32 @@ agent_vorbereiten
 t0=$(date +%s)
 agent_ausfuehren
 rc=$?; dauer=$(( $(date +%s) - t0 ))
+
+# --- Vorpruefung ------------------------------------------------------------
+# Laeuft das Spiel ueberhaupt? Syntax der Skripte, dann die Seite in einem
+# Browser ohne Fenster oeffnen und mitschreiben, was schiefgeht.
+#
+# In einem EIGENEN Behaelter, erst nachdem der Agent beendet ist. Ein Browser im
+# Agentenabbild waere ein Werkzeug, das dem Modell zur Verfuegung stuende -- es
+# koennte sein eigenes Spiel oeffnen und nachbessern, und das waere ein anderer
+# Pruefstand als der, den wir messen.
+#
+# Faellt der Pruefer aus, bleibt die Datei leer und die Spalten leer. Ein
+# fehlendes Werkzeug darf kein Modell schlecht aussehen lassen.
+: > "$ziel/vorpruefung.json"
+# Der Pruefer schreibt sein Bildschirmfoto als Nutzer 1000; das Laufverzeichnis
+# gehoert root. Ohne diese Zeile scheitert er mit EACCES -- und der Fehler
+# stuende dann als Laufzeitfehler beim Spiel, obwohl er unserer ist.
+chown 1000:1000 "$ziel" "$ziel/vorpruefung.json"
+if docker image inspect spielpruefer:1 >/dev/null 2>&1; then
+  { docker run --rm -v "$ziel/arbeit":/arbeit:ro -v "$ziel":/aus \
+      spielpruefer:1 node /opt/pruefen/vorpruefung.js /arbeit
+    docker run --rm -v "$ziel/arbeit":/arbeit:ro -v "$ziel":/aus \
+      spielpruefer:1 node /opt/pruefen/laufzeit.js /arbeit /aus/bildschirm.png
+  } > "$ziel/vorpruefung.json" 2>"$ziel/vorpruefung.log"
+else
+  sag "  Spielpruefer-Abbild fehlt -- Vorpruefung uebersprungen"
+fi
 abgebrochen=nein; [ $rc -eq 124 ] && abgebrochen=zeitlimit
 server_stop
 sag "  Agent fertig nach ${dauer}s (rc=$rc)"

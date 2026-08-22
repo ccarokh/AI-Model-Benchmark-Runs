@@ -72,7 +72,7 @@ Everything above that is untested — see [open](#open).
 | **Three-way runtime comparison: Ollama vs llama.cpp vs vLLM** on one card and one model — [two of the three are done](models/../data/ollama_vs_llamacpp.tsv) | planned |
 | **DSpark speculative decoding** — merged into llama.cpp, MIT, with draft checkpoints for Qwen and Gemma; reported 1.6–2.7× decode with unchanged output. Untested here | planned |
 | **Plain speculative decoding** (`--model-draft`) — supported by our runtime today and never measured | planned |
-| **Drift against current upstream llama.cpp** — the measurement build is 215 behind master, and there is no distribution package to carry updates in. [Standing check](SYSTEMS.md#checking-for-drift-against-current-upstream): build current alongside the pinned one, run the reference workload on both in the same session | **recurring** |
+| **Drift against current upstream llama.cpp** — the measurement build is 215 behind master, and there is no distribution package to carry updates in. [Standing check](systems/llama-cpp-builds.md#checking-for-drift-against-current-upstream): build current alongside the pinned one, run the reference workload on both in the same session | **recurring** |
 | **Agility game — one task, every coding model, human-judged** — graphics are drawn in code, the harness is agentic, and a person plays every result. [How the task got there](use-cases/agility-game.md) | **built, not yet run** |
 | **The same task with one repair turn** — the model sees its own console errors and may fix them. The difference is what a second turn is worth | planned |
 | **A second agent harness on the same task** — the harness is the biggest unmeasured variable here, and OpenCode is currently the only one measured | planned |

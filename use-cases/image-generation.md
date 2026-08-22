@@ -1,6 +1,6 @@
 # Image generation
 
-> Measured on **[System A](../SYSTEMS.md#system-a) v1.5**,
+> Measured on **[System A](../systems/system-a.md) v1.5**,
 > stable-diffusion.cpp `master-813-bfbef5b`, Vulkan, single card, fresh process per
 > image, card verified empty before **each** image. Raw data:
 > [`image_generation.tsv`](../data/image_generation.tsv),

@@ -1,6 +1,6 @@
 # Language understanding (German)
 
-> ⚠️ The table below was measured on **[System B](../SYSTEMS.md#system-b) v1.0**
+> ⚠️ The table below was measured on **[System B](../systems/system-b.md) v1.0**
 > (llama.cpp build 9614), except Qwen3.6-27B which ran on **System A v1.0**. Two
 > caveats follow: the ranking is a **hardware mix** (see
 > [below](#provenance-caveat)), and B v1.0's surrounding stack was not captured to
@@ -126,7 +126,7 @@ requesting access just to run an eval.
 
 ## A looped model, measured twice — Nanbeige4.2-3B
 
-> Measured on **[System A](../SYSTEMS.md#system-a) v1.4** (llama.cpp b10273), both
+> Measured on **[System A](../systems/system-a.md) v1.4** (llama.cpp b10273), both
 > models in the same session on the same card. Raw data:
 > [`chat_belebele_reasoning.tsv`](../data/chat_belebele_reasoning.tsv),
 > [`throughput_looped_transformer.tsv`](../data/throughput_looped_transformer.tsv).

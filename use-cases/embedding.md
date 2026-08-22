@@ -1,6 +1,6 @@
 # Embedding
 
-> Measured on **[System B](../SYSTEMS.md#system-b) v1.0**. Both models ran **in the
+> Measured on **[System B](../systems/system-b.md) v1.0**. Both models ran **in the
 > same session on the same harness**, including a fresh re-run of the incumbent
 > rather than a quoted older figure — so the comparison holds regardless of what the
 > surrounding stack was.

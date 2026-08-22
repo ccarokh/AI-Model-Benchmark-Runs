@@ -33,7 +33,7 @@ a preview.**
 
 Both machines here run rolling-release distributions, and both gained hardware
 mid-series. A result therefore belongs to a **system version** — see
-[SYSTEMS.md](SYSTEMS.md#system-versions) — which increments whenever the stack or the
+[SYSTEMS.md](systems/versions.md) — which increments whenever the stack or the
 hardware changes. Anything else silently compares across package updates.
 
 Three practices make that work:

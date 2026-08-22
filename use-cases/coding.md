@@ -1,6 +1,6 @@
 # Coding models
 
-> Measured on **[System A](../SYSTEMS.md#system-a) v1.0** (aider-polyglot) and
+> Measured on **[System A](../systems/system-a.md) v1.0** (aider-polyglot) and
 > **v1.1 → v1.2** (SWE-bench), quiet BIOS. The inference stack — llama.cpp b10098,
 > Mesa 26.1.5 — was constant throughout; the hardware changed between the two parts,
 > which is why they carry different version numbers.
@@ -196,7 +196,7 @@ is true and misleading at the same time.
 
 ### A 4B model that fails on format, not on diagnosis
 
-> [System A](../SYSTEMS.md#system-a) v1.4, llama.cpp b10273. Vendor table:
+> [System A](../systems/system-a.md) v1.4, llama.cpp b10273. Vendor table:
 > **SWE-bench Verified 63.6**, above Qwen3.5-9B and Gemma-4-12B. Measured here on
 > `repomap`, q8_0: **4 of 19 on pytest**, against 10 of 19 for Qwen3.6-27B, and
 > **0 of 10 on pylint**.

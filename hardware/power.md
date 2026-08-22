@@ -5,7 +5,7 @@
 1200 MHz clock ceiling — 1.70 W per tok/s against 2.54 at stock — and gets worse again
 below that.**
 
-Measured on [System A v1.0](../SYSTEMS.md#system-a), quiet BIOS, on a
+Measured on [System A v1.0](../systems/system-a.md), quiet BIOS, on a
 factory-overclocked RX 7900 XTX.
 
 ## The curve

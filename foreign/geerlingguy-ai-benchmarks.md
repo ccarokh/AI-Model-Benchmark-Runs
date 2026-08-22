@@ -8,7 +8,7 @@ Upstream: [geerlingguy/ai-benchmarks](https://github.com/geerlingguy/ai-benchmar
 Its table is `System | CPU/GPU | Eval Rate | Power (Peak)`, sorted by eval rate, one
 row per contributed machine.
 
-Measured on **[System A](../SYSTEMS.md#system-a) v1.3**, quiet BIOS, llama.cpp b10098,
+Measured on **[System A](../systems/system-a.md) v1.3**, quiet BIOS, llama.cpp b10098,
 kernel 7.1.5-arch1-2, Mesa 26.1.5. Model supervisor stopped, card verified empty
 beforehand, no downloads running.
 
