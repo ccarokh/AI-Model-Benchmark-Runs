@@ -19,7 +19,7 @@
 | **Root device** | CT1000P1SSD8 931.5G nvme |
 | **Vulkan reports** | AMD Radeon RX 7900 XTX (RADV NAVI31) |
 | **Vulkan API** | 1.4.354 |
-| **VRAM in use at capture** | 1 MiB |
+| **VRAM in use at capture** | 4 MiB |
 
 **GPUs**
 
@@ -39,11 +39,12 @@
 
 | Path | Build | Backend |
 |---|---|---|
-| `/opt/llama-cpp` | b10098 | vulkan |
+| `/opt/llama-cpp` | v0.2.0 | vulkan |
 | `/opt/llama-cpp-nb` | b10273 | vulkan |
+| `/opt/llama-cpp-v0.2.0` | bb4caa7 | vulkan |
 | `/opt/llama-cpp-rocm` | unknown | rocm |
 
-*Captured 2026-08-23T02:51:38+02:00 by [`scripts/systems/erfassen.sh`](../scripts/systems/erfassen.sh) — read off the machine, not written by hand. `VRAM in use` and the PCIe link are momentary values: link speed drops at idle, and on a desktop machine the session holds VRAM.*
+*Captured 2026-08-23T04:52:16+02:00 by [`scripts/systems/erfassen.sh`](../scripts/systems/erfassen.sh) — read off the machine, not written by hand. `VRAM in use` and the PCIe link are momentary values: link speed drops at idle, and on a desktop machine the session holds VRAM.*
 <!-- CAPTURED:END -->
 
 Everything from the coding series onwards ran here.
@@ -109,7 +110,8 @@ produced them.
 | **A v1.2** | 2026-08-03 | 2070 **moved to a CPU-direct slot**, both cards ×8 | unchanged |
 | **A v1.3** | 2026-08-04 | **+ ROCm 7.2.4** in a separate prefix | unchanged; `/opt/llama-cpp` untouched |
 | **A v1.4** | 2026-08-05 → 08-06 | **+ llama.cpp b10273** in `/opt/llama-cpp-nb`, for architectures the production build predates | `/opt/llama-cpp` still b10098 and still the production runtime |
-| **A v1.5** | from 2026-08-07 | **+ stable-diffusion.cpp** `master-813-bfbef5b` in `/opt/sd-cpp`, Vulkan | both llama.cpp prefixes untouched |
+| **A v1.5** | 2026-08-07 → 08-22 | **+ stable-diffusion.cpp** `master-813-bfbef5b` in `/opt/sd-cpp`, Vulkan | both llama.cpp prefixes untouched |
+| **A v1.6** | from 2026-08-23 | **production llama.cpp replaced: b10098 → v0.2.0** (`bb4caa7`) | `/opt/llama-cpp-nb` still b10273; candidate build in `/opt/llama-cpp-v0.2.0` |
 
 The kernel step from v1.0 to v1.1 is the only stack change inside the series, and its
 effect was **measured rather than assumed**: 78.47 against 78.18 on the same
@@ -121,6 +123,17 @@ across the first four.
 **The v1.4 build was measured against the one it sits beside rather than assumed
 equivalent:** Llama-3.2-3B gives 250.65 t/s on b10273 against 251.33 on b10098, 0.27 %
 apart. No earlier figure is invalidated by the new prefix.
+
+**v1.6 was switched before it was verified, and the old binaries are gone.** The
+production prefix was overwritten in place on 23.08. between 04:21 and 04:27, so
+**b10098 no longer exists as binaries on this machine** — the rollback point is b10273 in
+`/opt/llama-cpp-nb`, or a rebuild from source (`0278d8362`). What the switch does have is
+evidence, gathered afterwards: the reference completion hash `40beccc6ee14a703` is
+identical across b10098 (measured 02:49), b10273 and v0.2.0, and production-like
+throughput differs by under 2 % between them. **In-place replacement of a measurement
+baseline destroys the ability to compare** — a candidate belongs beside the production
+prefix, which is what the drift check builds and what
+[the build page](llama-cpp-builds.md) now says explicitly.
 
 **A second prefix needs `LD_LIBRARY_PATH`, not just a path.** The `ld.so` cache
 resolves every `libllama`/`libggml` to `/opt/llama-cpp/lib`, so the new binary runs on

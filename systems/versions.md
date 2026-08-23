@@ -6,7 +6,7 @@ history next to them — not three directories away.
 
 | | |
 |---|---|
-| [System A](system-a.md#history) | v1.0 to v1.5 — second GPU, ROCm, a second llama.cpp prefix, stable-diffusion.cpp |
+| [System A](system-a.md#history) | v1.0 to v1.6 — second GPU, ROCm, a second llama.cpp prefix, stable-diffusion.cpp, production llama.cpp on v0.2.0 |
 | [System B](system-b.md#history) | v1.0 |
 | [System C](system-c.md#history) | v1.0 — freshly installed |
 

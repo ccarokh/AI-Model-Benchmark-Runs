@@ -23,12 +23,14 @@ arbitrary.
 | **AMD stack** | Mesa/RADV **26.1.5-arch1.1**, `vulkan-radeon 1:26.1.5-1`, Vulkan API 1.4.354 — carries all inference | — | — |
 | **NVIDIA stack** | `nvidia-utils` 610.43.03 for the RTX 2070 — **no CUDA toolkit installed**; CUDA compute works anyway, with cuBLAS/cuDNN as pip wheels inside a venv ([measured](use-cases/transcription.md#part-3--faster-whisper-on-the-second-card)) | `nvidia-open-dkms` 610.43.03 + CUDA 13.3.1 | `nvidia-open` 610.57.04-8 + `nvidia-utils` 610.57.04-1, Vulkan API 1.4.341 — **Vulkan, not CUDA**, so the comparison against System A varies the card and nothing else |
 | **Compute** | ROCm 7.2.4 (`rocm-hip-runtime`), in a separate prefix | CUDA 13.3.1 | none installed — a CUDA build is planned as a *second*, separate measurement |
-| **Inference** | llama.cpp **b10098** in `/opt/llama-cpp` (production), **b10273** in `/opt/llama-cpp-nb` alongside it; stable-diffusion.cpp `master-813-bfbef5b` in `/opt/sd-cpp` | llama.cpp **build 9614** | llama.cpp built from source in `/opt/mess/llama.cpp`, Vulkan |
+| **Inference** | llama.cpp **v0.2.0** (`bb4caa7`) in `/opt/llama-cpp` (production, since 23.08.; **b10098** before that), **b10273** in `/opt/llama-cpp-nb` — which is what every measurement here uses; stable-diffusion.cpp `master-813-bfbef5b` in `/opt/sd-cpp` | llama.cpp **build 9614** | llama.cpp built from source in `/opt/mess/llama.cpp`, Vulkan |
 | **Python** | 3.14.6 | 3.14.6 | 3.14.7 |
 
-**Read `b10098` from `/opt/llama-cpp/.built-version`, not from `--version`** — the
-binary reports `version: 1 (0278d83)`, which is a build-metadata artifact and not a
-usable identifier.
+**Read the build from `/opt/llama-cpp/.built-version`, not from `--version`** — the
+old binary reported `version: 1 (0278d83)` and the current one reports
+`0.2.0-dev (build 1, commit bb4caa7)`. The build number is a metadata artifact of how the
+tree was fetched, not a usable identifier; the stamp file is written by whoever installed
+the prefix and is the only thing that names the state on purpose.
 
 ## Per system, in detail
 

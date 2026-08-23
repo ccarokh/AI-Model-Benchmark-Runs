@@ -205,6 +205,18 @@ conclusions drawn from them should carry it.
 
 ---
 
+## These numbers belong to a build
+
+Everything above was measured with the llama.cpp that was production until 23.08.2026
+(b10098). Production is now **v0.2.0**, and a split-mode finding is exactly the kind of
+thing a release can move: it lives in the scheduling between two devices, not in a kernel
+whose output can be hashed. Until it is measured again, treat the percentages here as
+attached to the old build.
+
+The re-check runs both prefixes in the same session —
+[`multigpu_recheck.sh`](../scripts/hardware/multigpu_recheck.sh) — so a difference is
+attributable to the build rather than to three weeks of everything else.
+
 ## Measurement notes
 
 - **Load time roughly doubles** on the split, from ~25 s to ~30 s. On this host that
