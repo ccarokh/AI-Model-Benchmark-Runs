@@ -18,6 +18,10 @@ SWITCHES = {
 }
 ARGS = ("-p", "2048", "-n", "128", "-r", "5", "-ngl", "99")
 
+# Every model, not the first two: whether the matrix path is worth anything can
+# depend on the shape of the model as much as on the hardware -- a 3B lost 25 %
+# of its prefill without coopmat2 where a 9B lost 20 %.
+
 
 def run(ctx):
     for build in ctx.builds:
@@ -26,7 +30,7 @@ def run(ctx):
             ctx.skip_permanently(NAME, f"no known switches for backend {build.backend}",
                                  backend=build.backend, build=build.version)
             continue
-        for model in ctx.models[:2]:
+        for model in ctx.models:
             for label, env in variants:
                 if ctx.results.has_prefix(NAME, "", build.backend, build.version,
                                           f"{model.stem}:{label}") or ctx.out_of_budget():

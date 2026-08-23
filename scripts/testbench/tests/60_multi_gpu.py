@@ -14,10 +14,18 @@ LAYOUTS = [("single", ("-sm", "none", "-mg", "0")),
 
 
 def run(ctx):
-    build = ctx.builds[0]
+    # Per build: a second card that one backend sees and another does not is a
+    # fact about this machine worth recording, and the split penalty is the
+    # backend's scheduling as much as the hardware's.
+    for build in ctx.builds:
+        _run_build(ctx, build)
+
+
+def _run_build(ctx, build):
     cards = ctx.cards_of(build)
     if len(cards) < 2:
-        ctx.skip_permanently(NAME, f"only {len(cards)} card visible to {build.backend}")
+        ctx.skip_permanently(NAME, f"only {len(cards)} card visible to {build.backend}",
+                             backend=build.backend, build=build.version)
         return
     # The largest model, because a split only matters where one card is not
     # enough -- and -n 1000 rather than a short burst, since generation is what

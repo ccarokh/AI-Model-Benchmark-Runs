@@ -13,12 +13,22 @@ CACHES = ("f16", "q8_0")
 
 
 def run(ctx):
-    model = ctx.models[0]
-    build = ctx.builds[0]
-    for cache in CACHES:
-        for depth in DEPTHS:
+    # Every build and every model. One build was an arbitrary pick: whether the
+    # depth curve looks the same through CUDA as through Vulkan is a question,
+    # not a given -- different allocators, different compute buffers. And a
+    # depth curve for one model says nothing about the model beside it, which
+    # is the whole reason the 14B turned out to be the interesting case.
+    done = total = 0
+    for build in ctx.builds:
+     for model in ctx.models:
+      for cache in CACHES:
+       for depth in DEPTHS:
+            total += 1
             if ctx.results.has_prefix(NAME, "", build.backend, build.version,
-                                      f"{model.stem}:{cache}:d{depth}") or ctx.out_of_budget():
+                                      f"{model.stem}:{cache}:d{depth}"):
+                done += 1
+                continue
+            if ctx.out_of_budget():
                 continue
             if not card_is_idle(ctx):
                 ctx.defer(NAME, f"card busy before depth {depth}")
@@ -43,8 +53,12 @@ def run(ctx):
                                 f"{model.stem}:{cache}:d{depth}:{phase}",
                                 f"{r[phase]:.2f}", unit,
                                 f"peak {sampler.peak_vram or 0} MiB VRAM during the run")
+            done += 1
             ctx.results.add(NAME, "", build.backend, build.version,
                             f"{model.stem}:{cache}:d{depth}:vram", str(sampler.peak_vram or 0),
                             "MiB peak")
             ctx.say(f"  {cache} depth {depth}: pp={r['pp']:.1f} tg={r['tg']:.2f} "
                     f"peak {sampler.peak_vram or 0} MiB")
+    ctx.coverage(NAME, done, total,
+                 f"{len(ctx.builds)} builds x {len(ctx.models)} models x "
+                 f"{len(CACHES)} caches x {len(DEPTHS)} depths")

@@ -169,6 +169,19 @@ class Context:
     #   NO row, so a restart tries again.
     # Writing both as "skipped" would make a machine without a power sensor
     # retry that test on every run, forever.
+    def coverage(self, test, done: int, total: int, note: str = ""):
+        """How much of the possible was actually measured.
+
+        A test that quietly runs on the first build and the first two models
+        reports "done" for a corner of the matrix, and the results file cannot
+        tell that apart from full coverage -- absence of a row and absence of a
+        measurement look identical. So every test writes what it covered.
+        """
+        self.results.add(test, parameter="coverage", value=f"{done}/{total}",
+                         unit="combinations", note=note)
+        if done < total:
+            self.say(f"  coverage: {done} of {total} combinations{' -- ' + note if note else ''}")
+
     def skip_permanently(self, test, reason, **kw):
         self.say(f"  SKIPPED permanently: {test} -- {reason}")
         self.results.add(test, note=f"skipped: {reason}", **kw)
@@ -326,6 +339,39 @@ def bench_probe(build: Build, model: Path, *args, device: str | None = None,
             reason = line.strip()[:120]
             break
     return False, reason or f"rc={rc}, no result"
+
+
+def alloc_probe(build: Build, model: Path, ctx_size: int, cache: str = "f16",
+                timeout: int = 300) -> tuple[bool, str]:
+    """Does a context of this size ALLOCATE -- without paying to fill it.
+
+    The ceiling is an allocation limit, not a compute one: what fails is the KV
+    cache and the buffers around it, and it fails before a single token is
+    processed. Probing it with llama-bench -d meant prefilling the whole depth
+    first -- seven minutes for one probe at 327 680 tokens, which put the search
+    out of reach for anything but a model or two. Asking for the context and
+    generating one token answers the same question in seconds.
+
+    What it does NOT answer is what throughput looks like at that depth. That is
+    a different test, and it stays expensive on purpose.
+    """
+    binary = cli_binary(build)
+    if not binary:
+        return False, "no llama-completion/llama-cli in the build"
+    cmd = [str(binary), "-m", str(model), "-ngl", "99", "--ctx-size", str(ctx_size),
+           "-n", "1", "--temp", "0", "--seed", "1", "-fa", "on",
+           "-ctk", cache, "-ctv", cache, *cli_flags(build), "-p", "x"]
+    rc, out, err = run(cmd, timeout=timeout, env={"LD_LIBRARY_PATH": str(build.bin)})
+    text = out + err
+    fail = re.search(r"(failed to allocate|allocation of size \d+ failed|out of memory|"
+                     r"unable to (allocate|load)|failed to (create|init))[^\n]*", text, re.I)
+    if fail:
+        return False, fail.group(0)[:120]
+    if rc != 0:
+        line = next((l for l in err.splitlines()
+                     if re.search(r"error|failed|cannot", l, re.I)), f"rc={rc}")
+        return False, line.strip()[:120]
+    return True, ""
 
 
 def cli_binary(build: Build) -> Path | None:

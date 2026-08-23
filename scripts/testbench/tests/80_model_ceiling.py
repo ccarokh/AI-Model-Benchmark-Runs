@@ -22,9 +22,14 @@ MIN_SAMPLES = 4
 
 
 def run(ctx):
-    build = ctx.builds[0]
-    for model in ctx.models:
+    # Every build: "does it fit" is answered by an allocator, and the allocator
+    # is the backend's. One build measured and filed as the card's answer is the
+    # same shortcut this suite keeps finding in its own tests.
+    done = total = 0
+    for build, model in [(b, m) for b in ctx.builds for m in ctx.models]:
+        total += 1
         if ctx.results.has_prefix(NAME, "", build.backend, build.version, model.stem):
+            done += 1
             continue
         if ctx.out_of_budget():
             return
@@ -50,5 +55,7 @@ def run(ctx):
                             f"{model.stem}:vram", str(peak), "MiB peak",
                             f"file {size_gib:.2f} GiB, overhead {overhead:.0f} MiB, "
                             f"{samples} samples{'; ' + doubt if doubt else ''}")
-        ctx.say(f"  {model.stem} ({size_gib:.2f} GiB): "
+        done += 1
+        ctx.say(f"  {build.backend} {model.stem} ({size_gib:.2f} GiB): "
                 + (f"runs, {peak} MiB peak" if ok else f"DOES NOT RUN -- {reason}"))
+    ctx.coverage(NAME, done, total, f"{len(ctx.builds)} builds x {len(ctx.models)} models")
