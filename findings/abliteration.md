@@ -8,7 +8,7 @@ fewer tokens** for the same task.
 That is worth stating plainly because this repository's only other third-party
 derivative [lost 26.7 points against its own base](../use-cases/finetuning.md).
 
-Measured on [System A](../SYSTEMS.md#system-a). Same quantisation as the base
+Measured on [System A](../systems/system-a.md). Same quantisation as the base
 (Q4_K_M), same card, base measured the day before. Full tables in
 [`data/abliteration.tsv`](../data/abliteration.tsv) and
 [`data/context_depth.tsv`](../data/context_depth.tsv).

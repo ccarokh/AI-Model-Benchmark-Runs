@@ -40,13 +40,13 @@ print("1) Ausgabe identisch : %s   (%s vs %s)" %
 if hb.startswith("SKIPPED") or hk.startswith("SKIPPED"):
     print("   ⚠️ nicht gemessen -- damit ist die Bedingung NICHT erfuellt, nicht 'wahrscheinlich ok'")
 
-# --- Bedingung 2: keine Kernelmeldungen ------------------------------------
+# --- Condition 2: no kernel messages ---------------------------------------
 kern = {m: v for m, v in k.items() if m.endswith("_kernel_msgs")}
 schlimm = {m: v for m, v in kern.items() if v not in ("0", "")}
 print("2) Kernel sauber     : %s%s" %
       ("JA" if not schlimm else "NEIN", "" if not schlimm else "   " + str(schlimm)))
 
-# --- Bedingung 3: produktionsnahe Zahlen nicht schlechter ------------------
+# --- Condition 3: production-like numbers no worse -------------------------
 print("3) Durchsatz")
 regress = []
 for metrik in sorted(set(b) & set(k)):

@@ -1,7 +1,7 @@
 #!/bin/bash
-# Runde 2: Chroma, SD 3.5 Medium, RealVisXL -- dieselben acht Aufgaben,
-# gleicher Seed, 1024x1024. Kartenwaechter VOR JEDEM BILD (siehe 07.08.:
-# drei ErrorDeviceLost, weil der stuendliche Health-Check dazwischenkam).
+# Round 2: Chroma, SD 3.5 Medium, RealVisXL -- the same eight tasks, same
+# seed, 1024x1024. Card guard BEFORE EVERY IMAGE (see 07.08.: three
+# ErrorDeviceLost, because the hourly health check cut in).
 set -u
 OUT=/opt/out
 B=/opt/models

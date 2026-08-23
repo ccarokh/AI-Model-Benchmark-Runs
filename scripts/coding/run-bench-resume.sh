@@ -1,13 +1,13 @@
 #!/bin/bash
-# Wie run-bench.sh, aber SETZT FORT statt neu anzufangen.
+# Like run-bench.sh, but RESUMES instead of starting over.
 #
-# Der Unterschied ist genau zwei Dinge:
-#   1. der DIRNAME ist das bestehende, datierte Verzeichnis
-#   2. --new wird WEGGELASSEN
-# aiders benchmark.py ueberspringt dann alle Aufgaben, die schon eine
-# .aider.results.json haben. Mit --new wuerde jedes Fenster von vorn beginnen.
+# The difference is exactly two things:
+#   1. the DIRNAME is the existing, dated directory
+#   2. --new is OMITTED
+# aider's benchmark.py then skips every task that already has a
+# .aider.results.json. With --new every window would start from scratch.
 #
-# Aufruf: run-bench-resume.sh <datiertes-verzeichnis> <port> <edit-format> <tries> <threads> <num-tests|all>
+# Usage: run-bench-resume.sh <dated-directory> <port> <edit-format> <tries> <threads> <num-tests|all>
 set -e
 cd /root/coding-eval/aider
 DIR="$1"; PORT="$2"; EF="${3:-diff}"; TRIES="${4:-2}"; THREADS="${5:-4}"; NT="${6:-all}"

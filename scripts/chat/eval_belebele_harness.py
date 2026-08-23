@@ -56,9 +56,9 @@ client = httpx.Client(timeout=600.0)
 vorlage = PROMPT_LOGPROB if MODUS == "logprob" else PROMPT_GENERATE
 denken = MODUS == "thinking"
 
-# enable_thinking kennt nicht jeder Tokenizer. Ob der Schalter angekommen ist,
-# wird mitprotokolliert -- ein still ignoriertes Argument wuerde die Stufe
-# "thinking" zu einer Kopie von "generate" machen, ohne dass man es sieht.
+# Not every tokenizer knows enable_thinking. Whether the switch arrived gets
+# logged -- a silently ignored argument would turn the "thinking" stage into a
+# copy of "generate" without anyone seeing it.
 try:
     tok.apply_chat_template([{"role": "user", "content": "x"}], tokenize=False,
                             add_generation_prompt=True, enable_thinking=denken)

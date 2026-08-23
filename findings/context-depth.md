@@ -5,7 +5,7 @@ At 32 768 tokens of context the 9B reads 2.4× faster than the MoE and the gener
 is nearly gone.** The model that wins a long-context RAG slot is not the model that wins
 the benchmark, because the benchmark is run at depth 0.
 
-Measured on [System A](../SYSTEMS.md#system-a). `llama-bench -p 2048 -n 128 -d <depth>
+Measured on [System A](../systems/system-a.md). `llama-bench -p 2048 -n 128 -d <depth>
 -fa on -r 3`, one variable — the depth. Full table in
 [`data/context_depth.tsv`](../data/context_depth.tsv).
 

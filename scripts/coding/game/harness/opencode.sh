@@ -1,8 +1,8 @@
-# OpenCode -- der zuerst gebaute Pruefstand.
+# OpenCode -- the harness that was built first.
 agent_vorbereiten() {
-  # Das GANZE Heimatverzeichnis einhaengen, nicht einzelne Unterordner. Docker
-  # legt fehlende Einhaengepunkte als root an -- dann gehoert /home/pruef/.local
-  # root, und opencode scheitert daneben mit EACCES beim Anlegen von .local/state.
+  # Mount the WHOLE home directory, not individual subdirectories. Docker
+  # creates missing mount points as root -- then /home/pruef/.local belongs to
+  # root and opencode fails beside it with EACCES creating .local/state.
   mkdir -p "$ziel/ocheim/.config/opencode" "$ziel/ocheim/.local/share/opencode" \
            "$ziel/ocheim/.local/state"
   cat > "$ziel/ocheim/.config/opencode/opencode.json" <<J
@@ -25,11 +25,10 @@ J
 }
 
 agent_ausfuehren() {
-  # --auto: kein Veto des Pruefstands. Ohne den Schalter lehnt OpenCode jeden
-  # Schreibzugriff ausserhalb des Arbeitsverzeichnisses ab und meldet dem Modell
-  # "The user rejected permission" -- das liest sich wie "ein Mensch hat nein
-  # gesagt", nicht wie "nimm einen anderen Pfad". Zwei Modelle haben daraufhin
-  # aufgehoert statt es anders zu versuchen.
+  # --auto: no veto from the harness. Without it OpenCode refuses every write
+  # outside the working directory and tells the model "The user rejected
+  # permission" -- which reads like "a human said no", not like "use a different
+  # path". Two models stopped at that instead of trying differently.
   timeout "$zeitlimit" docker run --rm \
     -v "$ziel/ocheim":/home/pruef \
     -v "$ziel/arbeit":/arbeit \

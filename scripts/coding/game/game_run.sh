@@ -1,22 +1,22 @@
 #!/bin/bash
-# Agility-Spiel: EIN Lauf, beschrieben durch EINE Konfiguration.
+# Agility game: ONE run, described by ONE config file.
 #
 #   game_run.sh config/qwen3-coder-30b-a3b-llamacpp-opencode.conf
 #
-# Aufbau: der Pruefstand laeuft hier (.201) in einem Behaelter, der Modellserver
-# auf dem Messrechner (.192) an der Karte. Getrennt, weil ein Agent, der Dateien
-# schreibt und Befehle ausfuehrt, waehrend einer Messung keine Fremdlast auf dem
-# Messrechner sein darf -- und weil fremd erzeugter Code gekapselt gehoert.
+# Layout: the harness runs here (.201) in a container, the model server runs on
+# the measuring machine (.192) at the card. Separate, because an agent that
+# writes files and runs commands must not be foreign load on the measuring
+# machine during a measurement -- and because foreign code belongs sandboxed.
 #
-# Gemessen wird IMMER mit vollem Pruefstand. Ein einzelner Aufruf ohne Werkzeuge
-# war einmal als Nulllinie gedacht und ist gestrichen: er misst nicht, was ein
-# Modell kann, sondern was ihm die Umgebung verwehrt.
+# Measurement is ALWAYS with the full harness. A single call without tools was
+# once meant as a baseline and has been dropped: it measures not what a model
+# can do but what the environment denies it.
 set -u
 HIER=$(dirname "$(readlink -f "$0")")
 E=${PRUEF_DIR:-/root/pruef}
 MESS=${MESSRECHNER:-192.168.40.192}
-# NICHT 18099: dort haengt llm-runtime.service, der On-Demand-Server der
-# laufenden Infrastruktur. Der Pruefstand weicht aus, statt dazwischenzugehen.
+# NOT 18099: llm-runtime.service sits there, the on-demand server of the live
+# infrastructure. The harness moves aside rather than getting in its way.
 PORT=18199
 mkdir -p "$E/game"
 L=$E/game.log
@@ -29,10 +29,10 @@ CONF=${1:-}
 [ -f "$CONF" ] || { echo "Konfiguration nicht gefunden: ${1}"; exit 2; }
 LAUF=$(basename "$CONF"); LAUF=${LAUF%.conf}
 
-# --- Konfiguration ---------------------------------------------------------
-# Kein `source`: das sind Daten, keine Befehle. Und ein Tippfehler im Schluessel
-# MUSS abbrechen -- ein stillschweigend auf die Vorgabe zurueckfallendes
-# tmep=0.9 waere eine erfundene Messreihe.
+# --- Config ----------------------------------------------------------------
+# No `source`: this is data, not commands. And a typo in a key MUST abort -- a
+# silently-ignored tmep=0.9 falling back to the default would be a fabricated
+# series.
 model=""; gguf=""; hf=""; quant=""; harness=""; beschreibung=""; runtime=""
 temp=0.2; maxtok=16384; ctx=32768; template=gguf; zeitlimit=3600; aufgabe=aufgabe.md
 tool_parser=""; denken=an; tokenizer=""; tokenizer_mode=""
@@ -51,39 +51,38 @@ done < "$CONF"
 for pflicht in model quant harness beschreibung runtime; do
   [ -n "${!pflicht}" ] || ende "Konfiguration: '$pflicht' fehlt"
 done
-# Der Dateiname MUSS den Inhalt wiedergeben. Ein Etikett, das nachtraeglich
-# aufgeklebt wird, hat bei den Chunk-Groessen schon fast eine erfundene Kurve
-# erzeugt -- hier bricht es ab.
+# The filename MUST reflect the contents. A label stuck on afterwards nearly
+# produced a fabricated curve once already, with the chunk sizes -- here it
+# aborts instead.
 [ "$LAUF" = "$model-$beschreibung-$harness" ] || \
   ende "Dateiname und Inhalt weichen ab: '$LAUF.conf' muesste '$model-$beschreibung-$harness.conf' heissen"
-# Der Pruefstand ist eine Datei unter harness/, keine Fallunterscheidung hier.
-# Einen weiteren Agenten aufzunehmen heisst: eine Datei anlegen und eine
-# Konfiguration schreiben, die im Namen auf ihn endet. Dieses Skript kennt
-# keinen einzigen Agentennamen.
+# A harness is a file under harness/, not a case statement here. Adding another
+# agent means writing one file and one config whose name ends in it. This script
+# knows no agent by name.
 ADAPTER=$HIER/harness/$harness.sh
 [ -f "$ADAPTER" ] || ende "Pruefstand '$harness' unbekannt -- es gibt kein harness/$harness.sh"
 . "$ADAPTER"
 for f in agent_vorbereiten agent_ausfuehren; do
   command -v "$f" >/dev/null || ende "harness/$harness.sh liefert '$f' nicht"
 done
-# Die beiden Laufzeiten lesen nicht dieselbe Datei: llama.cpp will GGUF, vLLM
-# will HF-Format. Wo dazu eine andere Quantisierung noetig ist, macht das den
-# Lauf nicht ungueltig -- es macht ihn zu einem anderen Lauf, und deshalb steht
-# `quant` in jeder Ergebniszeile. Verglichen wird dann Laufzeit UND Gewicht,
-# und wer die Tabelle liest, sieht es.
+# The two runtimes do not read the same file: llama.cpp wants GGUF, vLLM wants
+# HF format. Where that requires a different quantisation, it does not make the
+# run invalid -- it makes it a different run, which is why `quant` appears in
+# every result row. Then runtime AND weights differ, and whoever reads the table
+# can see it.
 case "$runtime" in
   llamacpp) [ -n "$gguf" ] || ende "runtime=llamacpp braucht 'gguf'"
             [ -s "$(ssh -n $MESS "readlink -f '$gguf'" 2>/dev/null)" ] 2>/dev/null || true ;;
   vllm) [ -n "$hf" ] || ende "runtime=vllm braucht 'hf' (Pfad oder HF-Kennung)"
-        # OFFEN heisst: noch nicht gemessen, welche Gewichte vLLM hier lesen kann.
-        # Lieber sichtbar abbrechen als still etwas Beliebiges laden.
+        # OFFEN means: not yet measured which weights vLLM can read here.
+        # Better to abort visibly than to quietly load something arbitrary.
         [ "$hf" = OFFEN ] && ende "Gewichte fuer vLLM noch nicht bestimmt (hf = OFFEN)"
         [ -n "$(ssh -n $MESS 'command -v docker' 2>/dev/null)" ] || ende "vLLM braucht Docker auf $MESS"
-        # llama.cpp leitet den Aufrufstil aus der Vorlage in der GGUF ab. vLLM
-        # verlangt ihn benannt, je Modellfamilie ein eigener Parser -- und ohne
-        # ihn liefert der Server 400 bei jedem Werkzeugaufruf. Das ist ein
-        # Unterschied der Laufzeiten, kein Detail, und gehoert deshalb in die
-        # Konfiguration statt in eine Fallunterscheidung im Skript.
+        # llama.cpp derives the tool-call style from the template inside the
+        # GGUF. vLLM wants it named, one parser per model family -- and without
+        # it the server answers 400 to every tool call. That is a difference
+        # between runtimes, not a detail, so it belongs in the config rather
+        # than in a case statement here.
         [ -n "$tool_parser" ] || ende "runtime=vllm braucht 'tool_parser'" ;;
   *) ende "Laufzeit '$runtime' unbekannt" ;;
 esac
@@ -95,17 +94,17 @@ ziel=$E/game/$LAUF
 rm -rf "$ziel"; mkdir -p "$ziel/arbeit" "$ziel/occonfig" "$ziel/ocdaten"
 chown -R 1000:1000 "$ziel/arbeit" "$ziel/occonfig" "$ziel/ocdaten"
 
-# Die Aufgabendatei enthaelt die Aufgabe und sonst nichts -- sie geht
-# unveraendert hinaus. Vorher stand der Prompt in einem Dokument zwischen zwei
-# ---Linien und wurde mit awk herausgeschnitten: ein waagerechter Strich im
-# Prompt haette ihn still abgeschnitten, und in den Ergebnissen waere nur zu
-# sehen gewesen, dass ploetzlich alle Modelle schlechter werden.
+# The task file holds the task and nothing else -- it goes out unchanged. The
+# prompt used to live inside a document between two --- lines and was cut out
+# with awk: a horizontal rule inside the prompt would have truncated it
+# silently, and the results would only have shown that every model suddenly got
+# worse.
 cp "$AUFGABE" "$ziel/aufgabe.txt"
 [ -s "$ziel/aufgabe.txt" ] || ende "Aufgabendatei ist leer: $aufgabe"
-# Nicht der Dateiname zaehlt, sondern der Text. Die Aufgabe hat sich an einem
-# Nachmittag achtzehnmal geaendert; zwei Laeufe mit "task.md" in der Spalte
-# koennen voellig verschiedene Aufgaben gehabt haben. Der Fingerabdruck macht
-# das sichtbar, statt es unter einem gleichen Etikett zu verstecken.
+# What counts is the text, not the filename. The task changed eighteen times in
+# one afternoon; two runs both reading "task.md" in that column can have had
+# entirely different tasks. The fingerprint makes that visible instead of hiding
+# it under an identical label.
 aufgabe_id=$(sha256sum "$ziel/aufgabe.txt" | cut -c1-12)
 
 cat > "$ziel/lauf.json" <<J
@@ -120,7 +119,7 @@ J
 
 [ -f "$E/ergebnis.tsv" ] || printf 'lauf\tmodel\tbeschreibung\tharness\truntime\tquant\taufgabe_id\ttemperature\tmax_tokens\tctx\ttemplate\tzeitlimit\tabgebrochen\tsekunden\tdateien\tbytes\that_index\tausserhalb\tagenten_dateien\tsyntax_ok\tgeoeffnet\tlaufzeit_fehler\tkonsole_fehler\tfehlende_dateien\tcanvas_bemalt\tcanvas_or_svg\tjump_key\tduck_key\tscore\trestart\tspeedup\textern\n' > "$E/ergebnis.tsv"
 
-# --- Modellserver auf dem Messrechner ---------------------------------------
+# --- Model server on the measuring machine ----------------------------------
 server_stop(){
   ssh -n "$MESS" 'p=$(pgrep -x llama-server); [ -n "$p" ] && kill $p; sleep 5;
                   p=$(pgrep -x llama-server); [ -n "$p" ] && kill -9 $p; true' >/dev/null 2>&1
@@ -129,10 +128,10 @@ server_stop(){
 }
 trap 'server_stop' EXIT INT TERM
 
-# Kartenwaechter nur ueber den Speicher. Auf "kein llama-server" zu pruefen
-# geht nicht mehr: llm-runtime.service haelt dort dauerhaft einen, meist mit
-# einem kleinen Einbettungsmodell. Entscheidend ist, ob die Karte frei genug
-# ist -- ein grosses Modell belegt Gigabyte, nicht Megabyte.
+# Card guard by memory only. Checking for "no llama-server" no longer works:
+# llm-runtime.service keeps one running permanently, usually with a small
+# embedding model. What matters is whether the card is free enough -- a large
+# model takes gigabytes, not megabytes.
 frei(){ for i in $(seq 1 45); do
     v=$(ssh -n "$MESS" 'echo $(( $(cat /sys/class/drm/card1/device/mem_info_vram_used)/1048576 ))' 2>/dev/null)
     [ "${v:-99999}" -lt 2000 ] && return 0
@@ -144,30 +143,29 @@ sag "=== $LAUF ($model / $beschreibung / $harness / $runtime) ==="
 case "$runtime" in
   llamacpp)
     TPL='--jinja'; [ "$template" != gguf ] && TPL="--jinja --chat-template-file $template"
-    # Denkmodus. Ein Modell, das zwoelf Minuten denkt und dabei nie einen
-    # Werkzeugaufruf abschliesst, sieht aus wie ein Modell, das nichts kann.
-    # Ob das an ihm liegt oder daran, dass wir den Modus anlassen, entscheidet
-    # ein Lauf mit "aus" -- und beide Zeilen bleiben in der Tabelle stehen.
-    # Einfache Anfuehrungszeichen sind Pflicht: der ganze Befehl reist als
-    # doppelt gequotete Zeichenkette durch ssh, und ein nacktes JSON zerfaellt
-    # dabei zu {enable_thinking:false} -- llama-server startet dann nicht.
+    # Thinking mode. A model that thinks for twelve minutes and never completes
+    # a tool call looks like a model that can do nothing. Whether that is the
+    # model or our leaving the mode on is decided by a run with "aus" -- and
+    # both rows stay in the table.
+    # Single quotes are mandatory: the whole command travels through ssh as a
+    # double-quoted string, and bare JSON falls apart into
+    # {enable_thinking:false} on the way -- llama-server then refuses to start.
     [ "$denken" = aus ] && TPL="$TPL --chat-template-kwargs '{\"enable_thinking\":false}'"
     ssh -n "$MESS" "export LD_LIBRARY_PATH=/opt/llama-cpp-nb/lib; setsid nohup /opt/llama-cpp-nb/bin/llama-server -m '$gguf' --host 0.0.0.0 --port $PORT -c $ctx -np 1 -ngl 99 -sm none -mg 0 $TPL > /root/eval/game_srv.log 2>&1 < /dev/null & echo ok" >/dev/null
     ;;
   vllm)
-    # Werkzeugaufrufe aus GGUF-Gewichten: der mitgelieferte Texterkenner reicht
-    # nicht immer. Mistral schreibt [TOOL_CALLS]name[ARGS]{...}, und keiner der
-    # 29 Parser im Abbild kennt den [ARGS]-Trenner -- der Aufruf landet dann als
-    # Fliesstext in der Antwort, und der Agent sieht gar keinen. Mit dem
-    # Mistral-Tokenisierer, getrennt von den Gewichten geholt, wird er erkannt.
-    # Das ist eine Betriebsanleitung, kein Scheitern, und gehoert deshalb in die
-    # Konfiguration.
+    # Tool calls from GGUF weights: the bundled text parser is not always
+    # enough. Mistral writes [TOOL_CALLS]name[ARGS]{...}, and none of the 29
+    # parsers in the image knows the [ARGS] separator -- the call then lands as
+    # prose in the response and the agent sees none at all. With the Mistral
+    # tokenizer, fetched separately from the weights, it is recognised. That is
+    # an operating instruction, not a failure, so it belongs in the config.
     TOK=""
     [ -n "$tokenizer" ] && TOK="--tokenizer $tokenizer"
     [ -n "$tokenizer_mode" ] && TOK="$TOK --tokenizer-mode $tokenizer_mode"
-    # Der Behaelter braucht die Karte durchgereicht -- anders als der Pruefstand,
-    # der nur ueber HTTP redet. Kein --rm hier: bricht der Start ab, soll das
-    # Protokoll noch da sein.
+    # This container needs the card passed through -- unlike the harness, which
+    # only speaks HTTP. No --rm here: if the start fails, the log should still
+    # be there.
     ssh -n "$MESS" "docker rm -f vllm-mess >/dev/null 2>&1; setsid nohup docker run --name vllm-mess \
       --device=/dev/kfd --device=/dev/dri --group-add video \
       --security-opt seccomp=unconfined --shm-size 8g --ipc=host \
@@ -180,12 +178,12 @@ case "$runtime" in
     ;;
 esac
 ok=nein
-# llama.cpp antwortet auf /health mit einem Text, vLLM mit leerem 200. Deshalb
-# auf den Statuscode pruefen und nicht auf den Inhalt.
+# llama.cpp answers /health with text, vLLM with an empty 200. So check the
+# status code, not the body.
 #
-# Und: einen toten Server erkennen, statt 15 Minuten auf ihn zu warten. vLLM
-# bricht bei einer nicht unterstuetzten Architektur nach zwei Minuten ab -- die
-# uebrigen dreizehn Minuten waren reine Wartezeit, sechsmal in einer Nacht.
+# And: notice a dead server instead of waiting 15 minutes for it. vLLM gives up
+# on an unsupported architecture after two minutes -- the other thirteen were
+# pure waiting, six times in one night.
 for i in $(seq 1 180); do
   code=$(curl -s -o /dev/null -m 3 -w "%{http_code}" "http://$MESS:$PORT/health" 2>/dev/null)
   [ "$code" = 200 ] && { ok=ja; break; }
@@ -193,9 +191,8 @@ for i in $(seq 1 180); do
     ssh -n "$MESS" 'docker ps --filter name=vllm-mess --format "{{.Names}}" | grep -q vllm-mess' || { ok=tot; break; }
   fi
   sleep 5; done
-# Das Protokoll des Modellservers gehoert zum Lauf, nicht in eine Datei, die der
-# naechste Lauf ueberschreibt. Ohne das war nach sechs Fehlschlaegen nur der
-# letzte Grund bekannt.
+# The model server's log belongs to the run, not to a file the next run
+# overwrites. Without this, six failures left only the last reason known.
 if [ "$runtime" = vllm ]; then
   ssh -n "$MESS" 'tail -200 /root/eval/vllm_srv.log' > "$ziel/server.log" 2>/dev/null
 else
@@ -207,32 +204,31 @@ if [ "$ok" = tot ]; then
 fi
 [ $ok = ja ] || ende "Modellserver kam nicht hoch"
 
-# --- Pruefstand -------------------------------------------------------------
-# Ab hier gehoert die Arbeit dem Adapter. Was fuer alle gilt, steht in
-# harness/README.md -- insbesondere, dass die Grenzen in JEDE Konfiguration
-# gehoeren: ohne sie raten die Agenten, und ein geratenes max_tokens hat hier
-# schon wie Modellversagen ausgesehen.
+# --- Harness ----------------------------------------------------------------
+# From here the work belongs to the adapter. What applies to all of them is in
+# harness/README.md -- in particular that the limits belong in EVERY config:
+# without them the agents guess, and a guessed max_tokens has already looked
+# like model failure here.
 agent_vorbereiten
 
 t0=$(date +%s)
 agent_ausfuehren
 rc=$?; dauer=$(( $(date +%s) - t0 ))
 
-# --- Vorpruefung ------------------------------------------------------------
-# Laeuft das Spiel ueberhaupt? Syntax der Skripte, dann die Seite in einem
-# Browser ohne Fenster oeffnen und mitschreiben, was schiefgeht.
+# --- Pre-check ---------------------------------------------------------------
+# Does the game run at all? Script syntax first, then the page in a headless
+# browser, logging whatever goes wrong.
 #
-# In einem EIGENEN Behaelter, erst nachdem der Agent beendet ist. Ein Browser im
-# Agentenabbild waere ein Werkzeug, das dem Modell zur Verfuegung stuende -- es
-# koennte sein eigenes Spiel oeffnen und nachbessern, und das waere ein anderer
-# Pruefstand als der, den wir messen.
+# In a SEPARATE container, and only after the agent has exited. A browser in the
+# agent image would be a tool available to the model -- it could open and fix
+# its own game, and that would be a different harness than the one we measure.
 #
-# Faellt der Pruefer aus, bleibt die Datei leer und die Spalten leer. Ein
-# fehlendes Werkzeug darf kein Modell schlecht aussehen lassen.
+# If the checker fails, the file stays empty and so do the columns. A missing
+# tool must not make a model look bad.
 : > "$ziel/vorpruefung.json"
-# Der Pruefer schreibt sein Bildschirmfoto als Nutzer 1000; das Laufverzeichnis
-# gehoert root. Ohne diese Zeile scheitert er mit EACCES -- und der Fehler
-# stuende dann als Laufzeitfehler beim Spiel, obwohl er unserer ist.
+# The checker writes its screenshot as user 1000; the run directory belongs to
+# root. Without this line it fails with EACCES -- and the error would be filed
+# as a runtime error of the game, although it is ours.
 chown 1000:1000 "$ziel" "$ziel/vorpruefung.json"
 if docker image inspect spielpruefer:1 >/dev/null 2>&1; then
   { docker run --rm -v "$ziel/arbeit":/arbeit:ro -v "$ziel":/aus \

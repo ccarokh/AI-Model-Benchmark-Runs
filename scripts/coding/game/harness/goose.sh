@@ -1,4 +1,4 @@
-# Goose (Block) -- Rust-Agent, Anbieter ueber Umgebung und eine YAML-Datei.
+# Goose (Block) -- a Rust agent, provider via environment and a YAML file.
 agent_vorbereiten() {
   mkdir -p "$ziel/gooseheim/.config/goose"
   cat > "$ziel/gooseheim/.config/goose/config.yaml" <<J
@@ -15,7 +15,7 @@ J
 }
 
 agent_ausfuehren() {
-  # GOOSE_MODE=auto: keine Rueckfragen.
+  # GOOSE_MODE=auto: no questions back.
   timeout "$zeitlimit" docker run --rm \
     -v "$ziel/gooseheim":/home/pruef \
     -v "$ziel/arbeit":/arbeit \

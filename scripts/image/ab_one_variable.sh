@@ -1,11 +1,11 @@
 #!/bin/bash
-# A/B fuer Chroma: Schrittzahl und cfg, alles andere fest.
+# A/B for Chroma: step count and cfg, everything else fixed.
 #
-# Warum genau hier: Chroma ist das einzige Modell, das die Textaufgabe loest
-# (Editabstand 0, Apache-2.0). Seine drei Ausfaelle -- plastikhaft bei 04 und 08,
-# Rasterfell bei 07 -- koennten Parameter sein statt Modell. Die Quantisierung
-# ist bereits ausgeschlossen (Q4_0 und Q8_0 identisch).
-# Gleicher Seed, gleicher Prompt, eine Variable je Lauf.
+# Why here of all places: Chroma is the only model that solves the text task
+# (edit distance 0, Apache-2.0). Its three failures -- plastic-looking on 04
+# and 08, grid-patterned fur on 07 -- could be parameters rather than the
+# model. Quantisation is already ruled out (Q4_0 and Q8_0 identical).
+# Same seed, same prompt, one variable per run.
 set -u
 OUT=/opt/out/ab; mkdir -p $OUT
 B=/opt/models; F=$B/flux1-schnell; M=$B/chroma1-hd/Chroma1-HD-Q4_0.gguf

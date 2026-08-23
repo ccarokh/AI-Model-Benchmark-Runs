@@ -1,21 +1,20 @@
 #!/bin/bash
-# Spielt alle Konfigurationen unter config/ nacheinander ab.
+# Plays every configuration under config/, one after the other.
 #
-#   alle_laeufe.sh              # alles
-#   alle_laeufe.sh qwen3.8      # nur passende Dateinamen
+#   alle_laeufe.sh              # everything
+#   alle_laeufe.sh qwen3.8      # only matching filenames
 #
-# Der einzelne Lauf bleibt einzeln aufrufbar:
+# A single run stays individually callable:
 #   game_run.sh config/qwen3-coder-30b-a3b-llamacpp-opencode.conf
 #
-# ZEITFENSTER: die Karte wird tagsueber gebraucht, gemessen wird 23:00-11:00.
-# Fuer den Zeitgeber auf dem Messrechner ist die ganze Reihe EIN Schritt, der
-# ueber Stunden laufen kann -- deshalb prueft sie das Fenster selbst, vor jedem
-# einzelnen Lauf, und hoert auf, wenn es zugeht. Ein angefangener Lauf laeuft
-# noch zu Ende; ihn mittendrin abzuschneiden erzeugt ein halbes Ergebnis, das
-# spaeter wie ein schlechtes Modell aussieht.
+# TIME WINDOW: the card is needed during the day. To the scheduler on the
+# measuring machine this whole series is ONE step that can run for hours, so it
+# checks the window itself before every single run and stops when the window
+# closes. A run already started finishes; cutting it off mid-way produces half a
+# result, which later looks like a bad model.
 #
-# Ein fehlgeschlagener Lauf beendet die Reihe NICHT -- sonst kostet ein Modell,
-# dessen Server nicht hochkommt, die ganze Nacht.
+# A failed run does NOT end the series -- otherwise one model whose server fails
+# to come up costs the entire night.
 set -u
 HIER=$(dirname "$(readlink -f "$0")")
 FILTER=${1:-}

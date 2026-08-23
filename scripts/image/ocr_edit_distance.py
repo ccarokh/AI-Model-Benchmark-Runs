@@ -1,6 +1,7 @@
-# Text-im-Bild als Messung statt als Urteil: OCR das erzeugte Bild und vergleiche
-# gegen die angeforderte Zeichenkette. Bester Editabstand ueber alle Fenster
-# vergleichbarer Laenge -- so zaehlt Rauschen vom Schildrahmen nicht mit.
+# Text-in-image as a measurement instead of a judgement: OCR the generated
+# image and compare against the requested string. Best edit distance over all
+# windows of comparable length -- that way noise from the sign frame does not
+# count.
 import subprocess, re, sys
 
 SOLL = "ACHTUNG BEHAELTER"

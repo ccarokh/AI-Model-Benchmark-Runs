@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""OpenAI-kompatible Attrappe, um die Verdrahtung der Agenten zu pruefen.
+"""An OpenAI-compatible stub for checking how the agents are wired up.
 
-Sie braucht keine Karte und kein Modell. Antwortet auf /v1/models und
-/v1/chat/completions mit einer festen Antwort und schreibt jede Anfrage mit.
-Damit laesst sich fuer jeden Agenten feststellen, ob er ueberhaupt bei unserem
-Endpunkt ankommt -- getrennt von der Frage, ob ein Modell die Aufgabe loest.
+It needs no card and no model. It answers /v1/models and /v1/chat/completions
+with a fixed reply and logs every request. That establishes, per agent, whether
+it reaches our endpoint at all -- separately from whether a model can solve the
+task.
 
-    python3 attrappe.py 18299 protokoll.jsonl
+    python3 attrappe.py 18299 log.jsonl
 """
 import json, sys, time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer

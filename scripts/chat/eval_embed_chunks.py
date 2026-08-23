@@ -24,8 +24,8 @@ cl = httpx.Client(timeout=300.0)
 def bauen(i, p):
     if VAR == "kurz":
         return p
-    # Auf ~3000 Zeichen auffuellen, Zielpassage ans Ende. Fuellmaterial aus
-    # anderen Passagen, deterministisch ueber den Index gewaehlt.
+    # Pad to ~3000 characters, target passage at the end. Filler taken from
+    # other passages, chosen deterministically via the index.
     text = ""
     k = 0
     while len(text) + len(p) < 3000:

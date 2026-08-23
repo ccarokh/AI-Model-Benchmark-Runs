@@ -1,21 +1,21 @@
 #!/bin/bash
-# Messsuite fuer llama.cpp. Aufruf:  suite.sh <version> [modell-schluessel]
+# Measurement suite for llama.cpp. Usage:  suite.sh <version> [model-key]
 #
-#   suite.sh b10488            # ein Nightly-Tag
-#   suite.sh v0.1.2            # ein Pre-Release
-#   suite.sh master            # aktueller Stand
-#   suite.sh installed:/opt/llama-cpp   # ein bereits gebautes Praefix messen
+#   suite.sh b10488            # a nightly tag
+#   suite.sh v0.1.2            # a pre-release
+#   suite.sh master            # current state
+#   suite.sh installed:/opt/llama-cpp   # measure an already built prefix
 #
-# Alles andere passiert hier drin: bauen (falls noetig), pruefen dass wirklich
-# der gemeinte Build laeuft, messen, Ergebnis versioniert ablegen.
+# Everything else happens in here: build (if needed), verify that the intended
+# build is really the one running, measure, store the result versioned.
 #
-# ENTWURFSREGELN, alle aus Fehlern dieses Repos:
-#   - frischer Prozess je Messung (llama-server traegt Zustand mit)
-#   - Kartenwacht vor JEDEM Schritt, nicht einmal am Anfang
-#   - was uebersprungen wird, wird protokolliert -- Schweigen sieht aus wie Erfolg
-#   - jeder variierende Parameter steht im Dateinamen
-#   - Leistung wird nur ueber das Rechenfenster integriert, nicht ueber das Laden
-#   - Ausgabe-Hash mitmessen: schneller und anders ist nicht schneller
+# DESIGN RULES, all of them out of this repo's mistakes:
+#   - a fresh process per measurement (llama-server carries state along)
+#   - card guard before EVERY step, not once at the start
+#   - whatever is skipped gets logged -- silence looks like success
+#   - every varying parameter appears in the filename
+#   - power is integrated over the compute window only, not over loading
+#   - measure the output hash too: faster and different is not faster
 set -u
 
 VERSION="${1:?Aufruf: suite.sh <version|installed:/pfad> [modell]}"
@@ -52,7 +52,7 @@ ZEILE(){ printf '%s\t%s\t%s\t%s\n' "$TAG" "$MODELL_KEY" "$1" "$2" >> "$LAUF/erge
 [ -f "$LAUF/ergebnis.tsv" ] || printf 'build\tmodel\tmetric\tvalue\n' > "$LAUF/ergebnis.tsv"
 sag "=== Suite $TAG / $MODELL_KEY ==="
 
-# ---------------------------------------------------------------- bauen
+# ---------------------------------------------------------------- build
 if [ ! -x "$PRAEFIX/bin/llama-bench" ]; then
   sag "--- bauen: $VERSION ---"
   [ -d "$SRC" ] || { sag "kein Quellbaum unter $SRC"; exit 1; }
@@ -73,10 +73,10 @@ else
 fi
 export LD_LIBRARY_PATH="$PRAEFIX/lib"
 
-# ------------------------------------------- laeuft wirklich DIESER Build?
-# Ein zweites Praefix, dessen Binary die Bibliotheken des ersten laedt, hatten
-# wir hier schon: alle acht loesten ins alte Praefix auf und nur ein
-# Architekturfehler hat es verraten.
+# ------------------------------------------- is THIS build really running?
+# A second prefix whose binary loads the first one's libraries is something we
+# already had here: all eight resolved into the old prefix and only an
+# architecture error gave it away.
 ges=$(ldd "$PRAEFIX/bin/llama-bench" 2>/dev/null | grep -cE "libllama|libggml")
 mein=$(ldd "$PRAEFIX/bin/llama-bench" 2>/dev/null | grep -E "libllama|libggml" | grep -c "$PRAEFIX/lib")
 sag "Bibliotheken: $mein von $ges im eigenen Praefix"
@@ -129,8 +129,8 @@ sag "--- 3/4 Kontexttiefe ---"
 for t in 0 8192 32768; do bench depth_$t depth_$t -p 2048 -n 128 -d $t -fa on -r 3; done
 
 sag "--- 4/4 Determinismus ---"
-# Ein Build, der schneller wurde und anders antwortet, ist nicht schneller beim
-# Gleichen. Die Durchsatzzeile allein wuerde das durchwinken.
+# A build that got faster and answers differently is not faster at the same
+# thing. The throughput line alone would wave that through.
 if frei determinism; then
   h=$(timeout 600 "$PRAEFIX/bin/llama-cli" -m "$GGUF" -ngl 99 -sm none -mg 0 \
         --seed 1234 --temp 0 -n 96 -no-cnv -st --simple-io --no-warmup \

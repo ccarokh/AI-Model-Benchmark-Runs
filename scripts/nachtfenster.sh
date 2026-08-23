@@ -1,35 +1,28 @@
 #!/bin/bash
-# Nachtfenster 00:00-08:00 -- deckungsgleich mit LLM_RUNTIME_BATCH_WINDOW.
-# Tagsueber gehoert die Karte dem Betreiber.
+# Night window. During the day the card belongs to the operator; outside the
+# window nothing runs without an explicit instruction.
 #
-# Frueher stand hier 23:00-11:00, waehrend llm-runtime Pachten nur zwischen
-# 00:00 und 08:00 gewaehrt. Drei der zwoelf Stunden waren damit gar nicht
-# koordinierbar, und in der Nacht zum 21.08. hat genau das eine Messung
-# gekostet: der Abgleich mass gegen eine umkaempfte Karte, beide Bauten kamen
-# auf 3,3 statt 103 Token/s -- und der Pruefstand haette den Versionswechsel
-# durchgewunken, weil beide Seiten gleich falsch gemessen waren.
+# The window and LLM_RUNTIME_BATCH_WINDOW have to agree. They did not once, and
+# on the night of 21.08. that cost a measurement: the drift check measured
+# against a contended card, both builds came out at 3.3 instead of 103 tokens/s
+# -- and the check would have waved the version change through, because both
+# sides were equally wrong.
 #
-# Ausserhalb dieses Fensters wird nur auf ausdrueckliche Ansage gearbeitet.
+# This replaces the previous practice of starting measurement chains by hand
+# whenever it happened to suit -- and having them then get in each other's and
+# in the day job's way.
 #
-# Das ersetzt das bisherige Vorgehen, bei dem Messketten von Hand gestartet
-# wurden, wann es gerade passte -- und sich dann gegenseitig und dem Betrieb
-# in die Quere kamen.
-#
-# DREI HARTE REGELN:
-#   0. Ohne gewaehrte GPU-Pacht wird NICHT gemessen. llm-runtime bringt dafuer
-#      eine Verwaltung mit (/_manager/lease); solange sie gehalten wird, weist
-#      der Dienst interaktive Anfragen ab, statt uns den Speicher wegzunehmen.
-#      In der Nacht zum 21.08. hat gefehlt, dass sie ueberhaupt angefordert
-#      wurde: der Abgleich mass gegen eine umkaempfte Karte, beide Bauten kamen
-#      auf 3,3 statt 103 Token/s -- und weil BEIDE gleich falsch gemessen waren,
-#      meldete der Pruefstand "Zahlen nicht schlechter" und haette den
-#      Versionswechsel durchgewunken. Eine Messung, die ihre eigenen
-#      Voraussetzungen nicht prueft, erzeugt stillschweigend Zustimmung.
-#   1. Vor JEDEM Schritt wird das Fenster geprueft, nicht nur beim Start.
-#      Ein Schritt, der um 10:55 beginnt und drei Stunden braucht, waere sonst
-#      genau der Konflikt, den das Fenster verhindern soll.
-#   2. Um 11:00 wird abgeraeumt, auch mitten im Lauf -- inklusive des selbst
-#      gestarteten llama-server, ueber die gemerkte PID.
+# THREE HARD RULES:
+#   0. No measurement without a granted GPU lease. llm-runtime provides one
+#      (/_manager/lease); while it is held the service refuses interactive
+#      requests instead of taking the memory away from us. What was missing on
+#      the night of 21.08. was that anyone requested it at all. A measurement
+#      that does not check its own preconditions silently produces agreement.
+#   1. The window is checked before EVERY step, not only at the start. A step
+#      beginning at 10:55 and taking three hours would otherwise be exactly the
+#      conflict the window is meant to prevent.
+#   2. At the closing hour everything is torn down, mid-run if necessary --
+#      including the llama-server we started ourselves, via its remembered PID.
 set -u
 E=/root/eval
 D=/sys/class/drm/card1/device
@@ -44,12 +37,12 @@ SPID=""
 
 sag(){ echo "[$(date '+%d.%m. %H:%M:%S')] $*" | tee -a $L; }
 
-# Faengt das Fenster spaeter an, als es endet, laeuft es ueber Mitternacht.
+# If the window starts later than it ends, it runs across midnight.
 im_fenster(){ local h=$(date +%-H)
   if [ "$START_STD" -gt "$ENDE_STD" ]; then [ "$h" -ge "$START_STD" ] || [ "$h" -lt "$ENDE_STD" ]
   else [ "$h" -ge "$START_STD" ] && [ "$h" -lt "$ENDE_STD" ]; fi; }
 
-# --- GPU-Pacht ---------------------------------------------------------------
+# --- GPU lease ---------------------------------------------------------------
 pacht_nehmen(){
   [ -r "$PACHT_SCHLUESSEL" ] || { sag "Pacht-Schluessel fehlt: $PACHT_SCHLUESSEL"; return 1; }
   local t a
@@ -60,7 +53,7 @@ pacht_nehmen(){
   PACHT_ID=$(printf '%s' "$a" | sed -n 's/.*"lease_id":"\([^"]*\)".*/\1/p')
   [ -n "$PACHT_ID" ] || { sag "Pacht verweigert: $(printf '%s' "$a" | cut -c1-160)"; return 1; }
   sag "Pacht $PACHT_ID gehalten"
-  # Herzschlag deutlich unter der Laufzeit (LLM_RUNTIME_LEASE_TTL=300).
+  # Heartbeat well below the lease TTL (LLM_RUNTIME_LEASE_TTL=300).
   ( while :; do sleep 120
       curl -s -m 10 -o /dev/null -X POST \
         "$RUNTIME/_manager/lease/$PACHT_ID/heartbeat" -H "x-lease-token: $t" || true
@@ -85,9 +78,10 @@ pacht_zurueck(){
 
 aufraeumen(){
   pacht_zurueck
-  # Nur der selbst gestartete Server. Ein Muster traefe die Produktions-Runtime.
+  # Only the server we started ourselves. A pattern match would hit the
+  # production runtime as well.
   [ -n "$SPID" ] && { kill $SPID 2>/dev/null; sleep 6; kill -9 $SPID 2>/dev/null; }
-  # Takte zuruecksetzen, falls ein Drossel-Schritt unterbrochen wurde.
+  # Reset clocks in case a throttling step was interrupted.
   echo r > $D/pp_od_clk_voltage 2>/dev/null
   echo c > $D/pp_od_clk_voltage 2>/dev/null
   echo auto > $D/power_dpm_force_performance_level 2>/dev/null
@@ -101,7 +95,7 @@ pacht_nehmen || { sag "ohne Pacht wird nicht gemessen -- Fenster endet hier"; ex
 
 sag "=== Fenster auf ($(date +%H:%M), bis ${ENDE_STD}:00) ==="
 
-# Wachhund: raeumt um 11:00 ab, auch wenn ein Schritt noch laeuft.
+# Watchdog: clears the field at 11:00, even if a step is still running.
 ( while :; do
     h=$(date +%-H)
     if [ "$h" -ge "$ENDE_STD" ] && [ "$h" -lt "$START_STD" ]; then
@@ -120,17 +114,16 @@ while read -r zeile; do
     sag "Fenster zu -- Rest der Warteschlange bleibt liegen"
     break
   fi
-  # Karte frei? Kurz warten, dann MIT Meldung ueberspringen. Ein stummes
-  # Ueberspringen ist von Erfolg nicht zu unterscheiden.
-  # Mit Pacht entfaellt der Speicherwaechter: llm-runtime ist dann die
-  # zustaendige Stelle. Es gewaehrt die Pacht nur, wenn die Karte frei genug ist
-  # (Schwelle 1024 MiB), und weist danach interaktive Anfragen ab.
+  # Card free? Wait briefly, then skip WITH a message. A silent skip cannot be
+  # told apart from success.
+  # With a lease the memory guard drops away: llm-runtime is then the
+  # authority. It grants the lease only when the card is free enough (threshold
+  # 1024 MiB) and refuses interactive requests afterwards.
   #
-  # Ein zweiter, strengerer Schwellwert daneben hat in der Nacht zum 22.08. ALLE
-  # vier Schritte ausgesperrt: er verlangte unter 500 MiB, waehrend der Leerlauf
-  # dieses Rechners bei rund 700 liegt -- ein dauerhaft geladenes
-  # Erkennungsmodell. Die Bedingung konnte nie wahr werden. Die Pacht wurde
-  # genommen, gehalten und ungenutzt zurueckgegeben.
+  # A second, stricter threshold beside it locked out ALL four steps on the
+  # night of 22.08.: it demanded under 500 MiB while this machine idles at
+  # around 700 -- a permanently loaded detection model. The condition could
+  # never become true. The lease was taken, held, and returned unused.
   frei=nein
   [ -n "$PACHT_ID" ] && frei=ja
   for i in $(seq 1 30); do
@@ -139,18 +132,11 @@ while read -r zeile; do
     [ "$v" -lt 500 ] && [ "$s" -eq 0 ] && { frei=ja; break; }
     sleep 20
   done
-  # (Hinweis unten, vor der Schleife.)
-  # Der Speicherwaechter gilt nur OHNE Pacht. Mit Pacht ist llm-runtime die
-  # zustaendige Stelle: es gewaehrt sie nur, wenn die Karte frei genug ist, und
-  # weist danach interaktive Anfragen ab. Ein zweiter, strengerer Schwellwert
-  # daneben hat in der Nacht zum 22.08. ALLE vier Schritte ausgesperrt -- er
-  # verlangte unter 500 MiB, waehrend der Leerlauf dieses Rechners bei rund
-  # 700 liegt (ein dauerhaft geladenes Erkennungsmodell). Die Bedingung konnte
-  # nie wahr werden, und die Pacht lag ungenutzt daneben.
+
   [ $frei = ja ] || { sag "  Karte belegt -- uebersprungen: $zeile"; continue; }
-  # Vor JEDEM Schritt: gilt die Pacht noch? Eine verlorene Pacht heisst, dass
-  # jemand anders die Karte hat -- weitermessen wuerde Zahlen erzeugen, die wie
-  # Ergebnisse aussehen und keine sind.
+  # Before EVERY step: is the lease still valid? A lost lease means someone
+  # else has the card -- measuring on would produce numbers that look like
+  # results and are not.
   pacht_gilt || { sag "  Pacht verloren -- Fenster wird beendet"; break; }
 
   sag "--- $zeile ---"

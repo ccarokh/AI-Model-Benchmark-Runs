@@ -1,6 +1,6 @@
-# Crush (Charm) -- Terminal-Agent in Go, OpenCode strukturell am naechsten.
-# Deshalb der erste Vergleichspunkt: der Unterschied misst dann tatsaechlich
-# "anderer Agent" und nicht "anderes Arbeitsprinzip".
+# Crush (Charm) -- a terminal agent in Go, structurally closest to OpenCode.
+# Hence the first comparison point: the difference then really measures
+# "different agent" and not "different way of working".
 agent_vorbereiten() {
   mkdir -p "$ziel/crushheim/.config/crush" "$ziel/crushdaten"
   cat > "$ziel/crushheim/.config/crush/crush.json" <<J
@@ -28,8 +28,8 @@ J
 }
 
 agent_ausfuehren() {
-  # Crush kennt kein -y; die Erlaubnisse stehen bei ihm in der Konfiguration
-  # (permissions.allowed_tools), und die ist oben gesetzt.
+  # Crush has no -y; its permissions live in the config
+  # (permissions.allowed_tools), set above.
   timeout "$zeitlimit" docker run --rm \
     -v "$ziel/crushheim":/home/pruef \
     -v "$ziel/arbeit":/arbeit \

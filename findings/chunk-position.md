@@ -7,7 +7,7 @@ position alone. Nothing about the model, the query or the corpus changed.
 This is not a benchmark result. It is a defect in a running RAG system, found while
 measuring something else.
 
-Measured on [System A](../SYSTEMS.md#system-a), belebele `deu_Latn`, n = 80 passages,
+Measured on [System A](../systems/system-a.md), belebele `deu_Latn`, n = 80 passages,
 cosine nearest-neighbour retrieval — the same harness behind
 [`embedding_retrieval.tsv`](../data/embedding_retrieval.tsv). Full table in
 [`data/embedding_chunk_position.tsv`](../data/embedding_chunk_position.tsv).

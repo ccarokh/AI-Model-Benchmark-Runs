@@ -1,24 +1,24 @@
 #!/usr/bin/env python3
-"""Bewertungsserver fuer die Agility-Spiele.
+"""Rating server for the agility games.
 
-Warum lokal und nicht als Artefakt: die Spiele sind eigenstaendige Verzeichnisse
-mit index.html plus den Dateien, die das Modell selbst angefordert hat. Sie
-muessen als echte Seite geladen werden, mit funktionierender Tastatur -- in einem
-eingebetteten Rahmen laesst sich ein Spiel nicht ernsthaft spielen.
+Why local and not an artifact: the games are self-contained directories with an
+index.html plus whatever files the model asked for. They have to load as a real
+page, with a working keyboard -- a game cannot be played seriously inside an
+embedded frame.
 
-Das Primaerurteil ist binaer: laesst sich das Spiel oeffnen und spielen.
-Alles Weitere ist Kommentar.
+The primary verdict is binary: does the game open and play. Everything else is
+commentary.
 
-Jedes Kriterium hat VIER Zustaende: ja, nein, untestbar, noch nicht beantwortet.
-Ein Haekchen kann davon genau einen -- ein leeres Kaestchen hiesse gleichzeitig
-"nein" und "noch nicht angesehen", und dann laesst sich nie sagen, ob eine
-Bewertung fertig ist. Fertig heisst hier: alle acht beantwortet.
+Every criterion has FOUR states: yes, no, untestable, not yet answered. A
+checkbox can express exactly one of those -- an empty box would mean both "no"
+and "not looked at yet", and then it is never possible to say whether a rating
+is finished.
 
-"Untestbar" ist kein Ausweichen, sondern die einzig ehrliche Antwort, wenn das
-Spiel gar nicht erst startet: ob es mit der Zeit schneller wird, hat dann
-niemand gesehen. Als "nein" gezaehlt waere es eine erfundene Beobachtung.
+"Untestable" is not an escape but the only honest answer when the game does not
+start at all: nobody then saw whether it speeds up over time. Counted as "no" it
+would be a fabricated observation.
 
-Nur Standardbibliothek.
+Standard library only.
 
     python3 spiel_bewerter.py [port]      # http://127.0.0.1:8109
 """
@@ -30,14 +30,14 @@ SPIELE = os.path.join(HIER, "game")
 URTEILE = os.path.join(HIER, "spiel_urteile.json")
 TABELLE = os.path.join(HIER, "spiel_urteile.tsv")
 
-# Abzaehlbare Kriterien, die der Mensch nach dem Spielen abhakt.
+# Countable criteria a person ticks off after playing.
 #
-# JEDE FRAGE FRAGT GENAU EINE SACHE. "Huerden und Tunnel sehen aus wie Huerden
-# und Tunnel" war zusammengeklebt: bei "nein" weiss hinterher niemand, welches
-# von beiden schuld war. Dasselbe galt fuer "Game Over und Neustart", fuer
-# "Highscore steht daneben und ueberlebt den Neustart" und fuer "Springen hilft
-# am Tunnel nicht (und umgekehrt)". Lieber siebzehn scharfe Fragen als zwoelf,
-# deren Antworten sich nicht zurueckverfolgen lassen.
+# EVERY QUESTION ASKS EXACTLY ONE THING. "Hurdles and tunnels look like hurdles
+# and tunnels" was glued together: on a "no" nobody could tell afterwards which
+# of the two was at fault. The same held for "game over and restart", for
+# "high score is shown and survives a restart", and for "jumping does not help
+# at the tunnel (and vice versa)". Better nineteen sharp questions than twelve
+# whose answers cannot be traced back.
 KRITERIEN = [
     ("oeffnet",       "Öffnet ohne Fehler"),
     ("spielbar",      "Ist spielbar"),
@@ -60,9 +60,9 @@ KRITERIEN = [
     ("neustart",      "Neustart funktioniert"),
 ]
 
-# Im Klartext, was das Spiel erzeugt hat. Ohne diese Saetze steht auf der Seite
-# ein Wort wie "direkt", das niemand einordnen kann -- und dann bewertet man das
-# Modell fuer etwas, das der Pruefstand ihm gar nicht ermoeglicht hat.
+# In plain words, what produced the game. Without these sentences the page just
+# shows a word like "direkt" that nobody can place -- and then a model gets
+# rated for something the harness never allowed it to do.
 PRUEFSTAND = {
     "claudecode_blind":
         "BLINDLAUF, der einzige faire Vergleichspunkt: eine leere Sitzung in einem leeren "
@@ -96,7 +96,7 @@ def modelle():
         d = os.path.join(SPIELE, n)
         if not os.path.isdir(d):
             continue
-        # Das Spiel liegt im Arbeitsverzeichnis des Agenten, nicht im Laufordner.
+        # The game lives in the agent's working directory, not in the run folder.
         arbeit = os.path.join(d, "arbeit")
         idx = os.path.join(arbeit, "index.html")
         eintrag = {
@@ -106,8 +106,8 @@ def modelle():
             "dateien": sorted(os.listdir(arbeit)) if os.path.isdir(arbeit) else [],
             "kopf": {},
         }
-        # Was diesen Lauf ausmacht, steht in lauf.json -- die Seite soll es
-        # zeigen, nicht der Dateiname andeuten.
+        # What defines this run is in lauf.json -- the page should show it
+        # rather than have the filename hint at it.
         lauf = os.path.join(d, "lauf.json")
         if os.path.exists(lauf):
             try:
@@ -116,8 +116,8 @@ def modelle():
                     "model": c.get("model", ""),
                     "beschreibung": c.get("beschreibung", ""),
                     "harness": c.get("harness", ""),
-                    # Blindlauf und kontaminierter Lauf teilen sich den Pruefstand,
-                    # unterscheiden sich aber im Entscheidenden -- also am Text trennen.
+                    # Blind run and contaminated run share the harness but
+                    # differ in what matters -- so separate them by text.
                     "harness_text": PRUEFSTAND.get(
                         c.get("harness", "") + ("_blind" if c.get("beschreibung") == "blind" else ""),
                         PRUEFSTAND.get(c.get("harness", ""), "")),
@@ -146,8 +146,8 @@ def speichern(d):
     z = ["model\tvollstaendig\t" + "\t".join(k for k, _ in KRITERIEN) + "\tkommentar\tzeit"]
     for m in modelle():
         u = d.get(m["modell"], {})
-        # Leer heisst nicht beantwortet -- nicht "nein". Der Unterschied ist der
-        # ganze Punkt der drei Zustaende.
+        # Empty means not answered -- not "no". That distinction is the whole
+        # point of having several states.
         def wort(k):
             v = u.get(k, None)
             if v is True: return "ja"
@@ -172,7 +172,7 @@ class H(http.server.BaseHTTPRequestHandler):
         self.send_response(code)
         self.send_header("Content-Type", typ)
         self.send_header("Content-Length", str(len(body)))
-        # Kein Caching: die Spiele werden waehrend der Bewertung neu erzeugt.
+        # No caching: the games get regenerated while rating is in progress.
         self.send_header("Cache-Control", "no-store")
         for k, v in (extra or {}).items(): self.send_header(k, v)
         self.end_headers()
@@ -190,9 +190,9 @@ class H(http.server.BaseHTTPRequestHandler):
         if w.startswith("/spiel/"):
             rest = urllib.parse.unquote(w[len("/spiel/"):])
             teile = rest.split("/", 1)
-            # Ohne Schraegstrich am Ende loest der Browser relative Verweise eine
-            # Ebene zu hoch auf: aus game.js wird /spiel/game.js. Solange jedes
-            # Spiel aus einer einzigen Datei bestand, fiel das nicht auf.
+            # Without a trailing slash the browser resolves relative links one
+            # level too high: game.js becomes /spiel/game.js. As long as every
+            # game was a single file, that never showed.
             if len(teile) == 1 or not teile[1]:
                 teile = [teile[0], "index.html"]
             modell, datei = teile
@@ -234,8 +234,8 @@ class H(http.server.BaseHTTPRequestHandler):
             else: e.pop("kommentar", None)
         e["zeit"] = datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds")
         d[m] = e; speichern(d)
-        # Das gespeicherte Urteil zurueckgeben: die Oberflaeche aktualisiert damit
-        # genau eine Karte, statt die ganze Liste neu zu zeichnen.
+        # Return the stored verdict: the UI uses it to refresh exactly one card
+        # instead of redrawing the whole list.
         return self._send(200, "application/json; charset=utf-8",
                           json.dumps({"ok": True, "urteil": e}, ensure_ascii=False))
 
@@ -248,7 +248,7 @@ def main():
     m = modelle()
     if not m:
         print("Keine Spiele unter %s" % SPIELE); return 1
-    # Nur 127.0.0.1: keine Authentifizierung, und es fuehrt fremden Code aus.
+    # 127.0.0.1 only: no authentication, and it serves foreign code.
     with S(("127.0.0.1", port), H) as srv:
         print("Bewertung laeuft:  http://127.0.0.1:%d" % port)
         print("%d Spiele  ->  %s" % (len(m), TABELLE))

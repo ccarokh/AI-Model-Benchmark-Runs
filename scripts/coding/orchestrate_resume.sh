@@ -5,7 +5,7 @@ H=root@192.168.40.192
 DIR="$1"; GGUF="$2"; NT="${3:-30}"; TMO="${4:-36000}"; PORT=8181
 source /root/coding-eval/kartenwacht.sh
 kw_karte_sichern "abend-polyglot" 600 || { echo "[$(date +%H:%M)] Karte nicht zu bekommen"; exit 1; }
-# q8_0-Cache ist bei ctx 131072 nicht optional -- siehe orchestrate_slot32k.sh.
+# A q8_0 cache is not optional at ctx 131072 -- see orchestrate_slot32k.sh.
 kw_server_starten "-m '$GGUF' --host 0.0.0.0 --port $PORT --device Vulkan0 --ctx-size 131072 --batch-size 512 --ubatch-size 512 -ngl 99 --parallel 4 --cache-type-k q8_0 --cache-type-v q8_0 --jinja" /tmp/srv_abend.log || exit 1
 kw_wache_starten 60
 ok=0

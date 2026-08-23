@@ -11,8 +11,8 @@
   body { margin: 0; background: var(--grund); color: var(--schrift);
          font: 15px/1.5 system-ui, sans-serif; }
 
-  /* Der Gesamtstand klebt oben und ist die groesste Zahl auf der Seite --
-     "2 von 2" als Fliesstext ging unter. */
+  /* The overall score sticks to the top and is the largest number on the page
+     -- "2 of 2" as running text got lost. */
   header { position: sticky; top: 0; z-index: 10; background: var(--karte);
            border-bottom: 1px solid var(--rand); padding: 14px 20px 0; }
   .kopf { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
@@ -44,8 +44,8 @@
   .spielen:hover { background: #3b76ef; }
   .fehlt { margin-left: auto; color: var(--nein); font-weight: 650; }
 
-  /* Was den Lauf ausmacht, gehoert auf die Karte. Sonst steht dort ein Wort
-     wie "direkt", das niemand einordnen kann. */
+  /* What defines the run belongs on the card. Otherwise it just shows a word
+     like "direkt" that nobody can place. */
   .lauf { margin: 12px 0 0; background: var(--grund); border: 1px solid var(--rand);
           border-radius: 8px; padding: 11px 13px; }
   .lauf .zeile { display: flex; gap: 8px; flex-wrap: wrap; font-size: 13px; }
@@ -64,9 +64,9 @@
   tr:not(.offen) td.frage::before { content: ""; display: inline-block; width: 18px; }
   td.wahl { width: 268px; text-align: right; white-space: nowrap; }
 
-  /* Umschaltgruppe statt drei nackter Schaltflaechen. Der erste Entwurf sah
-     nicht klickbar aus und zeigte die Auswahl kaum -- beides ist bei einem
-     Werkzeug, das nur aus Klicken besteht, kein Schoenheitsfehler. */
+  /* A toggle group instead of three bare buttons. The first draft did not look
+     clickable and barely showed the selection -- in a tool that consists of
+     nothing but clicking, neither is a cosmetic flaw. */
   .gruppe { display: inline-flex; gap: 3px; padding: 3px;
             background: var(--grund); border: 1px solid var(--rand);
             border-radius: 11px; }
@@ -81,7 +81,7 @@
   button.w.an[data-w="ja"] { background: #22a55c; color: #04240f; }
   button.w.an[data-w="nein"] { background: #d24a4a; color: #2b0808; }
   button.w.an[data-w="untestbar"] { background: #6b7688; color: #fff; }
-  /* Die getroffene Wahl bleibt auch beim Ueberfahren stehen. */
+  /* The chosen option stays visible on hover too. */
   button.w.an:hover { filter: brightness(1.08); }
 
   .fuss { display: flex; align-items: center; gap: 12px; margin: 14px 0 0; }
@@ -109,9 +109,9 @@
 <script>
 let KRIT = [], URTEILE = {};
 
-// Drei Zustaende: true, false, nicht vorhanden. Ein Haekchen kann das nicht --
-// leer hiesse dort gleichzeitig "nein" und "noch nicht angesehen", und dann
-// gibt es kein Fertig.
+// Three states: true, false, absent. A checkbox cannot do that -- empty would
+// mean both "no" and "not looked at yet" there, and then there is no such thing
+// as finished.
 const beantwortet = u => KRIT.filter(([k]) => u && k in u).length;
 const istFertig   = u => beantwortet(u) === KRIT.length;
 
@@ -168,8 +168,8 @@ function zeichnen(modelle) {
     t.append(h, mk);
     if (m.hat_index) {
       const a = document.createElement("a");
-      // Schraegstrich am Ende ist Pflicht, sonst zeigen relative Verweise
-      // im Spiel eine Ebene zu hoch.
+      // The trailing slash is mandatory, otherwise relative links inside the
+      // game point one level too high.
       a.className = "spielen"; a.href = "/spiel/" + encodeURIComponent(m.modell) + "/";
       a.target = "_blank"; a.rel = "noopener"; a.textContent = "Spielen ▸";
       t.append(a);
@@ -214,25 +214,25 @@ function zeichnen(modelle) {
       const td1 = document.createElement("td"); td1.className = "frage"; td1.textContent = text;
       const td2 = document.createElement("td"); td2.className = "wahl";
       const gruppe = document.createElement("div"); gruppe.className = "gruppe";
-      // Untestbar ist kein Ausweichen: wenn das Spiel nicht startet, hat
-      // niemand gesehen, ob es schneller wird. Als "Nein" gezaehlt waere das
-      // eine erfundene Beobachtung.
+      // Untestable is not an escape: if the game does not start, nobody saw
+      // whether it speeds up. Counted as "no" that would be a fabricated
+      // observation.
       const WAHL = [["ja", "Ja", true], ["nein", "Nein", false],
                     ["untestbar", "Untestbar", "untestbar"]];
       const knoepfe = [];
       for (const [id, text, wert] of WAHL) {
         const b = document.createElement("button");
-        // Die Grundklasse MUSS hier stehen. Sie ist beim Umbau auf punktgenaue
-        // Auffrischung verlorengegangen, der Auffrischer setzt nur noch "an" --
-        // und "button.w" traf danach nichts. Ergebnis: Standardknoepfe des
-        // Browsers, keine sichtbare Auswahl, und ein Bewertungswerkzeug, das
-        // nicht zeigt, was bewertet wurde.
+        // The base class MUST be here. It got lost in the move to targeted
+        // refreshing -- the refresher only sets "an" any more, and "button.w"
+        // then matched nothing. Result: the browser's default buttons, no
+        // visible selection, and a rating tool that does not show what was
+        // rated.
         b.className = "w";
         b.dataset.w = id; b.textContent = text;
         b.onclick = () => {
-          // Zustand IMMER frisch aus URTEILE lesen, nie aus einer beim Zeichnen
-          // eingefrorenen Kopie -- sonst rechnet ein zweiter Klick gegen einen
-          // veralteten Wert.
+          // ALWAYS read the state fresh from URTEILE, never from a copy frozen
+          // at draw time -- otherwise a second click computes against a stale
+          // value.
           const jetzt = URTEILE[m.modell] || {};
           const neu = (key in jetzt && jetzt[key] === wert) ? null : wert;
           senden(m.modell, { [key]: neu });
@@ -242,9 +242,9 @@ function zeichnen(modelle) {
       }
       td2.append(gruppe);
       tr.append(td1, td2); tab.append(tr);
-      // Diese Zeile aktualisiert sich selbst -- ohne dass die Liste neu entsteht.
-      // Ein Neuaufbau unter dem Mauszeiger war der Grund, warum ein Klick auf
-      // "Ja" gelegentlich als "Nein" in der Nachbarzelle landete.
+      // This row refreshes itself -- without rebuilding the list. A rebuild
+      // under the mouse pointer was the reason a click on "yes" occasionally
+      // landed as "no" in the neighbouring cell.
       zeilenAuffrischer.push(() => {
         const jetzt = URTEILE[m.modell] || {};
         tr.classList.toggle("offen", !(key in jetzt));
@@ -275,8 +275,8 @@ async function senden(modell, feld, still) {
     body: JSON.stringify(Object.assign({ modell }, feld)) });
   if (!r.ok) { alert("Nicht gespeichert: " + await r.text()); return; }
   const antwort = await r.json();
-  // Der Server bleibt die Wahrheit, aber die Liste wird NICHT neu gebaut --
-  // nur die betroffenen Stellen frischen sich auf.
+  // The server stays the truth, but the list is NOT rebuilt -- only the
+  // affected spots refresh.
   if (antwort.urteil) URTEILE[modell] = antwort.urteil;
   auffrischen();
   const g = document.getElementById("g_" + modell);

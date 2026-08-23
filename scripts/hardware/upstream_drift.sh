@@ -1,15 +1,15 @@
 #!/bin/bash
-# Baut aktuelles llama.cpp NEBEN den festgepinnten Build und misst beide in
-# derselben Sitzung. Wiederkehrend, nicht einmalig.
+# Builds current llama.cpp BESIDE the pinned build and measures both in the
+# same session. Recurring, not one-off.
 #
-# WARUM NEBEN, NICHT DARUEBER: ein zweites Praefix, dessen Binary heimlich die
-# Bibliotheken des ersten laedt, hatten wir hier schon -- alle acht loesten in
-# das alte Praefix auf, und nur weil die alten Bibliotheken die Architektur
-# nicht kannten, ist es aufgefallen. Deshalb wird unten gezaehlt, wie viele
-# Bibliotheken wirklich im neuen Praefix landen, bevor eine Zahl zaehlt.
+# WHY BESIDE, NOT OVER: a second prefix whose binary quietly loads the first
+# one's libraries is something we already had here -- all eight resolved into
+# the old prefix, and it only came out because the old libraries did not know
+# the architecture. That is why the number of libraries that really land in the
+# new prefix is counted below, before any number counts.
 #
-# WARUM IN DERSELBEN SITZUNG: zwei Zahlen aus derselben Stunde sind ein
-# Vergleich, eine Zahl von heute gegen eine von vor drei Wochen nicht.
+# WHY IN THE SAME SESSION: two numbers from the same hour are a comparison, a
+# number from today against one from three weeks ago is not.
 set -u
 PROD=/opt/llama-cpp        # was die Produktions-Runtime tatsaechlich startet
 ALT=/opt/llama-cpp-nb      # womit dieses Repo misst
@@ -34,7 +34,7 @@ cmake --build build-latest -j"$(nproc)" --target llama-bench llama-cli >>$L 2>&1
 cmake --install build-latest >>$L 2>&1
 echo "$NEU_V" > $NEU/.built-version
 
-# Die Probe, die den alten Fehler gefangen haette.
+# The probe that would have caught the old mistake.
 sag "=== loesen die Bibliotheken ins NEUE Praefix auf? ==="
 export LD_LIBRARY_PATH=$NEU/lib
 ges=$(ldd $NEU/bin/llama-bench 2>/dev/null | grep -cE "libllama|libggml")
@@ -42,14 +42,14 @@ neu_n=$(ldd $NEU/bin/llama-bench 2>/dev/null | grep -E "libllama|libggml" | grep
 sag "  $neu_n von $ges im neuen Praefix"
 [ "$ges" -gt 0 ] && [ "$neu_n" -ne "$ges" ] && { sag "  ABBRUCH: Bibliotheken kommen aus dem falschen Praefix"; exit 1; }
 
-# DIESE MESSUNG ENTSCHEIDET, WELCHER BUILD PRODUKTIV GEHT.
-# Daraus folgen zwei Dinge, die eine reine Durchsatzmessung nicht leistet:
+# THIS MEASUREMENT DECIDES WHICH BUILD GOES INTO PRODUCTION.
+# Two things follow from that which a pure throughput measurement does not do:
 #
-#   1. Der PRODUKTIONS-Build muss mitlaufen. Er ist der Stand, gegen den ein
-#      Wechsel abgewogen wird -- nicht unser Mess-Build.
-#   2. Es muss die PRODUKTIONS-Konfiguration mitgemessen werden. Wir haben
-#      selbst dokumentiert, dass Produktionsflags ein Ergebnis um Faktor 6,8
-#      verschieben; eine Empfehlung auf Basis synthetischer Flags waere wertlos.
+#   1. The PRODUCTION build has to run along. It is the state a change gets
+#      weighed against -- not our measurement build.
+#   2. The PRODUCTION configuration has to be measured too. We documented
+#      ourselves that production flags move a result by a factor of 6.8; a
+#      recommendation based on synthetic flags would be worthless.
 PROD_V=$(cat $PROD/.built-version 2>/dev/null || echo unbekannt)
 sag "=== Referenzlauf auf ALLEN DREI, gleiche Sitzung ==="
 for paar in "$PROD_V $PROD" "$ALT_V $ALT" "$NEU_V $NEU"; do
@@ -66,16 +66,16 @@ for paar in "$PROD_V $PROD" "$ALT_V $ALT" "$NEU_V $NEU"; do
 d=json.load(sys.stdin); v={('pp' if e['n_prompt'] else 'tg'): e['avg_ts'] for e in d}
 print('pp2048=%.1f tg128=%.2f' % (v.get('pp',0), v.get('tg',0)))" 2>/dev/null)
   sag "  $v : $r"
-  # Gleiche Ausgabe? Ein Build, der schneller wurde und anders antwortet, ist
-  # nicht schneller beim Gleichen.
+  # Same output? A build that got faster and answers differently is not
+  # faster at the same thing.
   h=$(timeout 300 $pfad/bin/llama-cli -m $M -ngl 99 -sm none -mg 0 --seed 1234 --temp 0 \
         -n 96 -no-cnv -st --simple-io --no-warmup -p "List the first ten prime numbers." \
         < /dev/null 2>/dev/null | sed -n '/\[Start thinking\]/,/^\[ Prompt:/p' \
         | grep -v '^\[ Prompt:' | sha256sum | cut -c1-16)
   sag "  $v : Ausgabe-Hash $h"
 
-  # Produktionsnahe Konfiguration: gequantelter KV-Cache, grosser Kontext,
-  # parallele Slots. Das ist der Fall, ueber den entschieden wird.
+  # Production-like configuration: quantised KV cache, large context,
+  # parallel slots. That is the case being decided on.
   p=$(timeout 1800 $pfad/bin/llama-bench -m $M -p 4096 -n 256 -d 8192 -fa on \
         -ctk q8_0 -ctv q8_0 -r 3 -ngl 99 -sm none -mg 0 -o json 2>/dev/null \
       | python3 -c "import json,sys
@@ -83,8 +83,8 @@ d=json.load(sys.stdin); v={('pp' if e['n_prompt'] else 'tg'): e['avg_ts'] for e 
 print('pp4096@d8192=%.1f tg256=%.2f' % (v.get('pp',0), v.get('tg',0)))" 2>/dev/null)
   sag "  $v : produktionsnah  $p"
 
-  # Ein Build, der schneller wurde und dabei die Karte zuruecksetzt, ist kein
-  # Kandidat. Ein Durchsatztest allein wuerde das durchwinken.
+  # A build that got faster while resetting the card is not a candidate. A
+  # throughput test alone would wave that through.
   k=$(dmesg | tail -200 | grep -ciE "amdgpu.*(ring|reset|error)|GPU reset|VRAM is lost" || true)
   sag "  $v : Kernelmeldungen $k"
 done

@@ -29,10 +29,11 @@ fueller = [r["flores_passage"] for r in ds][:400]
 def bauen(i, p):
     if VAR == "kurz":
         return p
-    # Auf ~3000 Zeichen auffuellen (unsere echte Chunk-Groesse). Die POSITION der
-    # Zielpassage ist eine eigene Variable, weil sie das Ergebnis traegt: ein
-    # Modell mit last-token pooling gewichtet das Ende, eines mit Mittelung
-    # nicht. Nur ans Ende zu setzen misst die Poolung, nicht das Modell.
+    # Pad to ~3000 characters (our real chunk size). The POSITION of the
+    # target passage is a variable of its own, because it carries the result:
+    # a model with last-token pooling weights the end, one with mean pooling
+    # does not. Putting it only at the end measures the pooling, not the
+    # model.
     t, k = "", 0
     while len(t) + len(p) < 3000 and k < 60:
         f = fueller[(i * 7 + k) % len(fueller)]
@@ -48,13 +49,13 @@ def bauen(i, p):
 def emb(text):
     b = tok(text, return_tensors="pt", truncation=True, max_length=MAXLEN)
     h = mdl(**b).last_hidden_state
-    # last-token pooling, wie die Modellkarte es nennt
+    # last-token pooling, as the model card calls it
     v = h[0, -1, :].float().numpy()
     return v / (np.linalg.norm(v) + 1e-9)
 
 t0 = time.time()
 chunks = [bauen(i, r["flores_passage"]) for i, r in enumerate(rows)]
-# Wie viel wird tatsaechlich abgeschnitten? Das ist die Zahl, um die es geht.
+# How much actually gets truncated? That is the number this is about.
 laengen = [len(tok(c)["input_ids"]) for c in chunks]
 P = np.stack([emb(c) for c in chunks])
 ok = 0

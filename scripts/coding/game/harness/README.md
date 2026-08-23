@@ -1,27 +1,34 @@
-# Prüfstände
+# Harnesses
 
-Eine Datei je Agent. Sie ist alles, was ein neuer Prüfstand braucht — `game_run.sh`
-kennt keinen einzigen Agentennamen.
+One file per agent. It is everything a new harness needs — `game_run.sh` does not know a
+single agent by name.
 
-Jede Datei liefert zwei Funktionen und darf sich auf diese Variablen verlassen:
+Each file provides two functions and may rely on these variables:
 
-| Variable | Bedeutung |
+| Variable | Meaning |
 |---|---|
-| `$ziel` | Laufverzeichnis auf dem Prüfstandsrechner |
-| `$model` | Modellname, wie ihn der Modellserver ausliefert |
-| `$MESS`, `$PORT` | Adresse des Modellservers auf dem Messrechner |
-| `$ctx`, `$maxtok`, `$temp` | Grenzen und Temperatur aus der Konfiguration |
-| `$zeitlimit` | Sekunden, nach denen abgebrochen wird |
+| `$ziel` | the run directory on the harness host |
+| `$model` | model name as the model server serves it |
+| `$MESS`, `$PORT` | address of the model server on the measuring machine |
+| `$ctx`, `$maxtok`, `$temp` | limits and temperature from the config |
+| `$zeitlimit` | seconds after which the run is aborted |
 
-**`agent_vorbereiten`** legt die Konfiguration des Agenten unter `$ziel` an und setzt
-die Rechte auf `1000:1000` — im Behälter arbeitet niemand als root.
+**`agent_vorbereiten`** writes the agent's config under `$ziel` and sets ownership to
+`1000:1000` — nothing inside the container runs as root.
 
-**`agent_ausfuehren`** startet den Behälter, hängt `$ziel/arbeit` als `/arbeit` ein und
-schreibt nach `$ziel/agent.log`. Rückgabewert ist der des Agenten.
+**`agent_ausfuehren`** starts the container, mounts `$ziel/arbeit` as `/arbeit`, and writes
+to `$ziel/agent.log`. Its return value is the agent's.
 
-## Was jeder Agent zusätzlich braucht
+## What every agent needs on top
 
-Die Grenzen gehören in jede Konfiguration. Ohne sie raten die Agenten — OpenCode holt
-sie von `models.dev` und fällt ohne Netz auf `max_tokens=32000` zurück. llama.cpp
-beschneidet das stillschweigend, vLLM lehnt jede Anfrage ab. Das sah aus wie
-Modellversagen und war eine Voreinstellung.
+The limits belong in every config. Without them the agents guess — OpenCode fetches them
+from `models.dev` and, with no network, falls back to `max_tokens=32000`. llama.cpp
+silently truncates that and carries on; vLLM rejects every request. It looked like model
+failure and was a harness default.
+
+## attrappe.py
+
+An OpenAI-compatible stub that logs every request and always answers the same. It needs no
+GPU and no model, and it answers one question per agent: **does it reach our endpoint at
+all** — separately from whether a model can solve the task. Four of five agents failed that
+first, every time for a reason on our side.

@@ -1,28 +1,27 @@
-# Agility-Spiel: Rohdaten
+# Agility game: raw data
 
-`urteile.tsv` — die menschliche Bewertung, eine Zeile je Lauf, neunzehn Spalten mit
-`ja` / `nein` / `untestbar` / leer. Leer heißt **nicht beantwortet** und ist etwas
-anderes als `nein`.
+`urteile.tsv` — the human rating, one row per run, nineteen columns of
+`ja` / `nein` / `untestbar` / empty. Empty means **not answered** and is a different thing
+from `nein`.
 
-`baseline/` — der Blindlauf, der die Aufgabe validiert hat. Kein Wettbewerber und kein
-Messpunkt gegen die lokalen Modelle: fremde Hardware, anderer Prüfstand, unbekannte
-Quantisierung. Er beantwortet eine einzige Frage — **sind die neunzehn Kriterien
-gleichzeitig erfüllbar** —, und die Antwort ist ja.
+`baseline/` — the blind run that validated the task. Not a competitor and not a measuring
+point against the local models: foreign hardware, a different harness, unknown
+quantisation. It answers one question — **are the nineteen criteria satisfiable at the
+same time** — and the answer is yes.
 
-Ohne diesen Punkt wäre eine Tabelle voller `nein` nicht deutbar: zu schwache Modelle und
-eine zu harte oder zu ungenaue Aufgabe sähen darin gleich aus.
+Without that point a table full of "no" cannot be read: weak models and a task that is too
+hard or too vague look identical in it.
 
 | | |
 |---|---|
-| Modell | claude-opus-5 über Claude Code |
-| Bedingungen | leeres Verzeichnis außerhalb des Projekts, eine einzige Nachricht, kein Verlauf |
-| Aufgabe | `aufgabe.md`, Fingerabdruck `897f85484354`, zeichengleich geprüft |
-| Dauer | 1 658 s · 57 Werkzeugaufrufe · 292 690 Ausgabe-Token |
-| Ergebnis | **19 von 19 erfüllt** |
+| Model | claude-opus-5 via Claude Code |
+| Conditions | empty directory outside the project, one single message, no history |
+| Task | `aufgabe.md`, fingerprint `897f85484354`, verified character-identical |
+| Duration | 1 658 s · 57 tool calls · 292 690 output tokens |
+| Result | **19 of 19 met** |
 
-Der Weg dahin war zwei Anläufe lang. Der erste Blindlauf scheiterte an zwei Punkten:
-der Tunnel sah aus wie ein Zirkuszelt, und der Hund lief sichtbar davor vorbei statt
-hindurch. Beides waren **Lücken im Aufgabentext**, nicht Grenzen des Modells — der Text
-verlangte nur, dass Hürde und Tunnel unterscheidbar sind, und ein Zelt erfüllt das.
-Seitdem steht dort, woran man einen Tunnel erkennt, und dass der Hund darin verschwinden
-muss.
+Getting there took two attempts. The first blind run failed on two points: the tunnel
+looked like a circus tent, and the dog visibly ran *past* it rather than through. Both were
+**gaps in the task text**, not limits of the model — the text only demanded that hurdle and
+tunnel be distinguishable, and a tent satisfies that. Since then it says what makes a
+tunnel recognisable, and that the dog has to disappear inside it.

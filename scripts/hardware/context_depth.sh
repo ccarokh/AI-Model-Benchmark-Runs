@@ -1,16 +1,15 @@
 #!/bin/bash
-# Was ein gefuellter Kontext kostet -- Durchsatz UND Energie ueber die Tiefe.
+# What a filled context costs -- throughput AND energy over depth.
 #
-# Die Token/Wh-Messung hat ergeben, dass Lesen 19-30x billiger ist als Schreiben.
-# Sie hat aber bei Tiefe 0 gemessen, also mit leerem KV-Cache. Attention waechst
-# quadratisch mit der Tiefe, Erzeugung muss ausserdem bei jedem Token den
-# wachsenden Cache lesen. "Kontext ist billig" kann also nicht ueber die ganze
-# Laenge gelten, und genau die Stelle, wo es kippt, ist die Zahl, nach der man
-# ein RAG-System auslegt.
+# The tokens/Wh measurement found that reading is 19-30x cheaper than writing.
+# But it measured at depth 0, i.e. with an empty KV cache. Attention grows
+# quadratically with depth, and generation additionally has to read the growing
+# cache for every token. So "context is cheap" cannot hold over the full
+# length, and exactly where it tips is the number you size a RAG system by.
 #
-# Eine Variable: die Tiefe. Modell, Flags, Karte bleiben gleich.
-# Der fa-Block am Ende ist bewusst getrennt und getrennt beschriftet -- er
-# aendert eine zweite Variable und gehoert deshalb nicht in dieselbe Kurve.
+# One variable: depth. Model, flags and card stay the same.
+# The fa block at the end is deliberately separate and separately labelled --
+# it changes a second variable and therefore does not belong in the same curve.
 set -u
 OUT=/root/kontexttiefe; mkdir -p $OUT
 D=/sys/class/drm/card1/device
@@ -38,14 +37,14 @@ messen(){ # $1=name $2=tiefe $3=fa $4=marke
   : > $st.watt
   ( while true; do echo "$(date +%s.%N) $(cat $W)"; sleep 1; done ) > $st.watt &
   local sp=$!
-  # timeout: bei 32k Tiefe dauert der Vorlauf lange, aber nicht beliebig.
+  # timeout: at 32k depth the prefill takes long, but not arbitrarily long.
   timeout 1800 $BENCH -m "$d" -p 2048 -n 128 -d "$t" -fa "$fa" -r 3 \
       -ngl 99 -sm none -mg 0 -o json > $st.json 2> $st.log
   local rc=$?
   kill $sp 2>/dev/null
   if [ $rc -ne 0 ]; then
-    # Der haeufigste echte Grund ist zu wenig VRAM fuer den KV-Cache bei grosser
-    # Tiefe. Das ist ein Ergebnis, kein Ausfall -- also benennen, nicht schlucken.
+    # The most common real reason is too little VRAM for the KV cache at
+    # large depth. That is a result, not a failure -- so name it, don't swallow it.
     local grund="rc=$rc"
     grep -qi "out of memory\|failed to allocate\|ErrorOutOfDevice" $st.log && grund="VRAM reicht nicht"
     echo "$n  tiefe=$t  fa=$fa  ENTFAELLT ($grund)"
@@ -62,8 +61,9 @@ mw=sum(x[1] for x in r)/len(r)
 v={}
 for e in d:
     v["pp" if e["n_prompt"] else "tg"]=e["avg_ts"]
-# Token je Wh getrennt je Phase waere hier irrefuehrend, weil beide Phasen im
-# selben Wattfenster liegen. Deshalb nur die Durchsatzzahlen plus Gesamtenergie.
+# Tokens per Wh split by phase would be misleading here, because both phases
+# lie inside the same wattage window. Hence only the throughput numbers plus
+# total energy.
 print(f"{sys.argv[3]:<16} tiefe={int(sys.argv[4]):>6}  fa={sys.argv[5]:<4} "
       f"pp2048={v.get('pp',0):8.1f} t/s   tg128={v.get('tg',0):7.2f} t/s   "
       f"{mw:6.1f} W  {wh*1000:8.1f} mWh  n={len(r)}")

@@ -1,14 +1,14 @@
 #!/bin/bash
-# Drosselkurve unterhalb 159 W fortsetzen.
+# Continue the throttle curve below 159 W.
 #
-# Die vorhandene Kurve in hardware/power.md endet bei 1600 MHz / 159 W, weil das
-# die niedrigste damals probierte Stufe war -- nicht weil dort etwas aufhoerte.
-# Gleiche Last wie die vorhandene Kurve (Qwen3.5-9B, -p 2048 -n 128 -r 3), damit
-# die neuen Zeilen an die alten anschliessen und nicht daneben stehen.
+# The existing curve in hardware/power.md ends at 1600 MHz / 159 W because that
+# was the lowest step tried back then -- not because anything stopped there.
+# Same load as the existing curve (Qwen3.5-9B, -p 2048 -n 128 -r 3), so the new
+# rows connect to the old ones instead of standing beside them.
 #
-# Stock-Messungen zwischengeschoben: waermt sich die Karte oder driftet der
-# Treiber ueber die Stunden, faellt das an den Stock-Zeilen auf und nicht erst
-# als scheinbarer Effekt in den gedrosselten.
+# Stock measurements interleaved: if the card heats up or the driver drifts over
+# the hours, that shows in the stock rows and not first as an apparent effect in
+# the throttled ones.
 set -u
 OUT=/root/drossel_tief; mkdir -p $OUT
 D=/sys/class/drm/card1/device
@@ -24,8 +24,8 @@ zurueck(){
   echo auto > $D/power_dpm_force_performance_level 2>/dev/null
   echo 291000000 > $HW/power1_cap 2>/dev/null
 }
-# Die Karte darf unter keinen Umstaenden gedrosselt zurueckbleiben, auch nicht
-# wenn das Skript abgeschossen wird oder mittendrin stirbt.
+# Under no circumstances may the card be left throttled, not even if the script
+# is killed or dies halfway through.
 trap zurueck EXIT INT TERM
 
 warte(){ for i in $(seq 1 180); do
@@ -50,15 +50,15 @@ messen(){ # $1 = Stufe
   : > $OUT/${s}.watt
   ( while true; do echo "$(date +%s.%N) $(cat $W)"; sleep 1; done ) > $OUT/${s}.watt &
   local sp=$!
-  # -r 3 und diese Flags exakt wie die vorhandene Kurve. Eine Variable aendern,
-  # sonst wird ein Setup mit einem anderen verglichen statt Stufe mit Stufe.
+  # -r 3 and these flags exactly as in the existing curve. Change one variable,
+  # otherwise one setup gets compared with another instead of step with step.
   $BIN -m $MODELL -p 2048 -n 128 -r 3 -ngl 99 -sm none -mg 0 -o json \
        > $OUT/${s}.json 2> $OUT/${s}.log
   local rc=$?
   kill $sp 2>/dev/null
   local sclk=$(grep -oP '^\d+: \K\d+(?=Mhz \*)' $D/pp_dpm_sclk 2>/dev/null | tail -1)
-  # Ein Durchsatztest laeuft auch auf einer Karte durch, die sich schon
-  # zurueckgesetzt hat -- deshalb das Kernel-Log mitlesen.
+  # A throughput test also runs through on a card that has already reset
+  # itself -- hence reading the kernel log along.
   # Anchored on purpose. A bare "ring" matches Registering, buffering and
   # Keyring, and a bare "reset" matches half the boot log -- a health check that
   # cries wolf gets ignored, which is worse than not having one.
