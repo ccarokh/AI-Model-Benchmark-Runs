@@ -24,9 +24,9 @@ def run(ctx):
     # the split costs and a three-second run cannot show it.
     model = max(ctx.models, key=lambda m: m.stat().st_size)
     for label, flags in LAYOUTS:
-        key = ctx.results.key(NAME, "+".join(c.index for c in cards),
-                              build.backend, build.version, f"{model.stem}:{label}")
-        if ctx.results.has(key) or ctx.out_of_budget():
+        if ctx.results.has_prefix(NAME, "+".join(c.index for c in cards),
+                                  build.backend, build.version,
+                                  f"{model.stem}:{label}") or ctx.out_of_budget():
             continue
         if not card_is_idle(ctx):
             ctx.defer(NAME, f"card busy before {label}")

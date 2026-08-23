@@ -13,9 +13,8 @@ def run(ctx):
     build = ctx.builds[0]
     for cache in CACHES:
         for depth in DEPTHS:
-            key = ctx.results.key(NAME, "", build.backend, build.version,
-                                  f"{model.stem}:{cache}:d{depth}")
-            if ctx.results.has(key) or ctx.out_of_budget():
+            if ctx.results.has_prefix(NAME, "", build.backend, build.version,
+                                      f"{model.stem}:{cache}:d{depth}") or ctx.out_of_budget():
                 continue
             if not card_is_idle(ctx):
                 ctx.defer(NAME, f"card busy before depth {depth}")

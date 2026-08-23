@@ -28,9 +28,8 @@ def run(ctx):
             continue
         for model in ctx.models[:2]:
             for label, env in variants:
-                key = ctx.results.key(NAME, "", build.backend, build.version,
-                                      f"{model.stem}:{label}")
-                if ctx.results.has(key) or ctx.out_of_budget():
+                if ctx.results.has_prefix(NAME, "", build.backend, build.version,
+                                          f"{model.stem}:{label}") or ctx.out_of_budget():
                     continue
                 if not card_is_idle(ctx):
                     ctx.defer(NAME, "card busy")

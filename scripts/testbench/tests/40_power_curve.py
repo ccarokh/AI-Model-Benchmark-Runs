@@ -25,8 +25,9 @@ def run(ctx):
         return
 
     for watts in steps:
-        key = ctx.results.key(NAME, "", "", "", f"{model.stem}:{watts}W")
-        if ctx.results.has(key) or ctx.out_of_budget():
+        if any(ctx.results.has_prefix(NAME, "", b.backend, b.version,
+                                      f"{model.stem}:{watts}W") for b in ctx.builds) \
+           or ctx.out_of_budget():
             continue
         if not card_is_idle(ctx):
             ctx.defer(NAME, f"card busy before {watts} W")

@@ -73,6 +73,19 @@ class Results:
     def has(self, key: str) -> bool:
         return key in self.keys
 
+    def has_prefix(self, test, card="", backend="", build="", parameter="") -> bool:
+        """Has this measurement been made -- in any of the rows it produces?
+
+        One measurement usually writes several rows: a prefill and a generation
+        figure, a wattage and a tokens-per-watt-hour figure. They share a key
+        PREFIX and differ in the last segment. Checking the bare prefix with
+        has() therefore always came back false, and every test re-measured
+        everything on a restart -- the resume feature was there, wrote its keys,
+        and never matched a single one of them.
+        """
+        prefix = self.key(test, card, backend, build, parameter)
+        return any(k == prefix or k.startswith(prefix + ":") for k in self.keys)
+
     def add(self, test, card="", backend="", build="", parameter="",
             value="", unit="", note=""):
         key = self.key(test, card, backend, build, parameter)

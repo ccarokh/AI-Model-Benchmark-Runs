@@ -17,8 +17,8 @@ def run(ctx):
         for card in ctx.cards_of(build) or [None]:
             for model in ctx.models:
                 card_id = card.index if card else "default"
-                key = ctx.results.key(NAME, card_id, build.backend, build.version, model.stem)
-                if ctx.results.has(key):
+                if ctx.results.has_prefix(NAME, card_id, build.backend,
+                                          build.version, model.stem):
                     continue
                 if ctx.out_of_budget():
                     return
