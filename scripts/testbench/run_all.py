@@ -1,0 +1,260 @@
+#!/usr/bin/env python3
+"""One command, every measurement this repository knows how to make, on whatever
+machine it is started on.
+
+    run_all.py                     everything that applies here
+    run_all.py --list              what exists, and what it does
+    run_all.py matrix_path         only tests whose name contains this
+    run_all.py --budget 4          stop STARTING tests after four hours
+    run_all.py --lease             hold the GPU lease for the whole run
+    run_all.py --window 23-11      only work inside that hour window
+
+WHAT IT NEEDS: a configured llama.cpp -- at least one prefix or build directory
+containing llama-bench -- and at least one model. Cards and backends are
+discovered from the build itself. Everything else is optional, and its absence
+becomes a documented skip rather than a crash.
+
+RESUMABLE BY CONSTRUCTION. Every measurement carries a key, and a key already in
+the results file is not measured again. Interrupt it, restart it, it continues.
+Delete a row to repeat that measurement; delete the file to repeat everything.
+The results ARE the state -- there is no second place to fall out of sync.
+
+THE TESTS ARE NOT LISTED HERE. Whatever lies in tests/ is what runs, in filename
+order. Adding a measurement means adding a file, not editing this one. A test is
+a Python module with NAME, DESCRIPTION and run(ctx) -- or any executable file,
+which gets the context as JSON on stdin and writes result rows to stdout.
+"""
+from __future__ import annotations
+
+import argparse
+import configparser
+import importlib.util
+import json
+import os
+import socket
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
+
+import detect                                    # noqa: E402
+from harness import Context, Results, kernel_events, run  # noqa: E402
+
+DEFAULTS = {
+    "build_search_paths": "/opt/llama-cpp /opt/llama-cpp-nb /opt/llama-cpp-rocm "
+                          "/opt/mess/llama.cpp/build /opt/mess/llama.cpp/build-cuda "
+                          "/opt/src/llama.cpp/build /usr/local",
+    "model_search_paths": "/opt/llm-infra/models /opt/mess/models /opt/models",
+    "models": "",
+    "card_index": "0",
+    "amd_drm": "/sys/class/drm/card1/device",
+    "out_dir": "",
+    "lease_url": "http://127.0.0.1:8080",
+    "lease_token_file": "/etc/bench/lease.token",
+}
+
+
+def load_config(path: Path) -> dict:
+    cfg = dict(DEFAULTS)
+    if path.exists():
+        parser = configparser.ConfigParser()
+        parser.read(path)
+        for section in parser.sections():
+            for key, value in parser[section].items():
+                cfg[key] = value
+    for key in list(cfg):
+        env = os.environ.get("TESTBENCH_" + key.upper())
+        if env:
+            cfg[key] = env
+    return cfg
+
+
+class Lease:
+    """The GPU lease, if this machine shares its card with a service.
+
+    Optional on purpose: a borrowed box with nothing else running needs none.
+    Where a supervisor does share the card, measuring without the lease is how
+    a night once produced two builds at 3.3 tokens/s instead of 103 -- both
+    equally wrong, and the comparison between them looked perfectly consistent.
+    """
+
+    def __init__(self, url: str, token_file: str, holder: str = "testbench"):
+        self.url, self.holder = url.rstrip("/"), holder
+        self.token = Path(token_file).read_text().strip() if Path(token_file).exists() else None
+        self.id = None
+        self._stop = False
+
+    def acquire(self) -> bool:
+        if not self.token:
+            return False
+        rc, out, _ = run(["curl", "-s", "-m", "10", "-X", "POST", f"{self.url}/_manager/lease",
+                          "-H", f"x-lease-token: {self.token}",
+                          "-H", "Content-Type: application/json",
+                          "-d", json.dumps({"holder": self.holder})], timeout=20)
+        try:
+            self.id = json.loads(out)["lease_id"]
+        except Exception:
+            return False
+        import threading
+        def beat():
+            while not self._stop:
+                time.sleep(120)
+                run(["curl", "-s", "-m", "10", "-o", "/dev/null", "-X", "POST",
+                     f"{self.url}/_manager/lease/{self.id}/heartbeat",
+                     "-H", f"x-lease-token: {self.token}"], timeout=20)
+        threading.Thread(target=beat, daemon=True).start()
+        return True
+
+    def release(self):
+        self._stop = True
+        if self.id:
+            run(["curl", "-s", "-m", "10", "-o", "/dev/null", "-X", "DELETE",
+                 f"{self.url}/_manager/lease/{self.id}",
+                 "-H", f"x-lease-token: {self.token}"], timeout=20)
+            self.id = None
+
+
+def discover_tests(only: list[str]) -> list[tuple[str, Path, str]]:
+    """Whatever is in tests/, in filename order -- nothing is enumerated here."""
+    found = []
+    for path in sorted((HERE / "tests").glob("*")):
+        if path.name.startswith("_") or path.is_dir():
+            continue
+        if path.suffix == ".py":
+            description = ""
+            for line in path.read_text().splitlines()[:20]:
+                if line.startswith("DESCRIPTION"):
+                    description = line.split("=", 1)[1].strip().strip('"\'')
+                    break
+            found.append((path.stem, path, description))
+        elif os.access(path, os.X_OK):
+            found.append((path.stem, path, "external test (JSON on stdin, rows on stdout)"))
+    if only:
+        found = [t for t in found if any(o in t[0] for o in only)]
+    return found
+
+
+def in_window(window: str) -> bool:
+    """A window is for machines somebody else needs during the day."""
+    if not window:
+        return True
+    start, end = (int(x) for x in window.split("-"))
+    hour = time.localtime().tm_hour
+    return (hour >= start or hour < end) if start > end else (start <= hour < end)
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(add_help=False)
+    ap.add_argument("tests", nargs="*", help="run only tests whose name contains these")
+    ap.add_argument("--list", action="store_true")
+    ap.add_argument("--budget", type=float, default=0, help="hours; stop starting tests after")
+    ap.add_argument("--window", default="", help="e.g. 23-11")
+    ap.add_argument("--lease", action="store_true")
+    ap.add_argument("--conf", default=str(HERE / "testbench.conf"))
+    ap.add_argument("-h", "--help", action="store_true")
+    args = ap.parse_args()
+    if args.help:
+        print(__doc__)
+        return 0
+
+    cfg = load_config(Path(args.conf))
+    host = Path("/etc/hostname").read_text().strip() if Path("/etc/hostname").exists() else socket.gethostname()
+    out_dir = Path(cfg["out_dir"]) if cfg["out_dir"] else HERE / "results" / host
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    tests = discover_tests(args.tests)
+    if args.list:
+        for name, path, description in tests:
+            print(f"  {name:<24} {description}")
+        return 0
+    if not tests:
+        print("no tests found in tests/", file=sys.stderr)
+        return 2
+
+    builds = detect.find_builds(cfg["build_search_paths"].split())
+    if not builds:
+        print(f"no llama.cpp found. Searched: {cfg['build_search_paths']}\n"
+              f"Set build_search_paths in {args.conf}", file=sys.stderr)
+        return 2
+    models = ([Path(m) for m in cfg["models"].split()] if cfg["models"]
+              else detect.find_models(cfg["model_search_paths"].split()))
+    if not models:
+        print(f"no models found. Searched: {cfg['model_search_paths']}", file=sys.stderr)
+        return 2
+
+    ctx = Context(
+        host=host, out_dir=out_dir,
+        results=Results(out_dir / "results.tsv", host),
+        builds=builds, cards=detect.find_cards(builds[0]), models=models,
+        power=detect.detect_power(cfg),
+        log_path=out_dir / "run.log",
+        deadline=time.time() + args.budget * 3600 if args.budget else None,
+        config=cfg)
+
+    ctx.say(f"=== {host} ===")
+    ctx.say(f"results: {ctx.results.path} ({len(ctx.results.keys)} rows already there)")
+    for b in builds:
+        ctx.say(f"build:  {b}")
+    for c in ctx.cards:
+        ctx.say(f"card:   {c.index}  {c.name}  {c.vram_mib} MiB")
+    ctx.say(f"models: {len(models)}")
+    ctx.say(f"power:  {ctx.power.kind}"
+            f"{' (limit settable)' if ctx.power.can_set_limit() else ' (limit not settable)'}")
+
+    lease = None
+    if args.lease:
+        lease = Lease(cfg["lease_url"], cfg["lease_token_file"])
+        if lease.acquire():
+            ctx.say(f"lease held: {lease.id}")
+        else:
+            ctx.say("NO LEASE GRANTED -- refusing to measure against a card somebody else may take")
+            return 3
+
+    kernel_before = kernel_events()
+    try:
+        for name, path, _ in tests:
+            if args.window and not in_window(args.window):
+                ctx.say(f"outside the window {args.window} -- NOT run: {name}")
+                continue
+            if ctx.out_of_budget():
+                ctx.say(f"budget spent -- NOT run: {name}")
+                continue
+            ctx.say(f"--- {name} ---")
+            started = time.time()
+            try:
+                if path.suffix == ".py":
+                    spec = importlib.util.spec_from_file_location(f"test_{name}", path)
+                    module = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(module)
+                    module.run(ctx)
+                else:
+                    payload = json.dumps({
+                        "host": host, "out_dir": str(out_dir),
+                        "builds": [{"path": str(b.path), "backend": b.backend, "version": b.version} for b in builds],
+                        "cards": [{"index": c.index, "name": c.name, "vram_mib": c.vram_mib} for c in ctx.cards],
+                        "models": [str(m) for m in models]})
+                    p = subprocess.run([str(path)], input=payload, capture_output=True, text=True)
+                    for line in p.stdout.splitlines():
+                        if line.strip():
+                            with ctx.results.path.open("a") as f:
+                                f.write(line.rstrip("\n") + "\n")
+            except Exception as e:                       # a broken test is a result too
+                ctx.say(f"  TEST FAILED: {type(e).__name__}: {e}")
+            ctx.say(f"--- {name}: {int((time.time() - started) / 60)} min ---")
+    finally:
+        ctx.power.restore()
+        if lease:
+            lease.release()
+            ctx.say("lease returned")
+
+    if kernel_events() != kernel_before:
+        ctx.say("WARNING: the kernel logged the card during this run -- check every number")
+    ctx.say(f"=== done: {len(ctx.results.keys)} rows in {ctx.results.path} ===")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

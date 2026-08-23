@@ -1,0 +1,44 @@
+# Copy to testbench.conf and adjust. Everything here is optional: what is not
+# named gets discovered, and what cannot be discovered becomes a documented skip
+# rather than a crash. Every key can also be set as TESTBENCH_<KEY> in the
+# environment, which is how a scheduler overrides one value without editing this
+# file.
+
+[paths]
+# Where to look for llama.cpp. A directory counts if it holds bin/llama-bench --
+# an installed prefix and a cmake build directory are both fine, and both are
+# measured separately when both exist. The backend is read from the libggml-*.so
+# files IN the directory, never from its name.
+build_search_paths = /opt/llama-cpp /opt/llama-cpp-nb /opt/mess/llama.cpp/build /opt/mess/llama.cpp/build-cuda
+
+# Where to look for models when `models` below is empty.
+model_search_paths = /opt/llm-infra/models /opt/mess/models /opt/models
+
+[models]
+# Naming them is the honest way -- discovery takes what is lying there, in
+# alphabetical order, and that is rarely the set somebody meant. The first entry
+# is the one the single-model tests use (power curve, context depth).
+models =
+#   /opt/mess/models/qwen3.5-9b/Qwen3.5-9B-Q4_K_M.gguf
+#   /opt/mess/models/llama-3.2-3b/Llama-3.2-3B-Instruct-Q4_K_M.gguf
+
+[power]
+# Which card the vendor tool should be asked about. Only relevant when several
+# are present, and it is the vendor tool's index -- not the one llama-bench uses.
+card_index = 0
+# Where the AMD card exposes its sensors. Ignored on NVIDIA machines.
+amd_drm = /sys/class/drm/card1/device
+# Steps for the efficiency curve, in watts. Empty means: from the card's own
+# default limit downwards in 20 W steps.
+power_steps =
+
+[lease]
+# Only for machines that share their card with a service. Without --lease none
+# of this is touched; with --lease and no token the run refuses to start rather
+# than measure against a card somebody else may take away mid-run.
+lease_url = http://127.0.0.1:8080
+lease_token_file = /etc/bench/lease.token
+
+[output]
+# Default: results/<hostname>/ next to this file.
+out_dir =
