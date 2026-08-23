@@ -84,7 +84,7 @@ w vram_leerlauf    'nvidia-smi --query-gpu=memory.used --format=csv,noheader 2>/
 # --- llama.cpp builds ------------------------------------------------------
 printf '  "llama_cpp": [\n'
 e=1
-for p in /opt/llama-cpp /opt/llama-cpp-nb /opt/llama-cpp-rocm /opt/mess/llama.cpp/build; do
+for p in /opt/llama-cpp /opt/llama-cpp-nb /opt/llama-cpp-v0.2.0 /opt/llama-cpp-rocm /opt/mess/llama.cpp/build; do
   b="$p/bin/llama-bench"; [ -x "$b" ] || b="$p/bin/llama-server"; [ -x "$b" ] || continue
   v=$(cat "$p/.built-version" 2>/dev/null)
   [ -z "$v" ] && v=$(git -C "$(dirname "$p")" log -1 --format=%h 2>/dev/null)
