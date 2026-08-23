@@ -71,6 +71,11 @@ Interpreted in [foreign](../foreign/).
 
 **[`reference_bench.tsv`](../data/reference_bench.tsv)** — foreign benchmark, upstream flags
 
+These rows were measured on build `b10098`. Both cards were re-measured 490 commits later
+on `70adb1b` and moved by under 1 % — the numbers below are current, and the check is in
+[the card comparison](../data/karten/README.md#the-build-is-not-a-confounder), which also
+puts this model on the RTX 3080 and the RTX 4070 Super.
+
 | model | gpu | test | t_per_s | stddev |
 |---|---|---|---|---|
 | llama-3.2-3b | rx-7900-xtx | pp512 | 5711.19 | 348.68 |

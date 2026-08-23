@@ -10,3 +10,11 @@ RTX 4070 SUPER	504	pp4096	10722.51	56.88	70adb1b	Vulkan	610.57.04	Llama-3.2-3B-I
 RTX 4070 SUPER	504	pp4096+tg128	3663.52	3.10	70adb1b	Vulkan	610.57.04	Llama-3.2-3B-Instruct-Q4_K_M	Karte leer, 17 MiB belegt
 RTX 4070 SUPER	504	pp512	11579.89	146.21	70adb1b	Vulkan	610.57.04	Llama-3.2-3B-Instruct-Q4_K_M	Karte leer, 17 MiB belegt
 RTX 4070 SUPER	504	tg128	201.80	0.25	70adb1b	Vulkan	610.57.04	Llama-3.2-3B-Instruct-Q4_K_M	Karte leer, 17 MiB belegt
+RX 7900 XTX	960	pp512	5796.57	682.19	70adb1b	Vulkan	Mesa 26.1.5 (RADV)	Llama-3.2-3B-Instruct-Q4_K_M	Karte leer (34 MiB), Pacht gehalten, andere Karte im selben Rechner unbenutzt
+RX 7900 XTX	960	pp4096	6081.11	10.77	70adb1b	Vulkan	Mesa 26.1.5 (RADV)	Llama-3.2-3B-Instruct-Q4_K_M	Karte leer (34 MiB), Pacht gehalten, andere Karte im selben Rechner unbenutzt
+RX 7900 XTX	960	tg128	251.23	1.89	70adb1b	Vulkan	Mesa 26.1.5 (RADV)	Llama-3.2-3B-Instruct-Q4_K_M	Karte leer (34 MiB), Pacht gehalten, andere Karte im selben Rechner unbenutzt
+RX 7900 XTX	960	pp4096+tg128	3315.64	20.60	70adb1b	Vulkan	Mesa 26.1.5 (RADV)	Llama-3.2-3B-Instruct-Q4_K_M	Karte leer (34 MiB), Pacht gehalten, andere Karte im selben Rechner unbenutzt
+RTX 2070	448	pp512	3385.41	20.10	70adb1b	Vulkan	610.43.03	Llama-3.2-3B-Instruct-Q4_K_M	Karte leer (1 MiB), Pacht gehalten, andere Karte im selben Rechner unbenutzt
+RTX 2070	448	pp4096	3286.34	11.33	70adb1b	Vulkan	610.43.03	Llama-3.2-3B-Instruct-Q4_K_M	Karte leer (1 MiB), Pacht gehalten, andere Karte im selben Rechner unbenutzt
+RTX 2070	448	tg128	126.29	0.08	70adb1b	Vulkan	610.43.03	Llama-3.2-3B-Instruct-Q4_K_M	Karte leer (1 MiB), Pacht gehalten, andere Karte im selben Rechner unbenutzt
+RTX 2070	448	pp4096+tg128	1622.49	18.12	70adb1b	Vulkan	610.43.03	Llama-3.2-3B-Instruct-Q4_K_M	Karte leer (1 MiB), Pacht gehalten, andere Karte im selben Rechner unbenutzt
