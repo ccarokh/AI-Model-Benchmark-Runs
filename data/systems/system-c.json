@@ -1,0 +1,30 @@
+{
+  "rechnername": "messkiste",
+  "erfasst_am": "2026-08-23T04:28:49+02:00",
+  "cpu": "AMD Ryzen 5 5600X 6-Core Processor",
+  "cpu_faeden": "12",
+  "ram_gb": "15",
+  "board": "Micro-Star International Co., Ltd.",
+  "board_modell": "MPG X570 GAMING PLUS (MS-7C37)",
+  "bios": "A.D0",
+  "bios_datum": "05/20/2021",
+  "mikrocode": "0xa20102e",
+  "mikrocode_start": "0x0a201009",
+  "os": "Arch Linux",
+  "kernel": "7.1.9-arch1-2",
+  "python": "Python 3.14.7",
+  "wurzel_geraet": "/dev/sdc2",
+  "wurzel_traeger": "SanDisk SD6SB1M256G1002 238.5G sata",
+  "karten": [
+    {"name": "NVIDIA GeForce RTX 4070 SUPER", "vram": "12282 MiB", "treiber": "610.57.04", "leistungsgrenze": "220.00 W", "hersteller": "NVIDIA"}
+  ],
+  "vulkan_geraet": "NVIDIA GeForce RTX 4070 SUPER",
+  "vulkan_api": "1.4.341",
+  "pcie": [
+    {"geraet": "2d:00.0", "name": "NVIDIA Corporation AD104 [GeForce RTX 4070 SUPER", "karte_zur_bruecke": "Speed 16GT/s, Width x16", "bruecke_zur_cpu": "keine Bruecke"}
+  ],
+  "vram_leerlauf": "17 MiB",
+  "llama_cpp": [
+    {"pfad": "/opt/mess/llama.cpp/build", "stand": "70adb1b"}
+  ]
+}

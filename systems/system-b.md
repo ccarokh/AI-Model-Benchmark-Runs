@@ -1,5 +1,47 @@
 # System B — the development machine
 
+<!-- ERFASST:ANFANG -->
+| | |
+|---|---|
+| **CPU** | AMD Ryzen 9 5950X 16-Core Processor |
+| **Fäden** | 32 |
+| **Arbeitsspeicher (GB)** | 31 |
+| **Board — Hersteller** | Micro-Star International Co., Ltd. |
+| **Board — Modell** | MAG X570S TORPEDO MAX (MS-7D54) |
+| **BIOS** | A.D1 |
+| **BIOS-Datum** | 09/19/2025 |
+| **Mikrocode (laufend)** | 0xa201213 |
+| **Mikrocode beim Start ersetzt von** | *nicht ermittelt* |
+| **Betriebssystem** | Garuda Linux |
+| **Kernel** | 7.1.8-zen1-3-zen |
+| **Python** | Python 3.14.7 |
+| **Wurzel-Dateisystem** | /dev/nvme1n1p2 |
+| **Datenträger** | Seagate FireCuda 530 ZP2000GM30013  1,8T nvme |
+| **Vulkan meldet** | NVIDIA GeForce RTX 3080 |
+| **Vulkan-API** | 1.4.341 |
+| **VRAM belegt (Leerlauf)** | 2457 MiB |
+
+**Karten**
+
+| Karte | VRAM | Treiber | Leistungsgrenze |
+|---|---|---|---|
+| NVIDIA GeForce RTX 3080 | 10240 MiB | 610.57.04 | 370.00 W |
+
+**PCIe**
+
+| Gerät | Karte zur Brücke | Brücke zur CPU |
+|---|---|---|
+| NVIDIA Corporation GA102 [GeForce RTX 3080 Lite  | nicht lesbar (root noetig?) | keine Bruecke |
+
+**llama.cpp**
+
+| Pfad | Stand |
+|---|---|
+| `/opt/llama-cpp` | unbekannt |
+
+*Erfasst 2026-08-23T02:28:50+02:00 mit [`scripts/systems/erfassen.sh`](../scripts/systems/erfassen.sh) — nicht von Hand geschrieben.*
+<!-- ERFASST:ENDE -->
+
 Carried the 9B-class chat evaluations before System A existed.
 
 Note the inversion: **twice the system RAM, less than half the VRAM.** It can offload

@@ -1,0 +1,34 @@
+{
+  "rechnername": "LLMWorkerHost",
+  "erfasst_am": "2026-08-23T02:29:38+02:00",
+  "cpu": "Intel(R) Core(TM) i9-9900K CPU @ 3.60GHz",
+  "cpu_faeden": "16",
+  "ram_gb": "15",
+  "board": "Micro-Star International Co., Ltd.",
+  "board_modell": "MEG Z390 GODLIKE (MS-7B10)",
+  "bios": "1.D0",
+  "bios_datum": "11/01/2022",
+  "mikrocode": "0xf8",
+  "mikrocode_start": "0x000000f0",
+  "os": "Arch Linux",
+  "kernel": "7.1.5-arch1-2",
+  "python": "Python 3.14.6",
+  "wurzel_geraet": "/dev/nvme1n1p2",
+  "wurzel_traeger": "CT1000P1SSD8 931.5G nvme",
+  "karten": [
+    {"name": "NVIDIA GeForce RTX 2070", "vram": "8192 MiB", "treiber": "610.43.03", "leistungsgrenze": "225.00 W", "hersteller": "NVIDIA"},
+    {"name": " Advanced Micro Devices, Inc. [AMD/ATI] Navi 31 [Radeon RX 7900 XT/7900 XTX/7900 GRE/7900M] (rev c8)", "vram": "24560 MiB", "treiber": null, "leistungsgrenze": null, "hersteller": "AMD"}
+  ],
+  "vulkan_geraet": "AMD Radeon RX 7900 XTX (RADV NAVI31)",
+  "vulkan_api": "1.4.354",
+  "pcie": [
+    {"geraet": "03:00.0", "name": "Advanced Micro Devices, Inc. [AMD/ATI] Navi 31 [", "karte_zur_bruecke": "Speed 16GT/s, Width x16", "bruecke_zur_cpu": "Speed 8GT/s (downgraded), Width x8 (downgraded)"},
+    {"geraet": "04:00.0", "name": "NVIDIA Corporation TU106 [GeForce RTX 2070 Rev. ", "karte_zur_bruecke": "Speed 8GT/s, Width x8 (downgraded)", "bruecke_zur_cpu": "keine Bruecke"}
+  ],
+  "vram_leerlauf": "4 MiB",
+  "llama_cpp": [
+    {"pfad": "/opt/llama-cpp", "stand": "b10098"},
+    {"pfad": "/opt/llama-cpp-nb", "stand": "b10273"},
+    {"pfad": "/opt/llama-cpp-rocm", "stand": "unbekannt"}
+  ]
+}

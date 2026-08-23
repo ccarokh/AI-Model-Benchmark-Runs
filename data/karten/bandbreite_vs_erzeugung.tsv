@@ -1,0 +1,12 @@
+karte	bandbreite_gb_s	test	t_per_s	stddev	bau	backend	treiber	modell	bedingungen
+RTX 3080	760	pp4096	7630.83	53.97	70adb1b	Vulkan	610.57.04	Llama-3.2-3B-Instruct-Q4_K_M	Desktop teilweise beendet, 1405 MiB belegt -- Zahl ist eine Untergrenze
+RTX 3080	760	pp4096+tg128	3370.57	21.09	70adb1b	Vulkan	610.57.04	Llama-3.2-3B-Instruct-Q4_K_M	Desktop teilweise beendet, 1405 MiB belegt -- Zahl ist eine Untergrenze
+RTX 3080	760	pp512	8268.75	142.50	70adb1b	Vulkan	610.57.04	Llama-3.2-3B-Instruct-Q4_K_M	Desktop teilweise beendet, 1405 MiB belegt -- Zahl ist eine Untergrenze
+RTX 3080	760	tg128	218.90	0.77	70adb1b	Vulkan	610.57.04	Llama-3.2-3B-Instruct-Q4_K_M	Desktop teilweise beendet, 1405 MiB belegt -- Zahl ist eine Untergrenze
+RTX 3080 (mit Desktop)	760	pp4096	7666.58	476.95	70adb1b	Vulkan	610.57.04	Llama-3.2-3B-Instruct-Q4_K_M	voller Desktop, 2620 MiB belegt, 22 % Grundlast -- Rohdaten nachtraeglich von uns geloescht, hier stehen nur die Mittelwerte aus dem Lauf
+RTX 3080 (mit Desktop)	760	pp512	8734.20	1243.76	70adb1b	Vulkan	610.57.04	Llama-3.2-3B-Instruct-Q4_K_M	voller Desktop, 2620 MiB belegt, 22 % Grundlast -- Rohdaten nachtraeglich von uns geloescht, hier stehen nur die Mittelwerte aus dem Lauf
+RTX 3080 (mit Desktop)	760	tg128	203.20	15.55	70adb1b	Vulkan	610.57.04	Llama-3.2-3B-Instruct-Q4_K_M	voller Desktop, 2620 MiB belegt, 22 % Grundlast -- Rohdaten nachtraeglich von uns geloescht, hier stehen nur die Mittelwerte aus dem Lauf
+RTX 4070 SUPER	504	pp4096	10722.51	56.88	70adb1b	Vulkan	610.57.04	Llama-3.2-3B-Instruct-Q4_K_M	Karte leer, 17 MiB belegt
+RTX 4070 SUPER	504	pp4096+tg128	3663.52	3.10	70adb1b	Vulkan	610.57.04	Llama-3.2-3B-Instruct-Q4_K_M	Karte leer, 17 MiB belegt
+RTX 4070 SUPER	504	pp512	11579.89	146.21	70adb1b	Vulkan	610.57.04	Llama-3.2-3B-Instruct-Q4_K_M	Karte leer, 17 MiB belegt
+RTX 4070 SUPER	504	tg128	201.80	0.25	70adb1b	Vulkan	610.57.04	Llama-3.2-3B-Instruct-Q4_K_M	Karte leer, 17 MiB belegt

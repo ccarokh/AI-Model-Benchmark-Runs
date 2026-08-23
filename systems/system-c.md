@@ -1,5 +1,47 @@
 # System C — RTX 4070 SUPER, two-day window
 
+<!-- ERFASST:ANFANG -->
+| | |
+|---|---|
+| **CPU** | AMD Ryzen 5 5600X 6-Core Processor |
+| **Fäden** | 12 |
+| **Arbeitsspeicher (GB)** | 15 |
+| **Board — Hersteller** | Micro-Star International Co., Ltd. |
+| **Board — Modell** | MPG X570 GAMING PLUS (MS-7C37) |
+| **BIOS** | A.D0 |
+| **BIOS-Datum** | 05/20/2021 |
+| **Mikrocode (laufend)** | 0xa20102e |
+| **Mikrocode beim Start ersetzt von** | 0x0a201009 |
+| **Betriebssystem** | Arch Linux |
+| **Kernel** | 7.1.9-arch1-2 |
+| **Python** | Python 3.14.7 |
+| **Wurzel-Dateisystem** | /dev/sdc2 |
+| **Datenträger** | SanDisk SD6SB1M256G1002 238.5G sata |
+| **Vulkan meldet** | NVIDIA GeForce RTX 4070 SUPER |
+| **Vulkan-API** | 1.4.341 |
+| **VRAM belegt (Leerlauf)** | 17 MiB |
+
+**Karten**
+
+| Karte | VRAM | Treiber | Leistungsgrenze |
+|---|---|---|---|
+| NVIDIA GeForce RTX 4070 SUPER | 12282 MiB | 610.57.04 | 220.00 W |
+
+**PCIe**
+
+| Gerät | Karte zur Brücke | Brücke zur CPU |
+|---|---|---|
+| NVIDIA Corporation AD104 [GeForce RTX 4070 SUPER | Speed 16GT/s, Width x16 | keine Bruecke |
+
+**llama.cpp**
+
+| Pfad | Stand |
+|---|---|
+| `/opt/mess/llama.cpp/build` | 70adb1b |
+
+*Erfasst 2026-08-23T04:28:49+02:00 mit [`scripts/systems/erfassen.sh`](../scripts/systems/erfassen.sh) — nicht von Hand geschrieben.*
+<!-- ERFASST:ENDE -->
+
 An RTX 4070 SUPER, available for two days. It exists in this repository for one question,
 not as another data point: **does generation really scale with memory bandwidth?** The
 [foreign benchmark page](../foreign/geerlingguy-ai-benchmarks.md#generation-scales-with-memory-bandwidth-almost-exactly)

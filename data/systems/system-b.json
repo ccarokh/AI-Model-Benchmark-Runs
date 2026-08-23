@@ -1,0 +1,30 @@
+{
+  "rechnername": "Asgarot",
+  "erfasst_am": "2026-08-23T02:29:53+02:00",
+  "cpu": "AMD Ryzen 9 5950X 16-Core Processor",
+  "cpu_faeden": "32",
+  "ram_gb": "31",
+  "board": "Micro-Star International Co., Ltd.",
+  "board_modell": "MAG X570S TORPEDO MAX (MS-7D54)",
+  "bios": "A.D1",
+  "bios_datum": "09/19/2025",
+  "mikrocode": "0xa201213",
+  "mikrocode_start": null,
+  "os": "Garuda Linux",
+  "kernel": "7.1.8-zen1-3-zen",
+  "python": "Python 3.14.7",
+  "wurzel_geraet": "/dev/nvme1n1p2",
+  "wurzel_traeger": "Seagate FireCuda 530 ZP2000GM30013  1,8T nvme",
+  "karten": [
+    {"name": "NVIDIA GeForce RTX 3080", "vram": "10240 MiB", "treiber": "610.57.04", "leistungsgrenze": "370.00 W", "hersteller": "NVIDIA"}
+  ],
+  "vulkan_geraet": "NVIDIA GeForce RTX 3080",
+  "vulkan_api": "1.4.341",
+  "pcie": [
+    {"geraet": "2d:00.0", "name": "NVIDIA Corporation GA102 [GeForce RTX 3080 Lite ", "karte_zur_bruecke": "Speed 16GT/s, Width x16", "bruecke_zur_cpu": "keine Bruecke"}
+  ],
+  "vram_leerlauf": "2450 MiB",
+  "llama_cpp": [
+    {"pfad": "/opt/llama-cpp", "stand": "unbekannt"}
+  ]
+}

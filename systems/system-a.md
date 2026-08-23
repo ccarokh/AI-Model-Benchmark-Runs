@@ -1,5 +1,51 @@
 # System A — the primary test bench
 
+<!-- ERFASST:ANFANG -->
+| | |
+|---|---|
+| **CPU** | Intel(R) Core(TM) i9-9900K CPU @ 3.60GHz |
+| **Fäden** | 16 |
+| **Arbeitsspeicher (GB)** | 15 |
+| **Board — Hersteller** | Micro-Star International Co., Ltd. |
+| **Board — Modell** | MEG Z390 GODLIKE (MS-7B10) |
+| **BIOS** | 1.D0 |
+| **BIOS-Datum** | 11/01/2022 |
+| **Mikrocode (laufend)** | 0xf8 |
+| **Mikrocode beim Start ersetzt von** | 0x000000f0 |
+| **Betriebssystem** | Arch Linux |
+| **Kernel** | 7.1.5-arch1-2 |
+| **Python** | Python 3.14.6 |
+| **Wurzel-Dateisystem** | /dev/nvme1n1p2 |
+| **Datenträger** | CT1000P1SSD8 931.5G nvme |
+| **Vulkan meldet** | AMD Radeon RX 7900 XTX (RADV NAVI31) |
+| **Vulkan-API** | 1.4.354 |
+| **VRAM belegt (Leerlauf)** | 4 MiB |
+
+**Karten**
+
+| Karte | VRAM | Treiber | Leistungsgrenze |
+|---|---|---|---|
+| NVIDIA GeForce RTX 2070 | 8192 MiB | 610.43.03 | 225.00 W |
+|  Advanced Micro Devices, Inc. [AMD/ATI] Navi 31 [Radeon RX 7900 XT/7900 XTX/7900 GRE/7900M] (rev c8) | 24560 MiB | *nicht ermittelt* | *nicht ermittelt* |
+
+**PCIe**
+
+| Gerät | Karte zur Brücke | Brücke zur CPU |
+|---|---|---|
+| Advanced Micro Devices, Inc. [AMD/ATI] Navi 31 [ | Speed 16GT/s, Width x16 | Speed 8GT/s (downgraded), Width x8 (downgraded) |
+| NVIDIA Corporation TU106 [GeForce RTX 2070 Rev.  | Speed 8GT/s, Width x8 (downgraded) | keine Bruecke |
+
+**llama.cpp**
+
+| Pfad | Stand |
+|---|---|
+| `/opt/llama-cpp` | b10098 |
+| `/opt/llama-cpp-nb` | b10273 |
+| `/opt/llama-cpp-rocm` | unbekannt |
+
+*Erfasst 2026-08-23T02:29:38+02:00 mit [`scripts/systems/erfassen.sh`](../scripts/systems/erfassen.sh) — nicht von Hand geschrieben.*
+<!-- ERFASST:ENDE -->
+
 Everything from the coding series onwards ran here.
 
 **16 GB of system RAM is the constraint that matters, not the 24 GB of VRAM.** CPU
