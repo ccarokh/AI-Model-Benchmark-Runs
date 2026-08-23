@@ -676,3 +676,33 @@ re-checked before every step, and losing the lease ends the chain instead of con
 test that only asks "is B worse than A" passes when A and B are equally broken. Some
 absolute anchor has to be in the comparison — here, the recorded reference figure from a
 healthy session — or the test can only detect *differences*, never *breakage*.
+
+## Attribution and decision need different comparisons
+
+The AMD card runs on Mesa/RADV, the NVIDIA cards on NVIDIA's own driver. Comparing across
+them mixes hardware with driver, and for a while that read like a flaw in the comparison.
+
+It is a flaw for one kind of question and not the other.
+
+**To explain a result**, the driver is a confounder. "Why is generation faster here?"
+cannot be answered while the driver differs — that is why the 3080-versus-4070 comparison
+was run inside one vendor, one driver version, one build, one model, leaving the card as
+the only variable.
+
+**To decide what to buy or deploy**, the driver is not a confounder, because it is not
+separable. A 7900 XTX cannot be run on NVIDIA's driver. Whoever buys the card buys RADV
+with it. The unit that exists in the world is the **package** — silicon, driver, runtime,
+and the quantisations that package can actually load — and a decision is made about
+packages, not about chips.
+
+The same split applies well beyond drivers:
+
+| | Attribution asks | Decision asks |
+|---|---|---|
+| Quantisation | what does 4-bit cost against fp16? | what fits in this card at all? |
+| Runtime | is vLLM faster than llama.cpp? | which one loads our weights? |
+| Harness | how much does the agent contribute? | what will actually run unattended? |
+
+Both are legitimate, and the mistake is not choosing one — it is reporting a
+decision-shaped measurement as if it explained a mechanism, or holding an
+attribution-shaped measurement to the standard of "but nobody can deploy that".
