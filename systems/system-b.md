@@ -1,46 +1,46 @@
 # System B — the development machine
 
-<!-- ERFASST:ANFANG -->
+<!-- CAPTURED:BEGIN -->
 | | |
 |---|---|
 | **CPU** | AMD Ryzen 9 5950X 16-Core Processor |
-| **Fäden** | 32 |
-| **Arbeitsspeicher (GB)** | 31 |
-| **Board — Hersteller** | Micro-Star International Co., Ltd. |
-| **Board — Modell** | MAG X570S TORPEDO MAX (MS-7D54) |
+| **Threads** | 32 |
+| **System RAM (GB)** | 31 |
+| **Board — vendor** | Micro-Star International Co., Ltd. |
+| **Board — model** | MAG X570S TORPEDO MAX (MS-7D54) |
 | **BIOS** | A.D1 |
-| **BIOS-Datum** | 09/19/2025 |
-| **Mikrocode (laufend)** | 0xa201213 |
-| **Mikrocode beim Start ersetzt von** | *nicht ermittelt* |
-| **Betriebssystem** | Garuda Linux |
+| **BIOS date** | 09/19/2025 |
+| **Microcode (running)** | 0xa201213 |
+| **Microcode replaced at boot, from** | *not determined* |
+| **OS** | Garuda Linux |
 | **Kernel** | 7.1.8-zen1-3-zen |
 | **Python** | Python 3.14.7 |
-| **Wurzel-Dateisystem** | /dev/nvme1n1p2 |
-| **Datenträger** | Seagate FireCuda 530 ZP2000GM30013  1,8T nvme |
-| **Vulkan meldet** | NVIDIA GeForce RTX 3080 |
-| **Vulkan-API** | 1.4.341 |
-| **VRAM belegt (Leerlauf)** | 2450 MiB |
+| **Root filesystem** | /dev/nvme1n1p2 |
+| **Root device** | Seagate FireCuda 530 ZP2000GM30013  1,8T nvme |
+| **Vulkan reports** | NVIDIA GeForce RTX 3080 |
+| **Vulkan API** | 1.4.341 |
+| **VRAM in use at capture** | 2332 MiB |
 
-**Karten**
+**GPUs**
 
-| Karte | VRAM | Treiber | Leistungsgrenze |
+| GPU | VRAM | Driver | Power limit |
 |---|---|---|---|
 | NVIDIA GeForce RTX 3080 | 10240 MiB | 610.57.04 | 370.00 W |
 
 **PCIe**
 
-| Gerät | Karte zur Brücke | Brücke zur CPU |
+| Device | Card to switch | Switch to CPU |
 |---|---|---|
-| NVIDIA Corporation GA102 [GeForce RTX 3080 Lite  | Speed 16GT/s, Width x16 | keine Bruecke |
+| NVIDIA Corporation GA102 [GeForce RTX 3080 Lite  | Speed 16GT/s, Width x16 | no switch |
 
 **llama.cpp**
 
-| Pfad | Stand |
-|---|---|
-| `/opt/llama-cpp` | unbekannt |
+| Path | Build | Backend |
+|---|---|---|
+| `/opt/llama-cpp` | 9614 (ebc10770ac) | vulkan+cuda |
 
-*Erfasst 2026-08-23T02:29:53+02:00 mit [`scripts/systems/erfassen.sh`](../scripts/systems/erfassen.sh) — nicht von Hand geschrieben.*
-<!-- ERFASST:ENDE -->
+*Captured 2026-08-23T02:51:41+02:00 by [`scripts/systems/erfassen.sh`](../scripts/systems/erfassen.sh) — read off the machine, not written by hand. `VRAM in use` and the PCIe link are momentary values: link speed drops at idle, and on a desktop machine the session holds VRAM.*
+<!-- CAPTURED:END -->
 
 Carried the 9B-class chat evaluations before System A existed.
 
@@ -57,11 +57,11 @@ straight through on System A fully resident. See
 Unlike System A this board is PCIe Gen 4 and AM4 — it would support a 2×8 split as
 well, so a multi-GPU repeat on a newer bus is possible here in principle. Not done.
 
-## Verlauf
+## History
 
-Ein Ergebnis gehoert zu einer System-*Version*, nicht zu einer Maschine.
-Aendert sich Hardware oder Stapel, zaehlt die Version hoch, und aeltere Ergebnisse
-bleiben an dem Zustand haengen, der sie erzeugt hat.
+A result belongs to a system *version*, not to a machine. When hardware or stack
+changes, the version increments and older results stay attached to the state that
+produced them.
 
 | Version | Stack |
 |---|---|

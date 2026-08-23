@@ -8,7 +8,7 @@ Rule of thumb: **chat and embedding evaluations are System B, everything from th
 coding series onwards is System A.** All hardware and operations measurements are
 System A by definition.
 
-## Nach System-Version
+## By system version
 
 | Measurement | System | GPU BIOS |
 |---|---|---|

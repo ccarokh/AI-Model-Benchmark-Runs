@@ -1,33 +1,35 @@
 #!/usr/bin/env python3
-"""Aus data/systems/*.json den Tatsachenblock jeder Systemseite erzeugen.
+"""Write the facts block of every system page from data/systems/*.json.
 
-Warum erzeugt und nicht geschrieben: die drei Seiten hatten drei verschiedene
-Formen. Eine erzaehlte ueber Arbeitsspeicher, die naechste ueber das BIOS, und
-ob irgendwo ein Feld FEHLTE, war gar nicht zu sehen. Jetzt hat jede Seite
-dieselben Felder in derselben Reihenfolge, und was nicht ermittelbar war, steht
-als "nicht ermittelt" da -- eine Luecke ist eine Aussage.
+Generated rather than written because the three pages used to have three
+different shapes. One talked about system RAM, the next about the BIOS, and
+whether a field was MISSING could not be seen at all. Now every page carries the
+same fields in the same order, and anything that could not be read says "not
+determined" -- a gap is a statement.
 
-Der Fliesstext bleibt unberuehrt: erzeugt wird nur, was zwischen den Marken
-steht.
+The prose is left alone: only what sits between the markers is generated.
 """
 import json, os, re
 
-MARKE_AUF = "<!-- ERFASST:ANFANG -->"
-MARKE_ZU = "<!-- ERFASST:ENDE -->"
+MARKE_AUF = "<!-- CAPTURED:BEGIN -->"
+MARKE_ZU = "<!-- CAPTURED:END -->"
 
+# Labels are English, like everything else in this repository -- documents,
+# comments and commit messages alike. A generated block with German headers in
+# the middle of English prose is what forced this cleanup.
 FELDER = [
-    ("cpu", "CPU"), ("cpu_faeden", "Fäden"), ("ram_gb", "Arbeitsspeicher (GB)"),
-    ("board", "Board — Hersteller"), ("board_modell", "Board — Modell"),
-    ("bios", "BIOS"), ("bios_datum", "BIOS-Datum"),
-    ("mikrocode", "Mikrocode (laufend)"), ("mikrocode_start", "Mikrocode beim Start ersetzt von"),
-    ("os", "Betriebssystem"), ("kernel", "Kernel"), ("python", "Python"),
-    ("wurzel_geraet", "Wurzel-Dateisystem"), ("wurzel_traeger", "Datenträger"),
-    ("vulkan_geraet", "Vulkan meldet"), ("vulkan_api", "Vulkan-API"),
-    ("vram_leerlauf", "VRAM belegt (Leerlauf)"),
+    ("cpu", "CPU"), ("cpu_faeden", "Threads"), ("ram_gb", "System RAM (GB)"),
+    ("board", "Board — vendor"), ("board_modell", "Board — model"),
+    ("bios", "BIOS"), ("bios_datum", "BIOS date"),
+    ("mikrocode", "Microcode (running)"), ("mikrocode_start", "Microcode replaced at boot, from"),
+    ("os", "OS"), ("kernel", "Kernel"), ("python", "Python"),
+    ("wurzel_geraet", "Root filesystem"), ("wurzel_traeger", "Root device"),
+    ("vulkan_geraet", "Vulkan reports"), ("vulkan_api", "Vulkan API"),
+    ("vram_leerlauf", "VRAM in use at capture"),
 ]
 
 def zelle(v):
-    return "*nicht ermittelt*" if v in (None, "", "null") else str(v)
+    return "*not determined*" if v in (None, "", "null") else str(v)
 
 def block(d):
     z = ["| | |", "|---|---|"]
@@ -35,26 +37,29 @@ def block(d):
         z.append(f"| **{name}** | {zelle(d.get(schluessel))} |")
     k = d.get("karten") or []
     if k:
-        z += ["", "**Karten**", "", "| Karte | VRAM | Treiber | Leistungsgrenze |", "|---|---|---|---|"]
+        z += ["", "**GPUs**", "", "| GPU | VRAM | Driver | Power limit |", "|---|---|---|---|"]
         for e in k:
             z.append(f"| {zelle(e.get('name'))} | {zelle(e.get('vram'))} | "
                      f"{zelle(e.get('treiber'))} | {zelle(e.get('leistungsgrenze'))} |")
     pc = d.get("pcie") or []
     if pc:
         z += ["", "**PCIe**", "",
-              "| Gerät | Karte zur Brücke | Brücke zur CPU |", "|---|---|---|"]
+              "| Device | Card to switch | Switch to CPU |", "|---|---|---|"]
         for e in pc:
             z.append(f"| {zelle(e.get('name'))} | {zelle(e.get('karte_zur_bruecke'))} | "
                      f"{zelle(e.get('bruecke_zur_cpu'))} |")
     b = d.get("llama_cpp") or []
     z += ["", "**llama.cpp**", ""]
     if b:
-        z += ["| Pfad | Stand |", "|---|---|"] + [f"| `{e['pfad']}` | {zelle(e['stand'])} |" for e in b]
+        z += ["| Path | Build | Backend |", "|---|---|---|"] + [
+            f"| `{e['pfad']}` | {zelle(e.get('stand'))} | {zelle(e.get('backend'))} |" for e in b]
     else:
-        z.append("*keiner installiert*")
-    z += ["", f"*Erfasst {zelle(d.get('erfasst_am'))} mit "
+        z.append("*none installed*")
+    z += ["", f"*Captured {zelle(d.get('erfasst_am'))} by "
           f"[`scripts/systems/erfassen.sh`](../scripts/systems/erfassen.sh) — "
-          f"nicht von Hand geschrieben.*"]
+          f"read off the machine, not written by hand. `VRAM in use` and the PCIe link "
+          f"are momentary values: link speed drops at idle, and on a desktop machine the "
+          f"session holds VRAM.*"]
     return "\n".join(z)
 
 for name in sorted(os.listdir("data/systems")):

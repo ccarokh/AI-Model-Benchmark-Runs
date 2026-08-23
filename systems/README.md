@@ -1,61 +1,69 @@
-# Systeme
+# Systems
 
-Eine Datei je Rechner, und in jeder **dieselben Felder in derselben Reihenfolge**.
+One file per machine, and in each of them **the same fields in the same order**.
 
-Der Tatsachenblock oben auf jeder Seite ist **erzeugt, nicht geschrieben**:
-[`scripts/systems/erfassen.sh`](../scripts/systems/erfassen.sh) liest ihn auf dem
-jeweiligen Rechner aus, die Ergebnisse liegen als JSON in
-[`data/systems/`](../data/systems/), und
-[`scripts/systems/gensystems.py`](../scripts/systems/gensystems.py) schreibt daraus den
-Block zwischen die Marken. Der Fließtext darunter bleibt von Hand.
+The facts table at the top of every page is **generated, not written**:
+[`scripts/systems/erfassen.sh`](../scripts/systems/erfassen.sh) reads it off the machine
+itself, the results land as JSON in [`data/systems/`](../data/systems/), and
+[`scripts/systems/gensystems.py`](../scripts/systems/gensystems.py) writes the block
+between the markers. The prose below it stays hand-written.
 
-## Warum das nötig war
+## Why this was necessary
 
-Vorher hatte jede Systembeschreibung ihre eigene Form. Die eine erzählte über
-Arbeitsspeicher, die nächste über das BIOS, die dritte über den Treiber — und **ob
-irgendwo etwas fehlte, war gar nicht zu sehen.** Eine Lücke sah aus wie ein Thema, das
-nicht zur Sprache kam.
+Each description used to have its own shape. One talked about system RAM, the next about
+the BIOS, the third about the driver — and **whether something was missing was invisible.**
+A gap looked like a topic that simply had not come up.
 
-Die erste Erfassung nach demselben Muster hat sofort vier Dinge gefunden:
+The first pass with a shared field set found four things immediately:
 
-**Die PCIe-Angabe für System A war unvollständig.** Dokumentiert war „Gen 3, 8 GT/s", die
-**Breite fehlte**: es sind **×8**, weil die RTX 2070 die anderen acht Bahnen belegt.
+**The PCIe entry for System A was incomplete.** It said "Gen 3, 8 GT/s"; the **width was
+missing**. It is **×8**, because the RTX 2070 takes the other eight lanes.
 
-Und sie ist **kein Merkmal des Systems, sondern ein Zustand**: bis zum 3. August lief die
-7900 XTX allein mit ×16. In [`versions.md`](versions.md) steht das seit jeher korrekt —
-in der Übersichtstabelle stand es zeitlos, als wäre es immer so gewesen. **Eine erfasste
-Momentaufnahme ist keine Geschichte**, und wo sich etwas geändert hat, muss die Tabelle
-auf die Versionsliste zeigen statt den heutigen Wert als Konstante auszugeben.
-
-Beim Nachsehen wäre ich dabei fast in die entgegengesetzte Falle gelaufen. `lspci` meldet
-für die 7900 XTX auch eine Verbindung mit **Gen 4 ×16** — die ist aber *innerhalb der
-Karte*, hinter dem PCIe-Switch, den Navi 31 selbst mitbringt:
+Reading it also nearly walked into the opposite trap. `lspci` reports a **Gen 4 ×16** link
+for the 7900 XTX as well — but that one is *inside the card*, behind the PCIe switch Navi
+31 carries on board:
 
 ```
-CPU-Wurzelanschluss 00:01.0   Gen 3 ×8   ← mehr kann die CPU nicht
-  └─ 01:00.0  Navi 10 XL Upstream Port of PCI Express Switch   ← auf der Karte
-       └─ 02:00.0  Downstream-Port
+CPU root port 00:01.0    Gen 3 ×8    ← the CPU offers no more
+  └─ 01:00.0  Navi 10 XL Upstream Port of PCI Express Switch   ← on the card
+       └─ 02:00.0  downstream port
             └─ 03:00.0  Navi 31 [Radeon RX 7900 XTX]
 ```
 
-Wer nur die Karte abfragt, liest den kartinternen Zweig und hält ihn für die Anbindung an
-den Rechner. **Deshalb erfasst das Skript beide Enden** — und deshalb steht in der Tabelle
-„Karte zur Brücke" neben „Brücke zur CPU", statt einer Zahl, die man verwechseln kann.
+Query only the card and you read the internal branch and take it for the connection to the
+machine. **So the collector records both ends** — which is why the table says "card to
+switch" next to "switch to CPU" instead of one number that can be mistaken for the other.
 
-**Der Kartenname kam vom falschen Gerät.** Der PCI-Pfad einer Karte hinter einem Switch
-zeigt auf dessen Downstream-Port; dort stand „Navi 10 XL Downstream Port of PCI Express
-Switch" statt des Kartennamens.
+**And the width is not a property, it is a state.** Until 3 August the 7900 XTX ran alone
+at ×16. The version history had it right all along; the summary table stated today's value
+as if it had always held. **A captured snapshot is not a history** — where something
+changed, the table has to point at the version list.
 
-**System B liefert keine PCIe-Daten**, weil `lspci -vv` dafür root braucht. Das steht
-jetzt als *nicht lesbar* da, statt als leeres Feld — ein fehlendes Recht sieht sonst aus
-wie eine fehlende Fähigkeit.
+**The GPU name came from the wrong device.** A card behind a switch has its PCI path point
+at the switch's downstream port, so the entry read "Navi 10 XL Downstream Port of PCI
+Express Switch" instead of the card.
 
-**Die BIOS-Stände standen nirgends.** 11/2022, 09/2025 und 05/2021 — genau die Angabe,
-die man bei Mikrocode-Fragen sucht.
+**System B returned no PCIe data**, because `lspci -vv` needs root for it. Without root
+that now shows as *not readable* rather than as an empty field — a missing permission
+otherwise looks like a missing capability. B's page carries a link value because that
+capture was run with root.
 
-## Neu erfassen
+Two more surfaced while fixing the collector itself:
+
+**The ROCm build was reported as CUDA.** llama.cpp's HIP path uses the CUDA names
+internally and prints `ggml_cuda_init`, so reading the output misclassifies it. `ldd` does
+not help either — ggml loads its backends at runtime, so they are not linked into the
+binary. The backend is now read from the `libggml-*.so` files that exist in the prefix.
+
+**`llama-bench` has no `--version`.** System B's build showed as "unknown" while the
+history two lines below recorded "build 9614" — a gap that did not exist. `llama-server`
+answers with `version: 9614 (ebc10770ac)`.
+
+## Re-capturing
 
 ```
-bash scripts/systems/erfassen.sh > data/systems/system-x.json   # auf dem Rechner selbst
-python3 scripts/systems/gensystems.py                            # Seiten neu erzeugen
+bash scripts/systems/erfassen.sh > data/systems/system-x.json   # on the machine itself
+python3 scripts/systems/gensystems.py                            # regenerate the pages
 ```
+
+Run it with `sudo` where PCIe details matter — without root, `lspci -vv` omits them.

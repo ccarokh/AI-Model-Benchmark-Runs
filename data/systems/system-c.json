@@ -1,6 +1,6 @@
 {
   "rechnername": "messkiste",
-  "erfasst_am": "2026-08-23T04:28:49+02:00",
+  "erfasst_am": "2026-08-23T04:51:40+02:00",
   "cpu": "AMD Ryzen 5 5600X 6-Core Processor",
   "cpu_faeden": "12",
   "ram_gb": "15",
@@ -21,10 +21,10 @@
   "vulkan_geraet": "NVIDIA GeForce RTX 4070 SUPER",
   "vulkan_api": "1.4.341",
   "pcie": [
-    {"geraet": "2d:00.0", "name": "NVIDIA Corporation AD104 [GeForce RTX 4070 SUPER", "karte_zur_bruecke": "Speed 16GT/s, Width x16", "bruecke_zur_cpu": "keine Bruecke"}
+    {"geraet": "2d:00.0", "name": "NVIDIA Corporation AD104 [GeForce RTX 4070 SUPER", "karte_zur_bruecke": "Speed 16GT/s, Width x16", "bruecke_zur_cpu": "no switch"}
   ],
   "vram_leerlauf": "17 MiB",
   "llama_cpp": [
-    {"pfad": "/opt/mess/llama.cpp/build", "stand": "70adb1b"}
+    {"pfad": "/opt/mess/llama.cpp/build", "stand": "70adb1b", "backend": "vulkan"}
   ]
 }

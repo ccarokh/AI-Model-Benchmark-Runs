@@ -1,46 +1,46 @@
 # System C — RTX 4070 SUPER, two-day window
 
-<!-- ERFASST:ANFANG -->
+<!-- CAPTURED:BEGIN -->
 | | |
 |---|---|
 | **CPU** | AMD Ryzen 5 5600X 6-Core Processor |
-| **Fäden** | 12 |
-| **Arbeitsspeicher (GB)** | 15 |
-| **Board — Hersteller** | Micro-Star International Co., Ltd. |
-| **Board — Modell** | MPG X570 GAMING PLUS (MS-7C37) |
+| **Threads** | 12 |
+| **System RAM (GB)** | 15 |
+| **Board — vendor** | Micro-Star International Co., Ltd. |
+| **Board — model** | MPG X570 GAMING PLUS (MS-7C37) |
 | **BIOS** | A.D0 |
-| **BIOS-Datum** | 05/20/2021 |
-| **Mikrocode (laufend)** | 0xa20102e |
-| **Mikrocode beim Start ersetzt von** | 0x0a201009 |
-| **Betriebssystem** | Arch Linux |
+| **BIOS date** | 05/20/2021 |
+| **Microcode (running)** | 0xa20102e |
+| **Microcode replaced at boot, from** | 0x0a201009 |
+| **OS** | Arch Linux |
 | **Kernel** | 7.1.9-arch1-2 |
 | **Python** | Python 3.14.7 |
-| **Wurzel-Dateisystem** | /dev/sdc2 |
-| **Datenträger** | SanDisk SD6SB1M256G1002 238.5G sata |
-| **Vulkan meldet** | NVIDIA GeForce RTX 4070 SUPER |
-| **Vulkan-API** | 1.4.341 |
-| **VRAM belegt (Leerlauf)** | 17 MiB |
+| **Root filesystem** | /dev/sdc2 |
+| **Root device** | SanDisk SD6SB1M256G1002 238.5G sata |
+| **Vulkan reports** | NVIDIA GeForce RTX 4070 SUPER |
+| **Vulkan API** | 1.4.341 |
+| **VRAM in use at capture** | 17 MiB |
 
-**Karten**
+**GPUs**
 
-| Karte | VRAM | Treiber | Leistungsgrenze |
+| GPU | VRAM | Driver | Power limit |
 |---|---|---|---|
 | NVIDIA GeForce RTX 4070 SUPER | 12282 MiB | 610.57.04 | 220.00 W |
 
 **PCIe**
 
-| Gerät | Karte zur Brücke | Brücke zur CPU |
+| Device | Card to switch | Switch to CPU |
 |---|---|---|
-| NVIDIA Corporation AD104 [GeForce RTX 4070 SUPER | Speed 16GT/s, Width x16 | keine Bruecke |
+| NVIDIA Corporation AD104 [GeForce RTX 4070 SUPER | Speed 16GT/s, Width x16 | no switch |
 
 **llama.cpp**
 
-| Pfad | Stand |
-|---|---|
-| `/opt/mess/llama.cpp/build` | 70adb1b |
+| Path | Build | Backend |
+|---|---|---|
+| `/opt/mess/llama.cpp/build` | 70adb1b | vulkan |
 
-*Erfasst 2026-08-23T04:28:49+02:00 mit [`scripts/systems/erfassen.sh`](../scripts/systems/erfassen.sh) — nicht von Hand geschrieben.*
-<!-- ERFASST:ENDE -->
+*Captured 2026-08-23T04:51:40+02:00 by [`scripts/systems/erfassen.sh`](../scripts/systems/erfassen.sh) — read off the machine, not written by hand. `VRAM in use` and the PCIe link are momentary values: link speed drops at idle, and on a desktop machine the session holds VRAM.*
+<!-- CAPTURED:END -->
 
 An RTX 4070 SUPER, available for two days. It exists in this repository for one question,
 not as another data point: **does generation really scale with memory bandwidth?** The
@@ -93,11 +93,11 @@ would run the *older* microcode, because Microsoft ships AMD microcode only rare
 leaves it to the board vendor. A Windows-versus-Linux comparison on this machine would
 therefore carry a second variable.
 
-## Verlauf
+## History
 
-| Version | Zeitraum | Zustand |
+| Version | Period | State |
 |---|---|---|
-| **C v1.0** | ab 2026-08-23 | Arch frisch aufgesetzt, llama.cpp `70adb1b` mit Vulkan, Treiber 610.57.04, BIOS A.D0 (05/2021) |
+| **C v1.0** | from 2026-08-23 | Arch freshly installed, llama.cpp `70adb1b` on Vulkan, driver 610.57.04, BIOS A.D0 (05/2021) |
 
-Geplant und noch nicht geschehen: ein CUDA-Bau als **zweite, getrennte** Messung, und
-ein BIOS-Update **nach** der Messreihe, nicht mittendrin.
+Planned and not yet done: a CUDA build as a **second, separate** measurement, and a BIOS
+update **after** the series rather than in the middle of it.

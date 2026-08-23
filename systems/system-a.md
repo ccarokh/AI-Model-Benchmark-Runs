@@ -1,50 +1,50 @@
 # System A — the primary test bench
 
-<!-- ERFASST:ANFANG -->
+<!-- CAPTURED:BEGIN -->
 | | |
 |---|---|
 | **CPU** | Intel(R) Core(TM) i9-9900K CPU @ 3.60GHz |
-| **Fäden** | 16 |
-| **Arbeitsspeicher (GB)** | 15 |
-| **Board — Hersteller** | Micro-Star International Co., Ltd. |
-| **Board — Modell** | MEG Z390 GODLIKE (MS-7B10) |
+| **Threads** | 16 |
+| **System RAM (GB)** | 15 |
+| **Board — vendor** | Micro-Star International Co., Ltd. |
+| **Board — model** | MEG Z390 GODLIKE (MS-7B10) |
 | **BIOS** | 1.D0 |
-| **BIOS-Datum** | 11/01/2022 |
-| **Mikrocode (laufend)** | 0xf8 |
-| **Mikrocode beim Start ersetzt von** | 0x000000f0 |
-| **Betriebssystem** | Arch Linux |
+| **BIOS date** | 11/01/2022 |
+| **Microcode (running)** | 0xf8 |
+| **Microcode replaced at boot, from** | 0x000000f0 |
+| **OS** | Arch Linux |
 | **Kernel** | 7.1.5-arch1-2 |
 | **Python** | Python 3.14.6 |
-| **Wurzel-Dateisystem** | /dev/nvme1n1p2 |
-| **Datenträger** | CT1000P1SSD8 931.5G nvme |
-| **Vulkan meldet** | AMD Radeon RX 7900 XTX (RADV NAVI31) |
-| **Vulkan-API** | 1.4.354 |
-| **VRAM belegt (Leerlauf)** | 4 MiB |
+| **Root filesystem** | /dev/nvme1n1p2 |
+| **Root device** | CT1000P1SSD8 931.5G nvme |
+| **Vulkan reports** | AMD Radeon RX 7900 XTX (RADV NAVI31) |
+| **Vulkan API** | 1.4.354 |
+| **VRAM in use at capture** | 1 MiB |
 
-**Karten**
+**GPUs**
 
-| Karte | VRAM | Treiber | Leistungsgrenze |
+| GPU | VRAM | Driver | Power limit |
 |---|---|---|---|
 | NVIDIA GeForce RTX 2070 | 8192 MiB | 610.43.03 | 225.00 W |
-|  Advanced Micro Devices, Inc. [AMD/ATI] Navi 31 [Radeon RX 7900 XT/7900 XTX/7900 GRE/7900M] (rev c8) | 24560 MiB | *nicht ermittelt* | *nicht ermittelt* |
+|  Advanced Micro Devices, Inc. [AMD/ATI] Navi 31 [Radeon RX 7900 XT/7900 XTX/7900 GRE/7900M] (rev c8) | 24560 MiB | *not determined* | *not determined* |
 
 **PCIe**
 
-| Gerät | Karte zur Brücke | Brücke zur CPU |
+| Device | Card to switch | Switch to CPU |
 |---|---|---|
 | Advanced Micro Devices, Inc. [AMD/ATI] Navi 31 [ | Speed 16GT/s, Width x16 | Speed 8GT/s (downgraded), Width x8 (downgraded) |
-| NVIDIA Corporation TU106 [GeForce RTX 2070 Rev.  | Speed 8GT/s, Width x8 (downgraded) | keine Bruecke |
+| NVIDIA Corporation TU106 [GeForce RTX 2070 Rev.  | Speed 8GT/s, Width x8 (downgraded) | no switch |
 
 **llama.cpp**
 
-| Pfad | Stand |
-|---|---|
-| `/opt/llama-cpp` | b10098 |
-| `/opt/llama-cpp-nb` | b10273 |
-| `/opt/llama-cpp-rocm` | unbekannt |
+| Path | Build | Backend |
+|---|---|---|
+| `/opt/llama-cpp` | b10098 | vulkan |
+| `/opt/llama-cpp-nb` | b10273 | vulkan |
+| `/opt/llama-cpp-rocm` | unknown | rocm |
 
-*Erfasst 2026-08-23T02:29:38+02:00 mit [`scripts/systems/erfassen.sh`](../scripts/systems/erfassen.sh) — nicht von Hand geschrieben.*
-<!-- ERFASST:ENDE -->
+*Captured 2026-08-23T02:51:38+02:00 by [`scripts/systems/erfassen.sh`](../scripts/systems/erfassen.sh) — read off the machine, not written by hand. `VRAM in use` and the PCIe link are momentary values: link speed drops at idle, and on a desktop machine the session holds VRAM.*
+<!-- CAPTURED:END -->
 
 Everything from the coding series onwards ran here.
 
@@ -96,11 +96,11 @@ The CPU root port runs at 8 GT/s ×16, i.e. **Gen 3**. The 16 GT/s figures visib
 some devices are card-internal, behind the GPU's own switch, not the path to the CPU.
 Gen 4 and Gen 5 SSDs bring nothing here.
 
-## Verlauf
+## History
 
-Ein Ergebnis gehoert zu einer System-*Version*, nicht zu einer Maschine.
-Aendert sich Hardware oder Stapel, zaehlt die Version hoch, und aeltere Ergebnisse
-bleiben an dem Zustand haengen, der sie erzeugt hat.
+A result belongs to a system *version*, not to a machine. When hardware or stack
+changes, the version increments and older results stay attached to the state that
+produced them.
 
 | Version | Period | Change | Stack |
 |---|---|---|---|
@@ -128,7 +128,7 @@ the old libraries otherwise — all eight of them, silently. Here it failed loud
 (`unknown model architecture: 'nanbeige'`); with an architecture both builds know, it
 would not have.
 
-## Aufbau und Prefixe
+## Bench setup and prefixes
 
 System A runs as an **open bench, no case**. All temperature and fan figures apply
 only to that. Putting it in a case is treated as a version increment like any other,
