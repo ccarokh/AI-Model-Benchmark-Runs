@@ -92,3 +92,12 @@ What follows from it is written down rather than assumed: the same box under Win
 would run the *older* microcode, because Microsoft ships AMD microcode only rarely and
 leaves it to the board vendor. A Windows-versus-Linux comparison on this machine would
 therefore carry a second variable.
+
+## Verlauf
+
+| Version | Zeitraum | Zustand |
+|---|---|---|
+| **C v1.0** | ab 2026-08-23 | Arch frisch aufgesetzt, llama.cpp `70adb1b` mit Vulkan, Treiber 610.57.04, BIOS A.D0 (05/2021) |
+
+Geplant und noch nicht geschehen: ein CUDA-Bau als **zweite, getrennte** Messung, und
+ein BIOS-Update **nach** der Messreihe, nicht mittendrin.

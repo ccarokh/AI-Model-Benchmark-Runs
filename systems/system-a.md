@@ -96,3 +96,44 @@ The CPU root port runs at 8 GT/s ×16, i.e. **Gen 3**. The 16 GT/s figures visib
 some devices are card-internal, behind the GPU's own switch, not the path to the CPU.
 Gen 4 and Gen 5 SSDs bring nothing here.
 
+## Verlauf
+
+Ein Ergebnis gehoert zu einer System-*Version*, nicht zu einer Maschine.
+Aendert sich Hardware oder Stapel, zaehlt die Version hoch, und aeltere Ergebnisse
+bleiben an dem Zustand haengen, der sie erzeugt hat.
+
+| Version | Period | Change | Stack |
+|---|---|---|---|
+| **A v1.0** | 2026-07-24 → 07-28 | single GPU (7900 XTX only) | kernel 7.1.4-arch1-1, llama.cpp b10098, Mesa 26.1.5 |
+| **A v1.1** | 2026-07-29 → 08-02 | **+ RTX 2070**, chipset slot at Gen 3 ×4 | kernel 7.1.5-arch1-2, otherwise unchanged |
+| **A v1.2** | 2026-08-03 | 2070 **moved to a CPU-direct slot**, both cards ×8 | unchanged |
+| **A v1.3** | 2026-08-04 | **+ ROCm 7.2.4** in a separate prefix | unchanged; `/opt/llama-cpp` untouched |
+| **A v1.4** | 2026-08-05 → 08-06 | **+ llama.cpp b10273** in `/opt/llama-cpp-nb`, for architectures the production build predates | `/opt/llama-cpp` still b10098 and still the production runtime |
+| **A v1.5** | from 2026-08-07 | **+ stable-diffusion.cpp** `master-813-bfbef5b` in `/opt/sd-cpp`, Vulkan | both llama.cpp prefixes untouched |
+
+The kernel step from v1.0 to v1.1 is the only stack change inside the series, and its
+effect was **measured rather than assumed**: 78.47 against 78.18 on the same
+workload. No effect.
+
+Mesa **26.1.5** held constant across all five versions, and llama.cpp **b10098**
+across the first four.
+
+**The v1.4 build was measured against the one it sits beside rather than assumed
+equivalent:** Llama-3.2-3B gives 250.65 t/s on b10273 against 251.33 on b10098, 0.27 %
+apart. No earlier figure is invalidated by the new prefix.
+
+**A second prefix needs `LD_LIBRARY_PATH`, not just a path.** The `ld.so` cache
+resolves every `libllama`/`libggml` to `/opt/llama-cpp/lib`, so the new binary runs on
+the old libraries otherwise — all eight of them, silently. Here it failed loudly
+(`unknown model architecture: 'nanbeige'`); with an architecture both builds know, it
+would not have.
+
+## Aufbau und Prefixe
+
+System A runs as an **open bench, no case**. All temperature and fan figures apply
+only to that. Putting it in a case is treated as a version increment like any other,
+and invalidates the thermal statements.
+
+`/opt/llama-cpp` is the Vulkan build and the one the production service uses.
+The HIP build lives separately in `/opt/llama-cpp-rocm` so the rollback is deleting a
+directory and no prior measurement is invalidated.
