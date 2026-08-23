@@ -302,6 +302,32 @@ def bench(build: Build, model: Path, *args, device: str | None = None,
     return result or None
 
 
+def bench_probe(build: Build, model: Path, *args, device: str | None = None,
+                timeout: int = 900, env: dict | None = None) -> tuple[bool, str]:
+    """Did this configuration run at all, and if not, what did it say?
+
+    The ceiling tests need the reason, not just the failure: "out of memory" and
+    "this model has no such context" are different answers to "does it fit", and
+    a probe that reports both as False turns one into the other.
+    """
+    cmd = [str(build.bin / "llama-bench"), "-m", str(model), *map(str, args), "-o", "json"]
+    if device:
+        cmd += ["-dev", device]
+    rc, out, err = run(cmd, timeout=timeout,
+                       env={"LD_LIBRARY_PATH": str(build.bin), **(env or {})})
+    try:
+        if json.loads(out):
+            return True, ""
+    except Exception:
+        pass
+    reason = ""
+    for line in err.splitlines():
+        if re.search(r"error|failed|cannot|unable|out of memory|oom|exceed", line, re.I):
+            reason = line.strip()[:120]
+            break
+    return False, reason or f"rc={rc}, no result"
+
+
 def cli_binary(build: Build) -> Path | None:
     """llama-completion before llama-cli.
 
@@ -370,6 +396,7 @@ class WattSampler:
 
     def __init__(self, power: PowerSource, interval: float = 1.0):
         self.power, self.interval, self.samples = power, interval, []
+        self.vram: list[int] = []
         self._stop = False
         self._thread = None
 
@@ -380,6 +407,14 @@ class WattSampler:
                 w = self.power.watts()
                 if w is not None:
                     self.samples.append(w)
+                # VRAM belongs in the same window as the power figure. Read
+                # after the process exits it is always the idle value -- the
+                # context-depth rows carried "17 MiB in use" for every depth up
+                # to 65 536, which is precisely the number that test exists to
+                # find and precisely the one it was not reporting.
+                v = self.power.vram_used_mib()
+                if v:
+                    self.vram.append(v)
                 time.sleep(self.interval)
         self._thread = threading.Thread(target=loop, daemon=True)
         self._thread.start()
@@ -396,3 +431,5 @@ class WattSampler:
     def peak(self):  return max(self.samples) if self.samples else None
     @property
     def count(self): return len(self.samples)
+    @property
+    def peak_vram(self): return max(self.vram) if self.vram else None
