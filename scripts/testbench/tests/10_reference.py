@@ -14,7 +14,7 @@ ARGS = ("-p", "2048", "-n", "128", "-r", "5", "-ngl", "99")
 
 def run(ctx):
     for build in ctx.builds:
-        for card in ctx.cards or [None]:
+        for card in ctx.cards_of(build) or [None]:
             for model in ctx.models:
                 card_id = card.index if card else "default"
                 key = ctx.results.key(NAME, card_id, build.backend, build.version, model.stem)

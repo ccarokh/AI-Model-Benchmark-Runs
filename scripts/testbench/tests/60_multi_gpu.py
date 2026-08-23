@@ -14,16 +14,17 @@ LAYOUTS = [("single", ("-sm", "none", "-mg", "0")),
 
 
 def run(ctx):
-    if len(ctx.cards) < 2:
-        ctx.skip_permanently(NAME, f"only {len(ctx.cards)} card on this machine")
-        return
     build = ctx.builds[0]
+    cards = ctx.cards_of(build)
+    if len(cards) < 2:
+        ctx.skip_permanently(NAME, f"only {len(cards)} card visible to {build.backend}")
+        return
     # The largest model, because a split only matters where one card is not
     # enough -- and -n 1000 rather than a short burst, since generation is what
     # the split costs and a three-second run cannot show it.
     model = max(ctx.models, key=lambda m: m.stat().st_size)
     for label, flags in LAYOUTS:
-        key = ctx.results.key(NAME, "+".join(c.index for c in ctx.cards),
+        key = ctx.results.key(NAME, "+".join(c.index for c in cards),
                               build.backend, build.version, f"{model.stem}:{label}")
         if ctx.results.has(key) or ctx.out_of_budget():
             continue
@@ -31,14 +32,14 @@ def run(ctx):
             ctx.defer(NAME, f"card busy before {label}")
             continue
         r = bench(build, model, "-p", "2048", "-n", "1000", "-r", "2", "-ngl", "99", *flags)
-        cards = "+".join(c.index for c in ctx.cards)
+        card_ids = "+".join(c.index for c in cards)
         if not r:
-            ctx.results.add(NAME, cards, build.backend, build.version,
+            ctx.results.add(NAME, card_ids, build.backend, build.version,
                             f"{model.stem}:{label}", "", "",
                             "no measurement -- this configuration did not run")
             ctx.say(f"  {label}: NO MEASUREMENT")
             continue
         for phase, unit in (("pp", "t/s prefill"), ("tg", "t/s generation")):
-            ctx.results.add(NAME, cards, build.backend, build.version,
+            ctx.results.add(NAME, card_ids, build.backend, build.version,
                             f"{model.stem}:{label}:{phase}", f"{r[phase]:.2f}", unit)
         ctx.say(f"  {label}: pp={r['pp']:.1f} tg={r['tg']:.2f}")

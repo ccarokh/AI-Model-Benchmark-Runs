@@ -6,6 +6,7 @@ blank. A test that never ran because no build was found has to say so.
 """
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 from harness import AmdPower, Build, Card, NvidiaPower, PowerSource, run
@@ -55,14 +56,24 @@ def find_cards(build: Build) -> list[Card]:
     """
     rc, out, err = run([str(build.bin / "llama-bench"), "--list-devices"],
                        timeout=120, env={"LD_LIBRARY_PATH": str(build.bin)})
+    # Only the block under "Available devices:", and only identifiers that look
+    # like a backend device id. The backends log to stderr while they
+    # initialise, and one of those lines ("ggml_cuda_init: found 1 CUDA
+    # devices") parses as a device called ggml_cuda_init with 11899 MiB.
     cards = []
+    in_block = False
     for line in (out + err).splitlines():
+        if line.strip().lower().startswith("available devices"):
+            in_block = True
+            continue
+        if not in_block:
+            continue
         line = line.strip()
         if ":" not in line or "MiB" not in line:
             continue
         ident, rest = line.split(":", 1)
         ident = ident.strip()
-        if " " in ident:
+        if not re.fullmatch(r"[A-Za-z]+\d+", ident):
             continue
         name = rest.split("(")[0].strip()
         vram = 0

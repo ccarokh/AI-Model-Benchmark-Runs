@@ -188,7 +188,9 @@ def main() -> int:
     ctx = Context(
         host=host, out_dir=out_dir,
         results=Results(out_dir / "results.tsv", host),
-        builds=builds, cards=detect.find_cards(builds[0]), models=models,
+        builds=builds,
+        cards_by_build={str(b.path): detect.find_cards(b) for b in builds},
+        models=models,
         power=detect.detect_power(cfg),
         log_path=out_dir / "run.log",
         deadline=time.time() + args.budget * 3600 if args.budget else None,
@@ -198,8 +200,9 @@ def main() -> int:
     ctx.say(f"results: {ctx.results.path} ({len(ctx.results.keys)} rows already there)")
     for b in builds:
         ctx.say(f"build:  {b}")
-    for c in ctx.cards:
-        ctx.say(f"card:   {c.index}  {c.name}  {c.vram_mib} MiB")
+    for b in builds:
+        for c in ctx.cards_of(b):
+            ctx.say(f"card:   {c.index}  {c.name}  {c.vram_mib} MiB  [{b.backend}]")
     ctx.say(f"models: {len(models)}")
     ctx.say(f"power:  {ctx.power.kind}"
             f"{' (limit settable)' if ctx.power.can_set_limit() else ' (limit not settable)'}")
@@ -234,7 +237,8 @@ def main() -> int:
                     payload = json.dumps({
                         "host": host, "out_dir": str(out_dir),
                         "builds": [{"path": str(b.path), "backend": b.backend, "version": b.version} for b in builds],
-                        "cards": [{"index": c.index, "name": c.name, "vram_mib": c.vram_mib} for c in ctx.cards],
+                        "cards": {k: [{"index": c.index, "name": c.name, "vram_mib": c.vram_mib} for c in v]
+                                  for k, v in ctx.cards_by_build.items()},
                         "models": [str(m) for m in models]})
                     p = subprocess.run([str(path)], input=payload, capture_output=True, text=True)
                     for line in p.stdout.splitlines():

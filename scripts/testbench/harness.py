@@ -117,12 +117,25 @@ class Context:
     out_dir: Path
     results: Results
     builds: list[Build]
-    cards: list[Card]
+    # Cards PER BUILD, not per machine. The device id is a backend's id: the
+    # same card is Vulkan0 to one build and CUDA0 to the next, and passing the
+    # wrong one either fails or is ignored -- and being ignored means the run
+    # measures whatever the backend picked, filed under the card that was asked
+    # for.
+    cards_by_build: dict[str, list[Card]]
     models: list[Path]
     power: "PowerSource"
     log_path: Path
     deadline: float | None = None
     config: dict = field(default_factory=dict)
+
+    @property
+    def cards(self) -> list[Card]:
+        """The first build's cards -- for counting, not for pinning."""
+        return next(iter(self.cards_by_build.values()), [])
+
+    def cards_of(self, build: Build) -> list[Card]:
+        return self.cards_by_build.get(str(build.path), [])
 
     def say(self, msg: str):
         line = f"[{time.strftime('%H:%M:%S')}] {msg}"
