@@ -19,7 +19,7 @@
 | **Datenträger** | Seagate FireCuda 530 ZP2000GM30013  1,8T nvme |
 | **Vulkan meldet** | NVIDIA GeForce RTX 3080 |
 | **Vulkan-API** | 1.4.341 |
-| **VRAM belegt (Leerlauf)** | 2457 MiB |
+| **VRAM belegt (Leerlauf)** | 2450 MiB |
 
 **Karten**
 
@@ -31,7 +31,7 @@
 
 | Gerät | Karte zur Brücke | Brücke zur CPU |
 |---|---|---|
-| NVIDIA Corporation GA102 [GeForce RTX 3080 Lite  | nicht lesbar (root noetig?) | keine Bruecke |
+| NVIDIA Corporation GA102 [GeForce RTX 3080 Lite  | Speed 16GT/s, Width x16 | keine Bruecke |
 
 **llama.cpp**
 
@@ -39,7 +39,7 @@
 |---|---|
 | `/opt/llama-cpp` | unbekannt |
 
-*Erfasst 2026-08-23T02:28:50+02:00 mit [`scripts/systems/erfassen.sh`](../scripts/systems/erfassen.sh) — nicht von Hand geschrieben.*
+*Erfasst 2026-08-23T02:29:53+02:00 mit [`scripts/systems/erfassen.sh`](../scripts/systems/erfassen.sh) — nicht von Hand geschrieben.*
 <!-- ERFASST:ENDE -->
 
 Carried the 9B-class chat evaluations before System A existed.
