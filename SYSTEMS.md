@@ -11,7 +11,7 @@ arbitrary.
 | **CPU** | Intel i9-9900K, 8C/16T | AMD Ryzen 9 5950X, 16C/32T | AMD Ryzen 5 5600X, 6C/12T |
 | **Board** | MSI MEG Z390 GODLIKE (MS-7B10) | MSI MAG X570S TORPEDO MAX (MS-7D54) | MSI MPG X570 GAMING PLUS (MS-7C37), BIOS A.D0 of 05/2021 |
 | **RAM** | **16 GB** DDR4 dual channel | **31 GB** | **15 GB** — same as System A, which removes one variable from the comparison |
-| **PCIe** | **Gen 3 ×8 to the CPU** — a bridge sits in between: the 7900 XTX links to it at Gen 4 ×16, the bridge links onward at 8 GT/s ×8. The old entry named only the speed and missed the halved width | **Gen 4** — GPU link at 16 GT/s ×16 | **Gen 4** — 16 GT/s ×16 **under load**; reads 2.5 GT/s at idle, which is link power saving and not a downgrade |
+| **PCIe** | **Gen 3, and the width changed over time**: ×16 while the 7900 XTX was alone, ×8 since the RTX 2070 moved into a CPU-direct slot on 2026-08-03 ([versions](systems/versions.md)). Anything measured before that date ran at twice the width. The Gen 4 ×16 link `lspci` also reports is *inside the card*, behind the switch Navi 31 carries on board — it says nothing about the connection to the machine | **Gen 4** — GPU link at 16 GT/s ×16 | **Gen 4** — 16 GT/s ×16 **under load**; reads 2.5 GT/s at idle, which is link power saving and not a downgrade |
 | **Disk** | NVMe | NVMe | **SATA SSD** (SanDisk 256 GB) — slower model loading, which lies outside every measurement window |
 
 ## Software stack
