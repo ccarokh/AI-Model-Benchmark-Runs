@@ -394,6 +394,109 @@ artifact: the power trace covered model loading as well as computing, and a 17 G
 loads for ~28 s while the card idles. See
 [METHODOLOGY](../METHODOLOGY.md#the-measurement-window-must-contain-only-the-work-you-are-counting).
 
+## The RTX 4070 Super has its own optimum, and it is not at stock
+
+Same measurement on the second card, and this one reports board power itself — no wall
+meter, no sensor correction, and the figure is per card rather than per machine.
+Qwen3.5-9B, `llama-bench -p 2048 -n 256 -r 3`, one power sample per second across the
+whole run.
+
+| Power limit | Prefill t/s | Generation t/s | Mean draw | Peak | Generation tok/Wh |
+|---:|---:|---:|---:|---:|---:|
+| 220 W (stock) | 3 577 | 79.86 | 179.9 W | 219.9 W | 1 598 |
+| 200 W | 3 508 | 79.84 | 176.0 W | 199.9 W | 1 633 |
+| 180 W | 3 425 | 79.50 | 159.2 W | 180.3 W | 1 798 |
+| **160 W** | 3 311 | **78.90** | 143.8 W | 163.6 W | **1 975** |
+| 140 W | 3 103 | 68.97 | 121.7 W | 139.9 W | **2 040** |
+| 120 W | 2 550 | 55.51 | 108.3 W | 119.8 W | 1 845 |
+| 100 W | 2 014 | 42.51 | 95.3 W | 106.9 W | 1 606 |
+
+**160 W is the setting to run this card at: 27 % less power for 1.2 % less speed.**
+Efficiency peaks a step further down at 140 W, but that step costs 14 % of the
+generation rate — it buys 3 % more tokens per watt-hour for a seventh of the throughput.
+Below 120 W the curve turns back on itself exactly as it does on the AMD card: the parts
+that draw power regardless stop being amortised.
+
+Note that the card never approaches its own limit at stock — 179.9 W mean against a
+220 W ceiling. The first 40 W of "limit" are not being used, which is why the first two
+steps down cost almost nothing.
+
+## What a million tokens costs
+
+Prices are seven German household tariffs, collected 23.08.2026:
+**24.30 · 24.64 · 24.99 · 27.72 · 30.25 · 32.80 · 36.33 Ct/kWh** — minimum 24.30, mean
+**28.72**, maximum 36.33 ([`data/strompreise.tsv`](../data/strompreise.tsv)).
+
+Cost of **one million generated tokens**. Full table in
+[`data/energy_cost_1m.tsv`](../data/energy_cost_1m.tsv).
+
+| Card | State | Model | tok/Wh | kWh per 1M | min | **mean** | max |
+|---|---|---|---:|---:|---:|---:|---:|
+| RX 7900 XTX | stock | llama-3.2-3b | 3 304 | 0.303 | 7.4 ct | **8.7 ct** | 11.0 ct |
+| RX 7900 XTX | stock | gpt-oss-20b | 2 729 | 0.366 | 8.9 ct | **10.5 ct** | 13.3 ct |
+| RX 7900 XTX | stock | qwen3-30b-a3b | 2 501 | 0.400 | 9.7 ct | **11.5 ct** | 14.5 ct |
+| RX 7900 XTX | stock | qwen3-coder-30b-a3b | 2 498 | 0.400 | 9.7 ct | **11.5 ct** | 14.5 ct |
+| RTX 4070 Super | 140 W | qwen3.5-9b | 2 040 | 0.490 | 11.9 ct | **14.1 ct** | 17.8 ct |
+| RTX 4070 Super | 160 W | qwen3.5-9b | 1 975 | 0.506 | 12.3 ct | **14.5 ct** | 18.4 ct |
+| RX 7900 XTX | stock | ornith-35b ° | 1 835 | 0.545 | 13.2 ct | **15.7 ct** | 19.8 ct |
+| RX 7900 XTX | stock | qwen3.6-35b-a3b ° | 1 813 | 0.552 | 13.4 ct | **15.8 ct** | 20.0 ct |
+| RX 7900 XTX | stock | nanbeige-4.2-3b | 1 704 | 0.587 | 14.3 ct | **16.9 ct** | 21.3 ct |
+| RTX 4070 Super | 220 W stock | qwen3.5-9b | 1 598 | 0.626 | 15.2 ct | **18.0 ct** | 22.7 ct |
+| RX 7900 XTX | stock | qwen3.5-9b | 1 401 | 0.714 | 17.3 ct | **20.5 ct** | 25.9 ct |
+| RX 7900 XTX | stock, Sensor +25 % korrigiert | qwen3.5-9b | 1 051 | 0.951 | 23.1 ct | **27.3 ct** | 34.6 ct |
+| RX 7900 XTX | stock | deepseek-r1-14b | 987 | 1.013 | 24.6 ct | **29.1 ct** | 36.8 ct |
+| RX 7900 XTX | stock | gemma-4-12b | 969 | 1.032 | 25.1 ct | **29.6 ct** | 37.5 ct |
+| RX 7900 XTX | stock | qwen3.5-27b ° | 512 | 1.954 | 47.5 ct | **56.1 ct** | 71.0 ct |
+| RX 7900 XTX | stock | qwen3.8-27b-abl | 488 | 2.049 | 49.8 ct | **58.8 ct** | 74.4 ct |
+| RX 7900 XTX | stock | qwen3.6-27b | 481 | 2.079 | 50.5 ct | **59.7 ct** | 75.5 ct |
+| RX 7900 XTX | stock | qwen3.8-27b | 480 | 2.083 | 50.6 ct | **59.8 ct** | 75.7 ct |
+| RX 7900 XTX | stock | kimi-linear-48b-a3b ° | 271 | 3.692 | 89.7 ct | **106.0 ct** | 134.1 ct |
+
+° **Derived, not measured**: tokens/Wh from the generation rate at 275 W, which is usable
+here for one reason — [this card draws 256–291 W under load no matter which model is
+resident](#tokens-per-watt-hour-per-phase), so energy per token is throughput and nothing
+else. The derivation was checked against the five models that have both numbers:
+
+| Model | measured | derived | deviation |
+|---|---:|---:|---:|
+| Llama-3.2-3B | 3 304 | 3 302 | −0.1 % |
+| Qwen3.5-9B | 1 401 | 1 413 | +0.9 % |
+| Qwen3-30B-A3B | 2 501 | 2 572 | +2.8 % |
+| Qwen3.8-27B-ABL | 488 | 517 | +5.9 % |
+| Qwen3.8-27B | 480 | 511 | +6.6 % |
+
+**Under 7 % on every one, and the error has a direction**: the dense 27B models draw
+288–289 W, above the 275 W the derivation assumes, so their derived figure is optimistic
+by exactly that ratio. Reading a derived row as "±7 %, optimistic for dense models" is
+sound; reading it as a measurement is not.
+
+**The model beats the card by a wide margin.** Factor **12.2** between the cheapest and the
+most expensive model on the same card — 8.7 ct for Llama-3.2-3B against 106 ct for
+Kimi-Linear-48B-A3B — against factor **1.4** between the two cards on the same model.
+Whoever wants a smaller electricity bill changes the model, not the GPU — and if the card
+stays, capping it at 160 W is worth another 19 %.
+
+### Four things this table is not
+
+**It is not the RTX 3080 or the RTX 2070.** Neither card was ever measured for power here,
+only for throughput. There is no row for them, and there will not be one derived from the
+throughput figures — that would be a guess wearing a number's clothes.
+
+**It is not one measuring instrument.** The AMD rows come from `power1_average`, which
+[under-reports the real increase by about a quarter](#the-amd-sensor-under-reports-the-nvidia-one-does-not);
+the NVIDIA rows come from a sensor that does not. The corrected XTX row is in the table for
+that reason: read *that* one against the 4070 Super, not the raw one. A cross-vendor
+comparison here compares sensors as much as it compares cards.
+
+**It is not the machine.** A million tokens at ~80 t/s is **3.5 hours of runtime**. The rest
+of the host — [56 W idle for the whole machine](#it-cannot-be-powered-down-when-idle), of
+which roughly 40 W is not the GPU — adds about **4 ct** on top, which is a third of the bill
+in the cheapest rows.
+
+**It is not reading.** These are *generated* tokens. A read token costs
+[19–30× less](#reading-a-token-is-cheap-writing-one-is-not): a million tokens of prompt come
+to about **1 ct** on the XTX.
+
 ## Still open: watt-hours per completed task
 
 The `W per tok/s` column above is a partial answer to "what does this cost to run" —
