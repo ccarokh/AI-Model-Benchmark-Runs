@@ -19,7 +19,7 @@ AUS=${AUS:-/root/eval/multigpu}
 RUNTIME=${RUNTIME:-http://127.0.0.1:8080}
 SCHLUESSEL=${SCHLUESSEL:-/etc/bench/lease.token}
 L=${L:-/root/eval/multigpu_recheck.log}
-PACHT_ID=""; HERZ=""
+PACHT_ID=${PACHT_ID:-}; GEERBT=nein; HERZ=""
 
 # -n 1000 rather than the 3000 of the original sustained run: the same document
 # records that configuration A differed by 0.03 % between 3 s and 4.5 min of
@@ -30,6 +30,7 @@ PRE=${PRE:-2048}
 sag(){ echo "[$(date '+%d.%m. %H:%M:%S')] $*" | tee -a "$L"; }
 
 aufraeumen(){
+  [ "$GEERBT" = ja ] && return 0
   [ -n "$HERZ" ] && kill "$HERZ" 2>/dev/null
   [ -n "$PACHT_ID" ] && { curl -s -m 10 -o /dev/null -X DELETE "$RUNTIME/_manager/lease/$PACHT_ID" \
       -H "x-lease-token: $(cat "$SCHLUESSEL")" || true; sag "Pacht $PACHT_ID zurueckgegeben"; }
@@ -37,6 +38,11 @@ aufraeumen(){
 trap aufraeumen EXIT INT TERM
 
 pacht_nehmen(){
+  # A step started inside the night window inherits the scheduler's lease: it is
+  # already held, and llm-runtime grants exactly one. Asking for a second one is
+  # refused, and the step then dies before it measures anything -- which is what
+  # happened at 04:58 to both validation steps while the long series ran on.
+  if [ -n "$PACHT_ID" ]; then GEERBT=ja; sag "Pacht $PACHT_ID vom Aufrufer geerbt"; return 0; fi
   local t a; t=$(cat "$SCHLUESSEL") || return 1
   a=$(curl -s -m 10 -X POST "$RUNTIME/_manager/lease" -H "x-lease-token: $t" \
         -H "Content-Type: application/json" -d '{"holder":"multigpu_recheck"}')

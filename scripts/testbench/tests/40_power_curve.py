@@ -55,6 +55,14 @@ def run(ctx):
                 # the process would average in model loading -- a 17 GB model
                 # loads for half a minute while the card idles, and that
                 # artifact once became a published claim about MoE power draw.
+                # A short unsampled run first. Setting a new power limit does
+                # not move the clocks instantly, and the first seconds after the
+                # switch are drawn at idle rates -- which lands in the mean and
+                # makes the step look more efficient than it is. It showed as a
+                # jump exactly at each model's FIRST step: 3B at 220 W came out
+                # at 6 936 tok/Wh against 5 315 at 160 W, breaking an otherwise
+                # monotone curve. Three of four models had it, in the same place.
+                bench(build, model, "-p", "512", "-n", "32", "-r", "1", "-ngl", "99")
                 with WattSampler(ctx.power, interval=0.25) as sampler:
                     r = bench(build, model, *ARGS)
                 if not r:

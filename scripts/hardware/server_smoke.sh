@@ -32,12 +32,13 @@ PORT=${PORT:-18099}
 RUNTIME=${RUNTIME:-http://127.0.0.1:8080}
 SCHLUESSEL=${SCHLUESSEL:-/etc/bench/lease.token}
 L=${L:-/root/eval/server_smoke.log}
-PACHT_ID=""; HERZ=""; SRV=""
+PACHT_ID=${PACHT_ID:-}; GEERBT=nein; HERZ=""; SRV=""
 
 sag(){ echo "[$(date '+%d.%m. %H:%M:%S')] $*" | tee -a "$L"; }
 
 aufraeumen(){
   [ -n "$SRV" ] && kill "$SRV" 2>/dev/null && wait "$SRV" 2>/dev/null
+  [ "$GEERBT" = ja ] && return 0
   [ -n "$HERZ" ] && kill "$HERZ" 2>/dev/null
   if [ -n "$PACHT_ID" ]; then
     curl -s -m 10 -o /dev/null -X DELETE "$RUNTIME/_manager/lease/$PACHT_ID" \
@@ -48,6 +49,11 @@ aufraeumen(){
 trap aufraeumen EXIT INT TERM
 
 pacht_nehmen(){
+  # A step started inside the night window inherits the scheduler's lease: it is
+  # already held, and llm-runtime grants exactly one. Asking for a second one is
+  # refused, and the step then dies before it measures anything -- which is what
+  # happened at 04:58 to both validation steps while the long series ran on.
+  if [ -n "$PACHT_ID" ]; then GEERBT=ja; sag "Pacht $PACHT_ID vom Aufrufer geerbt"; return 0; fi
   local t a; t=$(cat "$SCHLUESSEL") || return 1
   a=$(curl -s -m 10 -X POST "$RUNTIME/_manager/lease" -H "x-lease-token: $t" \
         -H "Content-Type: application/json" -d '{"holder":"server_smoke"}')
@@ -81,13 +87,24 @@ frage(){  # stdin = request body -> answer body
 
 # ---- the three probes, each printing ONE line that can be compared ----------
 probe_chat(){
-  printf '{"model":"x","temperature":0,"seed":1234,"max_tokens":64,"messages":[{"role":"user","content":"Name the first ten prime numbers, comma separated, nothing else."}]}' \
+  # max_tokens 512, not 64: the chat model is a reasoning model. With a short
+  # budget the whole allowance goes into the thinking block, the answer never
+  # starts, and the probe reports LEER for a server that is working fine.
+  # An empty answer therefore has to say WHY -- finish_reason and whether the
+  # model was still thinking. "LEER" without a reason is a bug report about the
+  # probe, not about the build.
+  printf '{"model":"x","temperature":0,"seed":1234,"max_tokens":512,"messages":[{"role":"user","content":"Name the first ten prime numbers, comma separated, nothing else."}]}' \
   | frage | python3 -c "
 import json,sys
 try: d=json.load(sys.stdin)
-except Exception: print('LEER'); sys.exit()
-c=(d.get('choices') or [{}])[0].get('message',{}).get('content') or ''
-print(' '.join(c.split())[:120] if c.strip() else 'LEER')"
+except Exception: print('LEER (keine gueltige Antwort)'); sys.exit()
+if d.get('error'): print('FEHLER %s' % str(d['error'])[:90]); sys.exit()
+w=(d.get('choices') or [{}])[0]
+m=w.get('message',{})
+c=(m.get('content') or '').strip()
+if c: print(' '.join(c.split())[:120]); sys.exit()
+r=(m.get('reasoning_content') or '').strip()
+print('LEER (finish=%s, denk-text %d Zeichen)' % (w.get('finish_reason'), len(r)))"
 }
 
 probe_werkzeug(){  # $1 = tool_choice
@@ -111,7 +128,7 @@ probe_bild(){
 import base64, json, sys, urllib.request
 bild, port = sys.argv[1], sys.argv[2]
 b = base64.b64encode(open(bild, 'rb').read()).decode()
-koerper = json.dumps({"model": "x", "temperature": 0, "seed": 1234, "max_tokens": 96,
+koerper = json.dumps({"model": "x", "temperature": 0, "seed": 1234, "max_tokens": 256,
     "messages": [{"role": "user", "content": [
         {"type": "text", "text": "Describe this image in one short sentence."},
         {"type": "image_url", "image_url": {"url": "data:image/jpeg;base64," + b}}]}]}).encode()
@@ -122,8 +139,11 @@ try:
     d = json.loads(r.read())
 except Exception as e:
     print("FEHLER %s" % str(e)[:80]); raise SystemExit
-c = (d.get("choices") or [{}])[0].get("message", {}).get("content") or ""
-print(" ".join(c.split())[:120] if c.strip() else "LEER")
+if d.get("error"):
+    print("FEHLER %s" % str(d["error"])[:90]); raise SystemExit
+w = (d.get("choices") or [{}])[0]
+c = (w.get("message", {}).get("content") or "").strip()
+print(" ".join(c.split())[:120] if c else "LEER (finish=%s)" % w.get("finish_reason"))
 PY
 }
 

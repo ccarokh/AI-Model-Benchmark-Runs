@@ -52,6 +52,11 @@ pacht_nehmen(){
         -d "{\"holder\":\"nachtfenster\"}" 2>/dev/null)
   PACHT_ID=$(printf '%s' "$a" | sed -n 's/.*"lease_id":"\([^"]*\)".*/\1/p')
   [ -n "$PACHT_ID" ] || { sag "Pacht verweigert: $(printf '%s' "$a" | cut -c1-160)"; return 1; }
+  # Exported, so a queue step can inherit it. llm-runtime grants exactly one
+  # lease; a step that asks for its own gets refused and dies before it
+  # measures. On 23.08. at 04:58 that took out both validation steps while the
+  # long series ran on unaffected -- two rc=1 lines in a log full of successes.
+  export PACHT_ID
   sag "Pacht $PACHT_ID gehalten"
   # Heartbeat well below the lease TTL (LLM_RUNTIME_LEASE_TTL=300).
   ( while :; do sleep 120
@@ -65,6 +70,30 @@ pacht_gilt(){
   [ -n "$PACHT_ID" ] || return 1
   curl -s -m 10 "$RUNTIME/_manager/status" -H "x-lease-token: $(cat "$PACHT_SCHLUESSEL")" \
     2>/dev/null | grep -q "$PACHT_ID"
+}
+
+# Hold the lease, do not merely check it. Returns 1 only when the window closes
+# before it can be had again -- that is the one case where stopping is right.
+pacht_sichern(){
+  pacht_gilt && return 0
+  sag "  Pacht verloren -- wird neu geholt, bis sie wieder gilt oder das Fenster zugeht"
+  local versuche=0
+  while im_fenster; do
+    versuche=$((versuche+1))
+    # Kill the old heartbeat first: otherwise, from the second round on, two
+    # loops beat against a lease id that no longer exists.
+    [ -n "$HERZ" ] && { kill "$HERZ" 2>/dev/null; HERZ=""; }
+    PACHT_ID=""
+    if pacht_nehmen; then
+      sag "  Pacht nach $versuche Versuch(en) wieder da"
+      return 0
+    fi
+    # Not the same line every minute: once at the start, then every ten. A log
+    # that says the same thing for an hour does not get read.
+    [ $((versuche % 10)) -eq 1 ] && sag "  ... Pacht weiterhin nicht zu bekommen (Versuch $versuche)"
+    sleep 60
+  done
+  return 1
 }
 
 pacht_zurueck(){
@@ -137,7 +166,14 @@ while read -r zeile; do
   # Before EVERY step: is the lease still valid? A lost lease means someone
   # else has the card -- measuring on would produce numbers that look like
   # results and are not.
-  pacht_gilt || { sag "  Pacht verloren -- Fenster wird beendet"; break; }
+  #
+  # But a lost lease is no reason to end the night. On the night of 24.08.
+  # llm-runtime was restarted at 23:19, and a restart drops the lease because it
+  # lives in memory. At 00:53 this check noticed and closed the window: four of
+  # seven steps were lost to a restart that had happened ninety minutes earlier
+  # and had nothing to do with the measurement. The lease is now re-acquired for
+  # as long as the window is open.
+  pacht_sichern || { sag "  Fenster zu und keine Pacht -- der Rest bleibt liegen"; break; }
 
   sag "--- $zeile ---"
   t0=$(date +%s)

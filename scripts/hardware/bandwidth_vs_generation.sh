@@ -24,11 +24,12 @@ SCHLUESSEL=${SCHLUESSEL:-/etc/bench/lease.token}
 BENCH=${BENCH:-/opt/src/llama.cpp/build-latest/bin/llama-bench}
 MODELL=${MODELL:-/opt/llm-infra/models/llama-3.2-3b/Llama-3.2-3B-Instruct-Q4_K_M.gguf}
 AUS=${AUS:-/root/eval/karten}
-PACHT_ID=""; HERZ=""
+PACHT_ID=${PACHT_ID:-}; GEERBT=nein; HERZ=""
 
 sag(){ echo "[$(date '+%d.%m. %H:%M:%S')] $*"; }
 
 pacht_zurueck(){
+  [ "$GEERBT" = ja ] && return 0
   [ -n "$HERZ" ] && kill "$HERZ" 2>/dev/null
   [ -n "$PACHT_ID" ] || return 0
   curl -s -m 10 -o /dev/null -X DELETE "$RUNTIME/_manager/lease/$PACHT_ID" \
@@ -38,6 +39,11 @@ pacht_zurueck(){
 trap pacht_zurueck EXIT INT TERM
 
 pacht_nehmen(){
+  # A step started inside the night window inherits the scheduler's lease: it is
+  # already held, and llm-runtime grants exactly one. Asking for a second one is
+  # refused, and the step then dies before it measures anything -- which is what
+  # happened at 04:58 to both validation steps while the long series ran on.
+  if [ -n "$PACHT_ID" ]; then GEERBT=ja; sag "Pacht $PACHT_ID vom Aufrufer geerbt"; return 0; fi
   local t a
   t=$(cat "$SCHLUESSEL") || return 1
   a=$(curl -s -m 10 -X POST "$RUNTIME/_manager/lease" \

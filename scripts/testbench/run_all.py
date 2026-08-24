@@ -87,6 +87,36 @@ class Lease:
         self.id = None
         self._stop = False
 
+    def hold(self, window: str = "") -> bool:
+        """Keep it, do not merely take it once.
+
+        A restart of the supervisor drops the lease -- it lives in memory. The
+        night runner used to treat that as the end of the night and lost four of
+        seven steps to a restart that had happened ninety minutes earlier.
+        Returns False only when there is no point trying any more: the window
+        closed.
+        """
+        import time as _t
+        tries = 0
+        while True:
+            tries += 1
+            if self.acquire():
+                return True
+            if window and not in_window(window):
+                return False
+            if tries == 1 or tries % 10 == 0:
+                print(f"[lease] not granted (attempt {tries}) -- retrying", flush=True)
+            if not window and tries > 60:
+                return False
+            _t.sleep(60)
+
+    def valid(self) -> bool:
+        if not (self.id and self.token):
+            return False
+        rc, out, _ = run(["curl", "-s", "-m", "10", f"{self.url}/_manager/status",
+                          "-H", f"x-lease-token: {self.token}"], timeout=20)
+        return self.id in out
+
     def acquire(self) -> bool:
         if not self.token:
             return False
@@ -210,7 +240,7 @@ def main() -> int:
     lease = None
     if args.lease:
         lease = Lease(cfg["lease_url"], cfg["lease_token_file"])
-        if lease.acquire():
+        if lease.hold(args.window):
             ctx.say(f"lease held: {lease.id}")
         else:
             ctx.say("NO LEASE GRANTED -- refusing to measure against a card somebody else may take")
@@ -225,6 +255,14 @@ def main() -> int:
             if ctx.out_of_budget():
                 ctx.say(f"budget spent -- NOT run: {name}")
                 continue
+            # Before every test, not only at the start: the lease can be lost
+            # mid-run by a restart of the service that grants it.
+            if lease and not lease.valid():
+                ctx.say("lease lost -- re-acquiring")
+                if not lease.hold(args.window):
+                    ctx.say("lease gone and the window is closed -- the rest stays undone")
+                    break
+                ctx.say(f"lease back: {lease.id}")
             ctx.say(f"--- {name} ---")
             started = time.time()
             try:
