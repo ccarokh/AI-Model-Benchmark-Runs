@@ -41,6 +41,9 @@ TOLERANZ=${TOLERANZ:-0.97}   # production-like throughput may not fall below thi
 NEU=${NEU:-/opt/llama-cpp-$(printf '%s' "$ZIEL" | sed 's|.*/||; s|[^A-Za-z0-9._-]|_|g')}
 
 sag(){ echo "[$(date '+%d.%m. %H:%M:%S')] $*" | tee -a $L; }
+kernel_zahl(){ dmesg 2>/dev/null | grep -ciE "amdgpu.*(ring|reset|error)|GPU reset|VRAM is lost" || true; }
+KERN0=$(kernel_zahl)
+
 zahl_ok(){ awk -v a="${1:-0}" 'BEGIN{exit !(a+0>0)}'; }
 
 sag "=== Quelle aktualisieren ($ZIEL) ==="
@@ -163,7 +166,12 @@ for paar in "$PROD_V $PROD" "$ALT_V $ALT" "$NEU_V $NEU"; do
 
   # A build that got faster while resetting the card is not a candidate. A
   # throughput test alone would wave that through.
-  KERN[$v]=$(dmesg | tail -200 | grep -ciE "amdgpu.*(ring|reset|error)|GPU reset|VRAM is lost" || true)
+  # A DELTA against the start of the run, not the tail of dmesg. Counting the
+  # last 200 lines counts what happened last night: after the card ran out of
+  # VRAM at 23:23 -- two consumers on it at once, because a service restart had
+  # dropped the lease -- every check afterwards reported "115 kernel messages"
+  # and went red for an event it had nothing to do with, until dmesg rotated.
+  KERN[$v]=$(( $(kernel_zahl) - KERN0 ))
   sag "  $v : Kernelmeldungen ${KERN[$v]}"
 done
 
