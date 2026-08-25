@@ -58,10 +58,14 @@ class Results:
     def __init__(self, path: Path, host: str):
         self.path, self.host = path, host
         self.keys: set[str] = set()
+        self.values: dict[str, str] = {}
         if path.exists():
             for line in path.read_text().splitlines()[1:]:
                 if line.strip():
-                    self.keys.add(line.split("\t", 1)[0])
+                    cells = line.split("\t")
+                    self.keys.add(cells[0])
+                    if len(cells) > COLUMNS.index("value"):
+                        self.values[cells[0]] = cells[COLUMNS.index("value")]
         else:
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text("\t".join(COLUMNS) + "\n")
@@ -94,7 +98,19 @@ class Results:
         with self.path.open("a") as f:
             f.write("\t".join(x.replace("\t", " ") for x in row) + "\n")
         self.keys.add(key)
+        self.values[key] = str(value)
         return key
+
+    def value_of(self, test, card="", backend="", build="", parameter="") -> str | None:
+        """The value a previous run wrote, or None.
+
+        Resume needs more than "was this measured": a comparison test has to
+        read back what it compared AGAINST. Without this, a run interrupted
+        after the baseline and restarted has the baseline row in the file and no
+        way to reach the hash in it -- so it either re-measures the baseline or,
+        worse, compares against nothing and calls everything identical.
+        """
+        return self.values.get(self.key(test, card, backend, build, parameter))
 
 
 @dataclass
@@ -479,3 +495,125 @@ class WattSampler:
     def count(self): return len(self.samples)
     @property
     def peak_vram(self): return max(self.vram) if self.vram else None
+
+
+# -- the server, and why the suite suddenly needs it ------------------------
+# Every number in this repository up to here came from llama-bench: one model,
+# one stream, one token at a time. Speculative decoding cannot be measured that
+# way -- llama-bench has no draft path at all. The instrument is llama-server
+# plus a single request, and the timings it reports for that request.
+#
+# The server is the more dangerous instrument of the two. It carries state
+# between requests (a warm cache, a previous slot), so every measurement here
+# gets a FRESH PROCESS and exactly ONE request. A second request into the same
+# process measures the first one as well.
+def free_port(start: int = 8099, tries: int = 50) -> int:
+    import socket
+    for port in range(start, start + tries):
+        with socket.socket() as s:
+            try:
+                s.bind(("127.0.0.1", port))
+                return port
+            except OSError:
+                continue
+    return start
+
+
+def server_probe(build: Build, model: Path, prompt: str, *extra,
+                 n_predict: int = 256, ngl: int = 99, ctx_size: int = 8192,
+                 boot_timeout: int = 180, request_timeout: int = 600) -> dict:
+    """One fresh server, one request. Always returns a dict, never raises.
+
+    Keys: ok, tg, pp, hash, text, acceptance, reason. When ok is false, `reason`
+    carries the server's own words -- "this model cannot draft for that one" and
+    "the card was full" are different answers, and a probe that reports both as
+    False turns one into the other.
+    """
+    import hashlib
+    import urllib.error
+    import urllib.request
+
+    port = free_port()
+    log = Path(os.environ.get("TMPDIR", "/tmp")) / f"server_probe.{port}.log"
+    cmd = [str(build.bin / "llama-server"), "-m", str(model),
+           "-ngl", str(ngl), "-c", str(ctx_size),
+           "--host", "127.0.0.1", "--port", str(port), "--no-warmup",
+           *map(str, extra)]
+    env = dict(os.environ, LD_LIBRARY_PATH=str(build.bin))
+    out = {"ok": False, "tg": None, "pp": None, "hash": None, "text": "",
+           "acceptance": None, "reason": ""}
+
+    def died_because() -> str:
+        text = log.read_text(errors="replace") if log.exists() else ""
+        for line in reversed(text.splitlines()):
+            if re.search(r"error|failed|cannot|unsupported|mismatch|out of memory|oom", line, re.I):
+                return line.strip()[:140]
+        return "server exited without a usable message"
+
+    with log.open("w") as handle:
+        proc = subprocess.Popen(cmd, stdout=handle, stderr=subprocess.STDOUT,
+                                stdin=subprocess.DEVNULL, env=env)
+    try:
+        deadline = time.time() + boot_timeout
+        ready = False
+        while time.time() < deadline:
+            if proc.poll() is not None:
+                out["reason"] = died_because()
+                return out
+            try:
+                with urllib.request.urlopen(f"http://127.0.0.1:{port}/health", timeout=2) as r:
+                    if b'"ok"' in r.read():
+                        ready = True
+                        break
+            except Exception:
+                pass
+            time.sleep(1)
+        if not ready:
+            out["reason"] = f"no health after {boot_timeout}s"
+            return out
+
+        body = json.dumps({"prompt": prompt, "n_predict": n_predict,
+                           "temperature": 0, "cache_prompt": False}).encode()
+        req = urllib.request.Request(f"http://127.0.0.1:{port}/completion", data=body,
+                                     headers={"Content-Type": "application/json"})
+        try:
+            with urllib.request.urlopen(req, timeout=request_timeout) as r:
+                data = json.loads(r.read())
+        except Exception as e:
+            out["reason"] = f"request failed: {str(e)[:100]}"
+            return out
+    finally:
+        proc.terminate()
+        try:
+            proc.wait(timeout=30)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+
+    text = data.get("content", "")
+    timings = data.get("timings", {})
+    digest = hashlib.sha256(text.encode()).hexdigest()[:16]
+    if digest == EMPTY_HASH:
+        out["reason"] = "the server answered with nothing"
+        return out
+    hits = re.findall(r"draft acceptance = ([0-9.]+)",
+                      log.read_text(errors="replace") if log.exists() else "")
+    out.update(ok=True, tg=timings.get("predicted_per_second"),
+               pp=timings.get("prompt_per_second"), hash=digest, text=text,
+               acceptance=float(hits[-1]) if hits else None)
+    return out
+
+
+def common_prefix(a: str, b: str) -> int:
+    """How far two answers agree, in characters.
+
+    A hash says "different" and stops there. Where the two answers part company
+    is the more useful number: a run that diverges at character 2 is a different
+    first token, one that diverges at 133 is a coin flip deep in a sentence, and
+    those are not the same finding.
+    """
+    n = 0
+    for x, y in zip(a, b):
+        if x != y:
+            break
+        n += 1
+    return n
