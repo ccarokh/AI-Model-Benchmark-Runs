@@ -52,6 +52,17 @@ CTX = 8192
 # being no faster. The cut is written into the coverage row, not left silent.
 SWEEP_IF_FACTOR_ABOVE = 1.1
 
+# HOW OFTEN THE SAME CELL IS MEASURED.
+# The ngram variants draft from the text the model is producing, so the gain is
+# a property of that text -- and the text is not the same twice across
+# conditions. The first pass measured ngram-mod on one model and one prompt at
+# 4.02x under one backend and 1.84x under the other, and on the sibling model
+# the other way round. Read as backend figures those are nonsense; read as one
+# sample each of a text-dependent quantity they are exactly what to expect.
+# Only variants that actually drafted are repeated -- three runs of a variant
+# that never engages is three times nothing.
+REPEATS = 3
+
 
 def _record(ctx, build, key, probe, baseline, factor_note=""):
     """One variant's rows: the rate, and whether the answer survived."""
@@ -161,42 +172,58 @@ def run(ctx):
                 base_tg = baseline.get("tg")
 
                 for name, args in variants[1:]:
-                    key = f"{stem}:{name}"
-                    if ctx.results.has_prefix(NAME, "", build.backend, build.version, key):
+                    erstes = None       # the first run's probe, for the sweep
+                    entwarf = False     # did speculation happen at all
+                    for lauf in range(1, REPEATS + 1):
+                        key = f"{stem}:{name}" if lauf == 1 else f"{stem}:{name}@r{lauf}"
+                        if lauf > 1:
+                            total += 1
+                            if not entwarf:
+                                break
+                        if ctx.results.has_prefix(NAME, "", build.backend, build.version, key):
+                            done += 1
+                            # A stored run counts as having drafted only if it
+                            # wrote a wording row -- that row exists exactly when
+                            # speculation happened.
+                            if lauf == 1:
+                                entwarf = ctx.results.value_of(
+                                    NAME, "", build.backend, build.version,
+                                    f"{key}:wording") is not None
+                            continue
+                        if ctx.out_of_budget():
+                            return
+                        if not card_is_idle(ctx):
+                            ctx.defer(NAME, f"card busy before {key}")
+                            break
+                        probe = server_probe(build, model, prompt, *args,
+                                             n_predict=N_PREDICT, ctx_size=CTX)
+                        factor = ""
+                        if probe["ok"] and base_tg:
+                            factor = f"{probe['tg'] / base_tg:.2f}x baseline"
+                        _record(ctx, build, key, probe, baseline, factor)
                         done += 1
-                        continue
-                    if ctx.out_of_budget():
-                        return
-                    if not card_is_idle(ctx):
-                        ctx.defer(NAME, f"card busy before {key}")
-                        continue
-                    probe = server_probe(build, model, prompt, *args,
-                                         n_predict=N_PREDICT, ctx_size=CTX)
-                    factor = ""
-                    if probe["ok"] and base_tg:
-                        factor = f"{probe['tg'] / base_tg:.2f}x baseline"
-                    _record(ctx, build, key, probe, baseline, factor)
-                    done += 1
-                    if probe["ok"] and probe["acceptance"] is None:
-                        ctx.say(f"  {build.backend} {key}: no speculation happened -- "
-                                "the flag was accepted and nothing was drafted")
-                        continue
-                    if probe["ok"]:
+                        if not probe["ok"]:
+                            ctx.say(f"  {build.backend} {key}: did not run -- {probe['reason']}")
+                            break
+                        if probe["acceptance"] is None:
+                            ctx.say(f"  {build.backend} {key}: no speculation happened -- "
+                                    "the flag was accepted and nothing was drafted")
+                            break
                         same = probe["hash"] == baseline["hash"]
                         ctx.say(f"  {build.backend} {key}: {probe['tg']:.2f} t/s "
                                 f"{factor} -- wording {'identical' if same else 'DIFFERS'}")
-                    else:
-                        ctx.say(f"  {build.backend} {key}: did not run -- {probe['reason']}")
-                        continue
+                        if lauf == 1:
+                            erstes, entwarf = probe, True
 
-                    # The threshold sweep, only where there is a gain to explain.
-                    if not name.startswith("draft-") or probe["acceptance"] is None:
+                    # The threshold sweep, only where there is a gain to explain,
+                    # and only once -- it is an exploration, not a measurement.
+                    if not name.startswith("draft-") or erstes is None:
                         continue
-                    if not (base_tg and probe["tg"] / base_tg > SWEEP_IF_FACTOR_ABOVE):
+                    if not (base_tg and erstes["tg"] / base_tg > SWEEP_IF_FACTOR_ABOVE):
                         skipped_sweeps += 1
                         continue
                     for p in P_MIN:
-                        p_key = f"{key}@p{p}"
+                        p_key = f"{stem}:{name}@p{p}"
                         total += 1
                         if ctx.results.has_prefix(NAME, "", build.backend, build.version, p_key):
                             done += 1
@@ -218,7 +245,8 @@ def run(ctx):
                                     f"wording {'identical' if same else 'DIFFERS'}")
 
     note = (f"{len(ctx.builds)} builds x {len(targets)} models x {len(PROMPTS)} prompts "
-            f"x {1 + len(NO_DRAFTER) + len(drafters)} variants")
+            f"x {1 + len(NO_DRAFTER) + len(drafters)} variants, "
+            f"{REPEATS} runs each where speculation engaged")
     if skipped_sweeps:
         note += f"; {skipped_sweeps} threshold sweeps not run -- pairing gained under {SWEEP_IF_FACTOR_ABOVE}x"
     ctx.coverage(NAME, done, total, note)

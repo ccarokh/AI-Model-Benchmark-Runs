@@ -28,7 +28,11 @@ import time
 
 import httpx
 from datasets import load_dataset
-from transformers import AutoTokenizer
+
+try:
+    from transformers import AutoTokenizer
+except ImportError:  # nur noetig, wenn ein HF-Tokenizer verlangt wird
+    AutoTokenizer = None
 
 BASE_URL, TOKENIZER, MODUS = sys.argv[1], sys.argv[2], sys.argv[3]
 N = int(sys.argv[4]) if len(sys.argv) > 4 else 150
@@ -48,7 +52,17 @@ PROMPT_GENERATE = (
     "Text: {passage}\n\nFrage: {question}\nA) {a}\nB) {b}\nC) {c}\nD) {d}"
 )
 
-tok = AutoTokenizer.from_pretrained(TOKENIZER)
+# TOKENIZER kann "server" sein: dann baut das Modell seinen Prompt selbst.
+#
+# Warum das noetig wurde: fuer ein gegatetes Modell steht der offizielle
+# Tokenizer nicht ueberall zur Verfuegung, und ein ungegateter Spiegel ist keine
+# Ersatzquelle. Bei Gemma 4 endete die Spiegel-Vorlage auf
+# "<|channel>thought<channel|>" -- sie oeffnet einen Denk-Kanal, den die Vorlage
+# in der Modelldatei nicht oeffnet. Das naechste Token waere Denktext gewesen
+# statt des Buchstabens, und die logprob-Messung haette Unsinn ergeben, der wie
+# eine Qualitaetsaussage aussieht.
+VOM_SERVER = TOKENIZER == "server"
+tok = None if VOM_SERVER else AutoTokenizer.from_pretrained(TOKENIZER)
 ds = load_dataset("facebook/belebele", "deu_Latn", split="test").select(range(N))
 LETTER_RE = re.compile(r"\b([ABCD])\b")
 client = httpx.Client(timeout=600.0)
@@ -59,15 +73,23 @@ denken = MODUS == "thinking"
 # Not every tokenizer knows enable_thinking. Whether the switch arrived gets
 # logged -- a silently ignored argument would turn the "thinking" stage into a
 # copy of "generate" without anyone seeing it.
-try:
-    tok.apply_chat_template([{"role": "user", "content": "x"}], tokenize=False,
-                            add_generation_prompt=True, enable_thinking=denken)
-    schalter = "angenommen"
-except TypeError:
-    schalter = "nicht unterstuetzt"
+if VOM_SERVER:
+    schalter = "entfaellt (Vorlage aus der Modelldatei)"
+else:
+    try:
+        tok.apply_chat_template([{"role": "user", "content": "x"}], tokenize=False,
+                                add_generation_prompt=True, enable_thinking=denken)
+        schalter = "angenommen"
+    except TypeError:
+        schalter = "nicht unterstuetzt"
 
 
 def bauen(msg):
+    if VOM_SERVER:
+        r = client.post(f"{BASE_URL}/apply-template",
+                        json={"messages": [{"role": "user", "content": msg}]})
+        r.raise_for_status()
+        return r.json()["prompt"]
     kw = dict(tokenize=False, add_generation_prompt=True)
     if schalter == "angenommen":
         kw["enable_thinking"] = denken
