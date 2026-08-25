@@ -146,10 +146,20 @@ for paar in "$PROD_V $PROD" "$ALT_V $ALT" "$NEU_V $NEU"; do
 
   # Same output? A build that got faster and answers differently is not
   # faster at the same thing.
-  h=$(LD_LIBRARY_PATH=$pfad/lib timeout 300 "$pfad/bin/llama-cli" -m "$M" -ngl 99 -sm none -mg 0 \
-        --seed 1234 --temp 0 -n 96 -no-cnv -st --simple-io --no-warmup \
+  # llama-completion, not llama-cli: current llama-cli defaults to conversation
+  # mode for instruct models and waits for input that never comes. And the flags
+  # come from the build's own --help -- `-no-cnv` is valid in one build and
+  # refused by the next, which turned every newer candidate into "no output".
+  bin=$pfad/bin/llama-completion; [ -x "$bin" ] || bin=$pfad/bin/llama-cli
+  hilfe=$(LD_LIBRARY_PATH=$pfad/lib "$bin" --help 2>&1)
+  flags="--simple-io --no-warmup"
+  printf '%s' "$hilfe" | grep -q -- "-no-cnv"             && flags="$flags -no-cnv"
+  printf '%s' "$hilfe" | grep -q -- "--single-turn"       && flags="$flags -st"
+  printf '%s' "$hilfe" | grep -q -- "--no-display-prompt" && flags="$flags --no-display-prompt"
+  h=$(LD_LIBRARY_PATH=$pfad/lib timeout 300 "$bin" -m "$M" -ngl 99 -sm none -mg 0 \
+        --seed 1234 --temp 0 -n 96 --ctx-size 4096 $flags \
         -p "List the first ten prime numbers." < /dev/null 2>/dev/null \
-      | sed -n '/\[Start thinking\]/,/^\[ Prompt:/p' | grep -v '^\[ Prompt:' | sha256sum | cut -c1-16)
+      | sha256sum | cut -c1-16)
   HASH[$v]=$h
   [ "$h" = "$LEER_HASH" ] && LEER[$v]="${LEER[$v]:+${LEER[$v]}, }Ausgabe leer"
   sag "  $v : Ausgabe-Hash $h$([ "$h" = "$LEER_HASH" ] && echo '  <-- das ist der Hash von NICHTS')"
