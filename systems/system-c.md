@@ -101,3 +101,20 @@ therefore carry a second variable.
 
 Planned and not yet done: a CUDA build as a **second, separate** measurement, and a BIOS
 update **after** the series rather than in the middle of it.
+
+## What it measured while it was here
+
+Borrowed for four days, and it carries the best-covered card in this repository:
+**1 058 result rows**, seven models, two backends, eight test types
+([raw data](../data/testbench/messkiste-4070super.tsv)).
+
+| Finding | Where |
+|---|---|
+| CUDA buys 14–25 % prefill and pays with up to 80 % of the context | [backends](../hardware/backends.md#the-other-pair-cuda-against-vulkan-on-one-nvidia-card) |
+| The matrix path is prefill only — generation does not move at all | [backends](../hardware/backends.md#what-the-matrix-path-is-worth-and-only-where) |
+| Every model peaks at 140–160 W, none at stock | [power](../hardware/power.md#the-rtx-4070-super-has-its-own-optimum-and-it-is-the-same-for-every-model) |
+| A 14B holds 16 384 tokens of context here, a 9B holds 204 800 | [context ceiling](../findings/context-ceiling.md) |
+| Bandwidth predicts generation across three architectures — and not for Ada | [card comparison](../data/karten/README.md) |
+
+It is also the only card here in the **12 GB class**, which is where most consumer
+purchases actually happen: 24 GB, 10 GB and 8 GB were represented, 12 GB was not.

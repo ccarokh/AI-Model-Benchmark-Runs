@@ -1,0 +1,86 @@
+# Where the context stops — measured, not estimated
+
+"That does not fit on 12 GB" is a sentence. This is the number it was standing in for.
+
+Every ceiling here was found by trying: double the requested context until the allocation
+fails, then halve the gap until it is under 4 096 tokens. Recorded per model are **the
+largest size that still allocated and the smallest that did not**, with the error the
+failing one gave. Found by
+[`70_fit_ceiling`](../scripts/testbench/tests/70_fit_ceiling.py) on an RTX 4070 Super,
+12 282 MiB, all weights on the GPU.
+
+## The 12 GB class
+
+| Model | File | f16 cache | q8_0 cache |
+|---|---:|---:|---:|
+| Llama-3.2-3B | 1.88 GiB | 86 016 | 163 840 |
+| **Qwen3.5-9B** | 5.29 GiB | **204 800** | **385 024** |
+| ornith-9b | 5.24 GiB | 204 800 | 389 120 |
+| DeepSeek-R1-14B | 8.37 GiB | **16 384** | 32 768 |
+| Qwen2.5-Coder-14B | 8.37 GiB | **16 384** | 32 768 |
+| gpt-oss-20B (MoE) | 11.28 GiB | **16 384** | 36 864 |
+
+## Three things this says that arithmetic did not
+
+**The 14B class hits a wall, and it is a property of the class.** Two unrelated 14B models
+— a DeepSeek-R1 distillation and a Qwen coder — land on **exactly the same** ceiling,
+16 384 tokens, with the first failure at 20 480, on both backends. That is not a quirk of
+one model's attention layout; it is what 8.4 GiB of weights leaves over on a 12 GiB card.
+
+**A 9B holds twelve times the context of a 14B.** 204 800 against 16 384, for 3.1 GiB more
+weights. Anyone sizing a RAG system by parameter count is sizing the wrong number: what
+decides is what is left after the weights, and the last three gigabytes of a card are worth
+more than the first ten.
+
+**The smaller model is not the roomier one.** Llama-3.2-3B tops out at 86 016 while the 9B
+reaches 204 800 — less than half the context for a third of the weights. The KV cache does
+not scale with parameter count but with layers × KV heads × head dimension, and the 3B pays
+more per token. A rule of thumb that says "smaller model, more room for context" is wrong
+here by a factor of 2.4.
+
+## Quantising the cache buys context, not speed
+
+The q8_0 column is roughly double the f16 one throughout — and it is not a trade against
+throughput. At depth 65 536 the quantised cache is **4 % faster** in generation (60.59
+against 58.18 t/s) while using 968 MiB less. What it costs is prefill: at that depth,
+1 485 against 2 134 t/s, about 30 %.
+
+**So the trade is prefill for context, not quality of service for capacity.**
+
+## The last failure is the informative one
+
+```
+d196608  allocates
+d229376  FAILS -- ggml_vulkan: Device memory allocation of size 940572672 failed.
+d212992  FAILS -- ggml_vulkan: Device memory allocation of size 525336576 failed.
+d204800  FAILS -- ggml_vulkan: Device memory allocation of size 12582912 failed.
+d200704  allocates
+```
+
+At 204 800 tokens the card refuses **12 MB**. That is the shape of a real ceiling: it is not
+approached gradually, it is a cliff where a routine allocation of a few megabytes is the one
+that cannot be served. A safety margin of "a few hundred MiB" is not a margin at all.
+
+## What is not measured here
+
+**Only one card.** Every figure is the 12 GB class. The same test on the 24 GB machine has
+not been run — the ceilings there will be different and the *shape* of the finding is what
+transfers, not the numbers.
+
+**Allocation, not throughput.** The probe asks for a context and generates one token; it
+answers "does this fit", not "what does it cost at that depth". The cost curve is
+[context depth](context-depth.md), and it is a different and much more expensive
+measurement. An earlier version of this test filled every depth before judging it and took
+**seven minutes per probe** at 327 680 tokens, which is why it covered two models instead of
+seven.
+
+The two probes agree within one bisection step: filling the depth put the 9B/f16 ceiling at
+200 704, allocating alone puts it at 204 800. The allocation probe is **4 096 tokens
+optimistic**, because the compute buffers a real prefill needs are not reserved. That is a
+known, bounded difference, not an unknown one.
+
+## Scripts
+
+- [`70_fit_ceiling.py`](../scripts/testbench/tests/70_fit_ceiling.py) — the bisection
+- [`80_model_ceiling.py`](../scripts/testbench/tests/80_model_ceiling.py) — does the model fit at all, and what does it really occupy
+- Raw data: [`data/testbench/messkiste-4070super.tsv`](../data/testbench/messkiste-4070super.tsv)

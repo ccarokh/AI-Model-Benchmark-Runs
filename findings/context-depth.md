@@ -1,5 +1,7 @@
 # What a full context costs
 
+> This is what depth **costs**. Where it **stops** is [context ceiling](context-ceiling.md) — a capacity result, found by bisection rather than by a list of depths.
+
 **At an empty cache the 30B MoE reads prompts as fast as the 9B and generates 1.8× faster.
 At 32 768 tokens of context the 9B reads 2.4× faster than the MoE and the generation gap
 is nearly gone.** The model that wins a long-context RAG slot is not the model that wins

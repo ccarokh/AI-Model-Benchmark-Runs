@@ -3,12 +3,12 @@ RX 7900 XTX	stock	llama-3.2-3b	3304	gemessen	0.303	7.4	8.7	11.0
 RX 7900 XTX	stock	gpt-oss-20b	2729	gemessen	0.366	8.9	10.5	13.3
 RX 7900 XTX	stock	qwen3-30b-a3b	2501	gemessen	0.400	9.7	11.5	14.5
 RX 7900 XTX	stock	qwen3-coder-30b-a3b	2498	gemessen	0.400	9.7	11.5	14.5
-RTX 4070 Super	140 W	qwen3.5-9b	2040	gemessen	0.490	11.9	14.1	17.8
-RTX 4070 Super	160 W	qwen3.5-9b	1975	gemessen	0.506	12.3	14.5	18.4
+RTX 4070 Super	140 W	qwen3.5-9b	1994	gemessen	0.502	12.2	14.4	18.2
+RTX 4070 Super	160 W	qwen3.5-9b	1998	gemessen	0.501	12.2	14.4	18.2
 RX 7900 XTX	stock	ornith-35b	1835	abgeleitet	0.545	13.2	15.7	19.8
 RX 7900 XTX	stock	qwen3.6-35b-a3b	1813	abgeleitet	0.552	13.4	15.8	20.0
 RX 7900 XTX	stock	nanbeige-4.2-3b	1704	gemessen	0.587	14.3	16.9	21.3
-RTX 4070 Super	220 W stock	qwen3.5-9b	1598	gemessen	0.626	15.2	18.0	22.7
+RTX 4070 Super	220 W stock	qwen3.5-9b	1554	gemessen	0.644	15.6	18.5	23.4
 RX 7900 XTX	stock	qwen3.5-9b	1401	gemessen	0.714	17.3	20.5	25.9
 RX 7900 XTX	stock, Sensor +25 % korrigiert	qwen3.5-9b	1051	gemessen	0.951	23.1	27.3	34.6
 RX 7900 XTX	stock	deepseek-r1-14b	987	gemessen	1.013	24.6	29.1	36.8

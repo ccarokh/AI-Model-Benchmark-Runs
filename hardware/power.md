@@ -394,32 +394,54 @@ artifact: the power trace covered model loading as well as computing, and a 17 G
 loads for ~28 s while the card idles. See
 [METHODOLOGY](../METHODOLOGY.md#the-measurement-window-must-contain-only-the-work-you-are-counting).
 
-## The RTX 4070 Super has its own optimum, and it is not at stock
+## The RTX 4070 Super has its own optimum, and it is the same for every model
 
 Same measurement on the second card, and this one reports board power itself — no wall
-meter, no sensor correction, and the figure is per card rather than per machine.
-Qwen3.5-9B, `llama-bench -p 2048 -n 256 -r 3`, one power sample per second across the
-whole run.
+meter, no sensor correction, and the figure is per card rather than per machine. Four
+models, `llama-bench -p 2048 -n 256 -r 3`, four power samples per second across the
+compute window only.
 
-| Power limit | Prefill t/s | Generation t/s | Mean draw | Peak | Generation tok/Wh |
-|---:|---:|---:|---:|---:|---:|
-| 220 W (stock) | 3 577 | 79.86 | 179.9 W | 219.9 W | 1 598 |
-| 200 W | 3 508 | 79.84 | 176.0 W | 199.9 W | 1 633 |
-| 180 W | 3 425 | 79.50 | 159.2 W | 180.3 W | 1 798 |
-| **160 W** | 3 311 | **78.90** | 143.8 W | 163.6 W | **1 975** |
-| 140 W | 3 103 | 68.97 | 121.7 W | 139.9 W | **2 040** |
-| 120 W | 2 550 | 55.51 | 108.3 W | 119.8 W | 1 845 |
-| 100 W | 2 014 | 42.51 | 95.3 W | 106.9 W | 1 606 |
+**Generation, tokens per watt-hour:**
 
-**160 W is the setting to run this card at: 27 % less power for 1.2 % less speed.**
-Efficiency peaks a step further down at 140 W, but that step costs 14 % of the
-generation rate — it buys 3 % more tokens per watt-hour for a seventh of the throughput.
+| Limit | Llama-3.2-3B | Qwen3.5-9B | ornith-9b | Qwen2.5-Coder-14B |
+|---:|---:|---:|---:|---:|
+| 100 W | 4 138 | 1 653 | 1 706 | 1 023 |
+| 120 W | 4 649 | 1 835 | 1 898 | 1 143 |
+| **140 W** | 4 999 | 1 994 | **2 052** | **1 262** |
+| **160 W** | **5 145** | **1 998** | 2 031 | 1 248 |
+| 180 W | 4 626 | 1 807 | 1 828 | 1 123 |
+| 200 W | 4 294 | 1 646 | 1 671 | 1 018 |
+| 220 W (stock) | 4 061 | 1 554 | 1 553 | 933 |
+
+**Every model peaks between 140 and 160 W, and none of them at stock.** The card runs
+27 % below its own limit for 1.4 % less generation — on the 9B, 78.92 t/s at 160 W
+against 80.07 at 220 W. A 3B at three times the token rate and a 14B at two thirds of it
+put the optimum in the same place, which makes this a property of the card rather than of
+the workload.
+
 Below 120 W the curve turns back on itself exactly as it does on the AMD card: the parts
 that draw power regardless stop being amortised.
 
-Note that the card never approaches its own limit at stock — 179.9 W mean against a
-220 W ceiling. The first 40 W of "limit" are not being used, which is why the first two
-steps down cost almost nothing.
+Note that the card never approaches its own limit at stock — 191 W mean against a 220 W
+ceiling. The first 30 W of "limit" are not being used, which is why the first two steps
+down cost almost nothing.
+
+### The first measurement after a power-limit change is not a measurement
+
+The first version of this table had a single model in it and one figure out of line: the
+3B reported **6 936 tok/Wh at 220 W** against 5 315 at 160 W, breaking an otherwise
+monotone curve. Three of the four models had the same jump, always at their own first
+step.
+
+Setting a new power limit does not move the clocks instantly. The first seconds after the
+switch are drawn at idle rates, they land in the mean, and the step comes out looking more
+efficient than it is — by **71 %** in the worst case here. The measurement now runs an
+unsampled warm-up before every sampled step, and the jump is gone: the same 3B/220 W point
+now reads 4 061.
+
+Had the maximum per model been taken at face value, this document would say that three of
+four models are most efficient at stock — the exact opposite of what the corrected data
+shows.
 
 ## What a million tokens costs
 
@@ -436,12 +458,12 @@ Cost of **one million generated tokens**. Full table in
 | RX 7900 XTX | stock | gpt-oss-20b | 2 729 | 0.366 | 8.9 ct | **10.5 ct** | 13.3 ct |
 | RX 7900 XTX | stock | qwen3-30b-a3b | 2 501 | 0.400 | 9.7 ct | **11.5 ct** | 14.5 ct |
 | RX 7900 XTX | stock | qwen3-coder-30b-a3b | 2 498 | 0.400 | 9.7 ct | **11.5 ct** | 14.5 ct |
-| RTX 4070 Super | 140 W | qwen3.5-9b | 2 040 | 0.490 | 11.9 ct | **14.1 ct** | 17.8 ct |
-| RTX 4070 Super | 160 W | qwen3.5-9b | 1 975 | 0.506 | 12.3 ct | **14.5 ct** | 18.4 ct |
+| RTX 4070 Super | 140 W | qwen3.5-9b | 1 994 | 0.502 | 12.2 ct | **14.4 ct** | 18.2 ct |
+| RTX 4070 Super | 160 W | qwen3.5-9b | 1 998 | 0.501 | 12.2 ct | **14.4 ct** | 18.2 ct |
 | RX 7900 XTX | stock | ornith-35b ° | 1 835 | 0.545 | 13.2 ct | **15.7 ct** | 19.8 ct |
 | RX 7900 XTX | stock | qwen3.6-35b-a3b ° | 1 813 | 0.552 | 13.4 ct | **15.8 ct** | 20.0 ct |
 | RX 7900 XTX | stock | nanbeige-4.2-3b | 1 704 | 0.587 | 14.3 ct | **16.9 ct** | 21.3 ct |
-| RTX 4070 Super | 220 W stock | qwen3.5-9b | 1 598 | 0.626 | 15.2 ct | **18.0 ct** | 22.7 ct |
+| RTX 4070 Super | 220 W stock | qwen3.5-9b | 1 554 | 0.644 | 15.6 ct | **18.5 ct** | 23.4 ct |
 | RX 7900 XTX | stock | qwen3.5-9b | 1 401 | 0.714 | 17.3 ct | **20.5 ct** | 25.9 ct |
 | RX 7900 XTX | stock, Sensor +25 % korrigiert | qwen3.5-9b | 1 051 | 0.951 | 23.1 ct | **27.3 ct** | 34.6 ct |
 | RX 7900 XTX | stock | deepseek-r1-14b | 987 | 1.013 | 24.6 ct | **29.1 ct** | 36.8 ct |

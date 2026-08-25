@@ -69,6 +69,87 @@ case "$bin" in
 esac
 ```
 
+## The other pair: CUDA against Vulkan on one NVIDIA card
+
+The ROCm question above has an NVIDIA counterpart, and it took a borrowed RTX 4070 Super
+to answer it: both backends built from the same commit, run on the same card, in the same
+session. Five models, `llama-bench -p 2048 -n 128 -r 5`, one card at a time.
+
+| Model | Prefill V / C | Generation V / C |
+|---|---|---|
+| Llama-3.2-3B | 11 413 / **11 842** | **201.89** / 196.03 |
+| Qwen3.5-9B | 3 607 / **4 506** (+25 %) | 80.04 / 80.35 |
+| ornith-9b | 3 652 / **4 499** (+23 %) | 80.80 / 80.99 |
+| Qwen2.5-Coder-14B | 2 521 / **2 871** (+14 %) | 51.36 / 51.05 |
+
+**CUDA buys prefill and nothing else.** Generation is a tie on every model — within half a
+percent — because generation is bandwidth-bound and the backend cannot change how much
+memory a token has to touch. Prefill is compute-bound, and there CUDA is 14–25 % ahead.
+
+### And it pays for that prefill with context
+
+The same comparison, but asking how much context still allocates
+([how the ceiling is found](../findings/context-ceiling.md)):
+
+| Model | f16 C / V | q8_0 C / V |
+|---|---|---|
+| Qwen3.5-9B | 196 608 / **204 800** | 311 296 / **385 024** (+24 %) |
+| ornith-9b | 200 704 / **204 800** | 311 296 / **389 120** (+25 %) |
+| Llama-3.2-3B | 86 016 / 86 016 | 151 552 / **163 840** (+8 %) |
+| Qwen2.5-Coder-14B | 16 384 / 16 384 | 28 672 / **32 768** (+14 %) |
+| **gpt-oss-20B** | 12 288 / **16 384** | 20 480 / **36 864** (+80 %) |
+
+With an f16 cache the two are equal or within 4 %. With a quantised one Vulkan fits a
+quarter more — **and the tighter the card, the wider the gap**: on the 20B MoE, which
+leaves 479 MiB free after loading, Vulkan holds 80 % more context than CUDA.
+
+**So the choice is not "which is faster" but which half of the workload matters.** A
+summarisation service that reads far more than it writes should take CUDA; a RAG system
+that needs the retrieved passages to fit should take Vulkan.
+
+### They do not always produce the same text
+
+The completion hash, same prompt, temperature 0, fixed seed:
+
+| Model | Vulkan | CUDA | |
+|---|---|---|---|
+| Qwen3.5-9B | `11cc155c5d27275f` | `11cc155c5d27275f` | identical |
+| Llama-3.2-3B | `ef10d86d5ff9c12d` | `ef10d86d5ff9c12d` | identical |
+| ornith-9b | `f516155b7c91c724` | `8936df579ec8b54f` | **differs** |
+| Qwen2.5-Coder-14B | `48df76cde437b45e` | `6cf5b882d938174a` | **differs** |
+| bge-m3 | `3f2a4b2921807edb` | `fa178badef9221a7` | **differs** |
+
+**Three of five.** Not empty outputs — different text. Different kernels sum in a different
+order, a near-tie in the logits flips, and at temperature 0 one flipped token changes
+everything after it. It does not invalidate the throughput figures above: `llama-bench`
+works on synthetic tokens and does not depend on content. What it does invalidate is the
+sentence "the two backends do the same work".
+
+The first version of this comparison ran on two models — and both of them were among the
+two that agree. It reported byte-identical output between backends, which is what
+[measuring a corner of the matrix](../scripts/testbench/README.md) buys you.
+
+## What the matrix path is worth, and only where
+
+Vulkan reaches the matrix hardware through `coopmat2`; switching it off is the closest
+thing to measuring what tensor cores contribute:
+
+| Model | Vulkan default → without coopmat2 | CUDA default → force-cublas |
+|---|---|---|
+| Llama-3.2-3B | 11 343 → **8 483** (−25 %) | 11 796 → 11 785 (±0) |
+| Qwen3.5-9B | 3 587 → **2 862** (−20 %) | 4 488 → 4 487 (±0) |
+| ornith-9b | 3 342 → **2 875** (−14 %) | 4 496 → 4 480 (±0) |
+| Qwen2.5-Coder-14B | 2 517 → **1 899** (−25 %) | 2 865 → 2 857 (±0) |
+
+**Generation does not move at all** — under a tenth of a percent on every model. The matrix
+path is a prefill mechanism, and this is what closes a question the four-card comparison
+opened: the RTX 4070 Super extracts 39 % more generation per GB/s of bandwidth than three
+other architectures, and it is **not** because of its tensor cores. That remains
+unexplained; the L2 cache is the next suspect and this hardware cannot isolate it.
+
+`GGML_CUDA_FORCE_MMQ` and `GGML_CUDA_FORCE_CUBLAS` change nothing on any model — the two
+switches do not separate anything on this card, which is itself the result.
+
 ## Installation note
 
 ROCm 7.2.4 installed as `rocm-hip-runtime hipblas rocm-llvm rocm-cmake` — 31
