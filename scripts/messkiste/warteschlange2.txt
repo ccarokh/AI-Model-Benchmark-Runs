@@ -1,0 +1,26 @@
+# System C, round two. Round one finished in FIFTEEN MINUTES, not the six hours
+# estimated -- so the budget buys depth instead of coverage now: the comparisons
+# that carried a defect get redone properly, and the ones that produced a result
+# get the resolution to back it up.
+
+# 1. Redo with a working output comparison. The first pass printed
+#    e3b0c44298fc1c14 four times -- the checksum of an empty stream, because the
+#    Vulkan tree has no llama-cli. It is built now and an empty answer says so.
+/root/mess/cuda_vs_vulkan.sh
+
+# 2. The right knobs for the CUDA backend. The queued "coopmat2 on the CUDA
+#    build" measured the same thing three times: GGML_VK_* is Vulkan-only.
+/root/mess/cuda_matrix_isolate.sh
+
+# 3. The efficiency optimum sits between 160 and 140 W. Finer steps around it,
+#    because the difference that matters (1975 against 2040 Token/Wh, at 78.90
+#    against 68.97 t/s) is decided in that gap.
+STUFEN="170 165 160 155 150 145 140 135" L=/root/mess/power_curve_fein.log /root/mess/power_curve_nvidia.sh
+
+# 4. Does CUDA's prefill lead survive a filled cache? The +25 % on the 9B was
+#    measured at depth 0, which is the one depth nobody runs in production.
+BAU=/opt/mess/llama.cpp/build-cuda L=/root/mess/vram_ceiling_cuda.log /root/mess/vram_ceiling.sh
+
+# 5. The 14B on 12 GB: the size where this card starts to hurt, and the reason
+#    somebody picks 16 GB instead.
+MODELL=/opt/mess/models/qwen2.5-coder-14b/Qwen2.5-Coder-14B-Instruct-Q4_K_M.gguf MARKE="qwen2.5-coder-14b Q4_K_M" TIEFEN="0 4096 8192 16384 32768" L=/root/mess/vram_ceiling_14b.log /root/mess/vram_ceiling.sh

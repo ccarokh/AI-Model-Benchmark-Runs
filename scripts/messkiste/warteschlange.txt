@@ -1,0 +1,21 @@
+# System C, day queue. Worked top to bottom until the time budget is spent.
+# Order is by "what is lost when the card goes back", not by what is quick.
+
+# 1. Explains the finding this card produced last night: 0.400 tg per GB/s
+#    against 0.26-0.29 for three other architectures. ~30 min.
+/root/mess/coopmat2_isolate.sh
+
+# 2. The only NVIDIA CUDA-against-Vulkan comparison this repository can make.
+#    Includes installing the toolkit and building beside the Vulkan tree. ~2 h.
+/root/mess/cuda_vs_vulkan.sh
+
+# 3. Efficiency against the power limit, board power read from the card itself
+#    rather than a wall meter. ~1 h.
+/root/mess/power_curve_nvidia.sh
+
+# 4. How much context fits beside a 9B on 12 GB, f16 against q8_0 KV. ~1.5 h.
+/root/mess/vram_ceiling.sh
+
+# 5. Repeat of 1 on the CUDA build: does the matrix hardware look different
+#    through the other backend? Only runs if 2 succeeded. ~30 min.
+BAU=/opt/mess/llama.cpp/build-cuda L=/root/mess/coopmat2_cuda.log /root/mess/coopmat2_isolate.sh
