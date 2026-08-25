@@ -83,4 +83,4 @@ known, bounded difference, not an unknown one.
 
 - [`70_fit_ceiling.py`](../scripts/testbench/tests/70_fit_ceiling.py) — the bisection
 - [`80_model_ceiling.py`](../scripts/testbench/tests/80_model_ceiling.py) — does the model fit at all, and what does it really occupy
-- Raw data: [`data/testbench/messkiste-4070super.tsv`](../data/testbench/messkiste-4070super.tsv)
+- Raw data: [`data/testbench/system-c-rtx4070-super.tsv`](../data/testbench/system-c-rtx4070-super.tsv)

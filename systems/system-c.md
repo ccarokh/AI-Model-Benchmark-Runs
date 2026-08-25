@@ -106,7 +106,7 @@ update **after** the series rather than in the middle of it.
 
 Borrowed for four days, and it carries the best-covered card in this repository:
 **1 058 result rows**, seven models, two backends, eight test types
-([raw data](../data/testbench/messkiste-4070super.tsv)).
+([raw data](../data/testbench/system-c-rtx4070-super.tsv)).
 
 | Finding | Where |
 |---|---|
