@@ -617,3 +617,141 @@ def common_prefix(a: str, b: str) -> int:
             break
         n += 1
     return n
+
+
+def server_load(build: Build, model: Path, prompt: str, users: int,
+                per_user_ctx: int = 8192, n_predict: int = 200,
+                ngl: int = 99, boot_timeout: int = 240,
+                request_timeout: int = 900) -> dict:
+    """How many people can this card serve at once, before it stops serving.
+
+    Every other figure in this repository is a single request on an empty card
+    -- the number a person sees when nobody else is using the machine. That is
+    not the number a service delivers. This starts the server with `users` slots
+    and `users * per_user_ctx` of context, fires that many requests at the same
+    moment, and reports what each of them actually experienced.
+
+    THE CONTEXT IS PER USER, NOT PER SERVER. llama.cpp divides --ctx-size
+    between the slots, so asking for eight users on a fixed context silently
+    gives each of them an eighth of it -- and the run then measures a smaller
+    context, not more users. The total is scaled here so that every user keeps
+    the same budget at every concurrency.
+
+    Returns: ok, aggregate (tokens/s over all users), per_user (median),
+    slowest (worst wall time), failures, reason.
+    """
+    import statistics
+    import threading
+    import urllib.error
+    import urllib.request
+
+    port = free_port()
+    log = Path(os.environ.get("TMPDIR", "/tmp")) / f"server_load.{port}.log"
+    cmd = [str(build.bin / "llama-server"), "-m", str(model),
+           "-ngl", str(ngl), "-c", str(users * per_user_ctx), "-np", str(users),
+           "--host", "127.0.0.1", "--port", str(port), "--no-warmup"]
+    env = dict(os.environ, LD_LIBRARY_PATH=str(build.bin))
+    out = {"ok": False, "aggregate": None, "per_user": None, "slowest": None,
+           "failures": 0, "reason": "", "tokens": 0}
+
+    with log.open("w") as handle:
+        proc = subprocess.Popen(cmd, stdout=handle, stderr=subprocess.STDOUT,
+                                stdin=subprocess.DEVNULL, env=env)
+    try:
+        deadline = time.time() + boot_timeout
+        ready = False
+        while time.time() < deadline:
+            if proc.poll() is not None:
+                text = log.read_text(errors="replace") if log.exists() else ""
+                # WHICH allocation failed, not that one did. "exiting due to
+                # model loading error" is the last line the server prints and
+                # the least informative one: the size it could not get is three
+                # lines above it, and that is the number the ceiling is made of.
+                zeilen = text.splitlines()
+                for muster in (r"out of memory|failed to allocate|allocation of size|unable to allocate",
+                               r"error|failed|cannot"):
+                    treffer = [l.strip() for l in reversed(zeilen) if re.search(muster, l, re.I)]
+                    if treffer:
+                        out["reason"] = treffer[0][:140]
+                        break
+                out["reason"] = out["reason"] or "server exited during startup"
+                return out
+            try:
+                with urllib.request.urlopen(f"http://127.0.0.1:{port}/health", timeout=2) as r:
+                    if b'"ok"' in r.read():
+                        ready = True
+                        break
+            except Exception:
+                pass
+            time.sleep(1)
+        if not ready:
+            out["reason"] = f"no health after {boot_timeout}s"
+            return out
+
+        # ONE REQUEST BEFORE THE MEASURED ONES. A fresh server has allocated its
+        # buffers and touched none of them; the first request pays for that, and
+        # at two users that cost is half the measurement. It showed up as two
+        # users being slower than four -- an ordering that is not physical.
+        try:
+            aufwaermen = json.dumps({"prompt": prompt, "n_predict": 16,
+                                     "temperature": 0, "cache_prompt": False}).encode()
+            req = urllib.request.Request(f"http://127.0.0.1:{port}/completion", data=aufwaermen,
+                                         headers={"Content-Type": "application/json"})
+            urllib.request.urlopen(req, timeout=request_timeout).read()
+        except Exception:
+            pass    # a warm-up that fails is not a result; the burst will say so
+
+        ergebnisse: list[dict] = []
+        sperre = threading.Lock()
+        # All of them at the same moment, not staggered: the question is what
+        # happens when the machine is actually busy, and a queue that never
+        # forms is not a load test.
+        los = threading.Event()
+
+        def einer(index: int):
+            body = json.dumps({"prompt": prompt, "n_predict": n_predict,
+                               "temperature": 0, "cache_prompt": False}).encode()
+            req = urllib.request.Request(f"http://127.0.0.1:{port}/completion", data=body,
+                                         headers={"Content-Type": "application/json"})
+            los.wait()
+            start = time.time()
+            try:
+                with urllib.request.urlopen(req, timeout=request_timeout) as r:
+                    data = json.loads(r.read())
+                dauer = time.time() - start
+                erzeugt = data.get("timings", {}).get("predicted_n") or 0
+                with sperre:
+                    ergebnisse.append({"ok": True, "dauer": dauer, "tokens": erzeugt})
+            except Exception as e:
+                with sperre:
+                    ergebnisse.append({"ok": False, "dauer": time.time() - start,
+                                       "fehler": str(e)[:80]})
+
+        faeden = [threading.Thread(target=einer, args=(i,)) for i in range(users)]
+        for f in faeden:
+            f.start()
+        beginn = time.time()
+        los.set()
+        for f in faeden:
+            f.join()
+        spanne = time.time() - beginn
+    finally:
+        proc.terminate()
+        try:
+            proc.wait(timeout=30)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+
+    gut = [e for e in ergebnisse if e["ok"]]
+    out["failures"] = len(ergebnisse) - len(gut)
+    if not gut:
+        fehler = next((e.get("fehler", "") for e in ergebnisse if not e["ok"]), "")
+        out["reason"] = f"every request failed: {fehler}"
+        return out
+    tokens = sum(e["tokens"] for e in gut)
+    raten = [e["tokens"] / e["dauer"] for e in gut if e["dauer"] > 0]
+    out.update(ok=True, tokens=tokens,
+               aggregate=tokens / spanne if spanne else None,
+               per_user=statistics.median(raten) if raten else None,
+               slowest=max(e["dauer"] for e in gut))
+    return out
