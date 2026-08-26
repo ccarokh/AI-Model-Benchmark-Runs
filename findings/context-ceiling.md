@@ -85,6 +85,15 @@ At 204 800 tokens the card refuses **12 MB**. That is the shape of a real ceilin
 approached gradually, it is a cliff where a routine allocation of a few megabytes is the one
 that cannot be served. A safety margin of "a few hundred MiB" is not a margin at all.
 
+## The same ceiling, seen as users
+
+A context ceiling is also a user ceiling. Give each user 8 192 tokens and
+DeepSeek-R1-14B serves exactly two of them before the server refuses to start —
+2 × 8 192 = 16 384, the ceiling in the first table. The arithmetic holds across the
+models measured, with one correction: **cutting the same total into more slots costs
+extra memory**, so the division is a starting point and not a result. Measured in
+[serving many users](serving-many-users.md).
+
 ## What is not measured here
 
 **Only one card.** Every figure is the 12 GB class. The same test on the 24 GB machine has
