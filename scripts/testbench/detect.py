@@ -109,10 +109,34 @@ def find_models(search_paths: list[str], limit: int = 40) -> list[Path]:
 
 
 def detect_power(config: dict) -> PowerSource:
-    rc, out, _ = run(["nvidia-smi", "-L"], timeout=20)
-    if rc == 0 and "GPU" in out:
-        return NvidiaPower(index=int(config.get("card_index", 0)))
+    """Which card the wattage and VRAM figures come from.
+
+    A HOST CAN HAVE TWO VENDORS. This one used to ask nvidia-smi first and take
+    its answer, which on a machine holding an AMD card for measuring and an
+    NVIDIA card for something else meant every VRAM peak was read off the card
+    that was not being measured -- and it read as a measurement of the one that
+    was. So when both are present and nobody has said which, nothing is
+    reported: a missing figure is recoverable, a figure from the wrong card is
+    not. Set power_source to nvidia or amd to say which.
+    """
+    wunsch = str(config.get("power_source", "auto")).lower()
     drm = Path(config.get("amd_drm", "/sys/class/drm/card1/device"))
-    if (drm / "mem_info_vram_used").exists():
+    rc, out, _ = run(["nvidia-smi", "-L"], timeout=20)
+    hat_nvidia = rc == 0 and "GPU" in out
+    hat_amd = (drm / "mem_info_vram_used").exists()
+
+    if wunsch == "nvidia":
+        return NvidiaPower(index=int(config.get("card_index", 0)))
+    if wunsch == "amd":
+        return AmdPower(drm)
+    if wunsch == "none":
+        return PowerSource()
+    if hat_nvidia and hat_amd:
+        print("  power: two vendors present and power_source not set -- "
+              "no wattage or VRAM will be recorded", flush=True)
+        return PowerSource()
+    if hat_nvidia:
+        return NvidiaPower(index=int(config.get("card_index", 0)))
+    if hat_amd:
         return AmdPower(drm)
     return PowerSource()

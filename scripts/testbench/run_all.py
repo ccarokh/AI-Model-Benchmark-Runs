@@ -51,6 +51,9 @@ DEFAULTS = {
     "models": "",
     "card_index": "0",
     "amd_drm": "/sys/class/drm/card1/device",
+    # auto | nvidia | amd | none -- see detect_power. Must be set on a host that
+    # has cards from both vendors.
+    "power_source": "auto",
     "out_dir": "",
     "lease_url": "http://127.0.0.1:8080",
     "lease_token_file": "/etc/bench/lease.token",
