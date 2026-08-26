@@ -36,6 +36,19 @@ Interpreted in [language-understanding](../use-cases/language-understanding.md).
 | gemma-4-12b | calibration | generate | off | 140 | 150 | 0.9333 | 10223 | 48 | 68.2 | 0 | 0 | 0 | 0 | 1024 | 184.8 |
 | gemma-4-12b | calibration | generate | on | 135 | 150 | 0.9 | 377808 | 535 | 2518.7 | 0 | 0 | 0 | 0 | 16384 | 5528.9 |
 
+**[`chat_belebele_quantisation.tsv`](../data/chat_belebele_quantisation.tsv)** — the same weights in different quantisations, two harnesses, n=900
+
+| model | quantisation | harness | n | correct | accuracy | tokens_mean | no_letter_in_top20 | seconds | thinking |
+|---|---|---|---|---|---|---|---|---|---|
+| gemma-4-12b | ordinary weights, Q4_0 | generate | 900 | 844 | 0.9378 | 67.9 | 0 | 1276 | off |
+| gemma-4-12b | ordinary weights, Q4_0 | logprob | 900 | 846 | 0.94 | 1.0 | 0 | 174 | off |
+| gemma-4-12b | ordinary weights, Q4_K_M | generate | 900 | 848 | 0.9422 | 61.7 | 0 | 1238 | off |
+| gemma-4-12b | ordinary weights, Q4_K_M | logprob | 900 | 844 | 0.9378 | 1.0 | 0 | 176 | off |
+| gemma-4-12b | QAT weights, Q4_0 | generate | 900 | 844 | 0.9378 | 67.8 | 0 | 1230 | off |
+| gemma-4-12b | QAT weights, Q4_0 | logprob | 900 | 847 | 0.9411 | 1.0 | 0 | 162 | off |
+| gemma-4-12b | QAT weights, requantised to Q4_K_M | generate | 900 | 842 | 0.9356 | 60.4 | 0 | 1176 | off |
+| gemma-4-12b | QAT weights, requantised to Q4_K_M | logprob | 900 | 843 | 0.9367 | 1.0 | 0 | 175 | off |
+
 ## Coding
 
 Interpreted in [coding](../use-cases/coding.md).

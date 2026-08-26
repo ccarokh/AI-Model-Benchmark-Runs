@@ -4,7 +4,7 @@ Everything measured about this model, by topic. **Every topic is listed, includi
 
 Generated from [`data/`](../data/) by [`scripts/genmodels.py`](../scripts/genmodels.py); every number traces to a row there.
 
-**Measured in 3 of 10 topics.**
+**Measured in 4 of 10 topics.**
 
 The dense control at 3B scale, not a competitor. **The most energy-efficient model
 measured here** — 3 304 tokens per watt-hour generating, 99 668 reading — and the least
@@ -12,7 +12,14 @@ robust to depth, losing 72.9 % of prefill by 32 768 tokens.
 
 ## Language understanding — German chat
 
-Not measured. Interpreted in [language-understanding](../use-cases/language-understanding.md) where it is.
+Interpreted in [language-understanding](../use-cases/language-understanding.md).
+
+**[`chat_belebele_n900.tsv`](../data/chat_belebele_n900.tsv)** — n=900 instead of 150, prompt built from the template inside the GGUF
+
+| model | harness | n | correct | accuracy | tokens_mean | no_letter_in_top20 | seconds | thinking |
+|---|---|---|---|---|---|---|---|---|
+| llama-3.2-3b | generate | 900 | 569 | 0.6322 | 23.7 | 0 | 143 | off |
+| llama-3.2-3b | logprob | 900 | 554 | 0.6156 | 1.0 | 0 | 31 | off |
 
 ## Coding
 

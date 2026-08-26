@@ -23,6 +23,13 @@ Interpreted in [language-understanding](../use-cases/language-understanding.md).
 | deepseek-r1-14b | generate | off | 132 | 150 | 0.88 | 71141 | 397 | 474.3 | 19 | 1 | 0 | accepted | 1024 | 1023.6 |
 | deepseek-r1-14b | generate | on | 137 | 150 | 0.9133 | 144935 | 397 | 966.2 | 9 | 0 | 0 | accepted | 8192 | 2083.8 |
 
+**[`chat_belebele_n900.tsv`](../data/chat_belebele_n900.tsv)** — n=900 instead of 150, prompt built from the template inside the GGUF
+
+| model | harness | n | correct | accuracy | tokens_mean | no_letter_in_top20 | seconds | thinking |
+|---|---|---|---|---|---|---|---|---|
+| deepseek-r1-14b | generate | 900 | 834 | 0.9267 | 695.5 | 0 | 12939 | off |
+| deepseek-r1-14b | logprob | 900 | 207 | 0.23 | 1.0 | 873 | 101 | off |
+
 ## Coding
 
 Not measured. Interpreted in [coding](../use-cases/coding.md) where it is.

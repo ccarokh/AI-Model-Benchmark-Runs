@@ -99,13 +99,15 @@ therefore carry a second variable.
 |---|---|---|
 | **C v1.0** | from 2026-08-23 | Arch freshly installed, llama.cpp `70adb1b` on Vulkan, driver 610.57.04, BIOS A.D0 (05/2021) |
 
-Planned and not yet done: a CUDA build as a **second, separate** measurement, and a BIOS
-update **after** the series rather than in the middle of it.
+The CUDA build followed on 2026-08-25, including `llama-server`, which the first
+configuration had left out — without it the backend question cannot be asked of anything
+that only the server can do, speculative decoding included. A BIOS update stays deferred
+until after the series rather than in the middle of it.
 
 ## What it measured while it was here
 
 Borrowed for four days, and it carries the best-covered card in this repository:
-**1 058 result rows**, seven models, two backends, eight test types
+**2 833 result rows**, twelve models, two backends, nine test types
 ([raw data](../data/testbench/system-c-rtx4070-super.tsv)).
 
 | Finding | Where |
@@ -115,6 +117,8 @@ Borrowed for four days, and it carries the best-covered card in this repository:
 | Every model peaks at 140–160 W, none at stock | [power](../hardware/power.md#the-rtx-4070-super-has-its-own-optimum-and-it-is-the-same-for-every-model) |
 | A 14B holds 16 384 tokens of context here, a 9B holds 204 800 | [context ceiling](../findings/context-ceiling.md) |
 | Bandwidth predicts generation across three architectures — and not for Ada | [card comparison](../data/karten/README.md) |
+| Up to 5.2× generation with the wording unchanged — and nothing at all on three of nine models | [speculative decoding](../findings/speculative-decoding.md) |
+| QAT weights against ordinary ones: 0.44 points across three files at n=900, and the QAT file wins on every other axis | [QAT against ordinary weights](../findings/qat-vs-ptq.md) |
 
 It is also the only card here in the **12 GB class**, which is where most consumer
 purchases actually happen: 24 GB, 10 GB and 8 GB were represented, 12 GB was not.

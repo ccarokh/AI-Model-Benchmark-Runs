@@ -157,6 +157,35 @@ directly. Only one of eight models gains anything.
 **On a reading-comprehension task, the answer is already in the passage.** Reasoning
 adds a step that can only introduce error, and on this evidence it usually does.
 
+## Part 3 — the same failure at n = 900, and the gap is 69 points
+
+The figures above rest on 150 questions. Six models were re-run at **900**, with the prompt
+built from the chat template inside the GGUF itself and reasoning switched off at the
+server — [`chat_belebele_n900.tsv`](../data/chat_belebele_n900.tsv).
+
+| Model | letter probability | free generation | Gap | Questions with no letter in the top 20 |
+|---|---:|---:|---:|---:|
+| DeepSeek-R1-14B | 23.00 % | **92.67 %** | **69.7** | **873 of 900** |
+| gpt-oss-20B | 23.78 % | **92.78 %** | **69.0** | **581 of 900** |
+| ornith-9b | 91.22 % | 91.78 % | 0.6 | 0 |
+| Qwen3.5-9B | 90.11 % | 90.11 % | 0.0 | 0 |
+| Qwen2.5-Coder-14B | 90.11 % | 89.78 % | −0.3 | 0 |
+| Llama-3.2-3B | 61.56 % | 63.22 % | 1.7 | 0 |
+
+**23 % is not a score, it is the floor of guessing** — four options, 25 % by chance. The
+last column says why without inference: in 873 of 900 questions the letter was not among
+the twenty most likely first tokens **at all**, because the model was still opening its
+answer. Six times the sample, and the split holds exactly: **ordinary models move by under
+two points between the harnesses, reasoning models by seventy.**
+
+**Switching reasoning off at the server did not stop them reasoning.** Both models were run
+with `--reasoning off`, and both still produced 695 and 378 tokens per answer on average
+against 5 to 24 for the ordinary models. The switch changed where the answer could be
+found, not whether thinking happened.
+
+One model in the table is worth its own line. **Qwen2.5-Coder-14B reads German at 90 %** —
+a coding model, never measured on language here, level with a 9B built for chat.
+
 ## What this does not settle
 
 - **Fourteen models across the two rounds**, but the ten remaining rows of the published

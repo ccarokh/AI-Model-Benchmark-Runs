@@ -28,7 +28,8 @@ NOT_A_MODEL = re.compile(r"^(#|GOLD-PATCH$|cuda_|cpu_)")
 TOPICS = [
  ("chat", "Language understanding — German chat", "../use-cases/language-understanding.md",
   ["chat_belebele", "chat_belebele_harness", "chat_belebele_chattemplate",
-   "chat_belebele_reasoning", "abliteration"]),
+   "chat_belebele_reasoning", "chat_belebele_quantisation", "chat_belebele_n900",
+   "abliteration"]),
  ("coding", "Coding", "../use-cases/coding.md",
   ["coding_polyglot", "coding_swebench", "coding_swebench_empty_causes", "coding_real_task"]),
  ("context", "Long context — cost against cache depth", "../findings/context-depth.md",
@@ -54,6 +55,8 @@ WAS = {
  "chat_belebele_harness": "three harnesses, one variable between each pair",
  "chat_belebele_chattemplate": "prompt formatted by the chat template inside the GGUF",
  "chat_belebele_reasoning": "model answers freely, the letter extracted from the text",
+ "chat_belebele_quantisation": "the same weights in different quantisations, two harnesses, n=900",
+ "chat_belebele_n900": "n=900 instead of 150, prompt built from the template inside the GGUF",
  "abliteration": "de-refused variant against its own base",
  "coding_polyglot": "aider-polyglot, 225 tasks",
  "coding_swebench": "SWE-bench Verified",
@@ -129,6 +132,15 @@ for m in sorted(rows):
         for f in present:
             cols = header[f]
             out.append("**[`%s.tsv`](../data/%s.tsv)** — %s\n" % (f, f, WAS.get(f, "")))
+            # A note that belongs to ONE table under ONE model. Written by hand
+            # into the generated file, it survives until the next run of this
+            # script and then vanishes -- which is how a paragraph explaining
+            # that two cards were re-measured 490 commits later was silently
+            # deleted. Keyed "model/file" in model_notes.json, it comes back
+            # every time.
+            unter = notes.get("%s/%s" % (m, f))
+            if unter:
+                out.append(unter.rstrip() + "\n")
             out.append("| " + " | ".join(cols) + " |")
             out.append("|" + "---|" * len(cols))
             for row in rows[m][f]:

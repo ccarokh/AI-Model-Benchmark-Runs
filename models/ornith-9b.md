@@ -18,6 +18,13 @@ Interpreted in [language-understanding](../use-cases/language-understanding.md).
 | ornith-9b | new | generate | off | 136 | 150 | 0.9067 | 16218 | 73 | 108.1 | 3 | 0 | 0 | 0 | 1024 | 195.5 |
 | ornith-9b | new | generate | on | 127 | 150 | 0.8467 | 87586 | 343 | 583.9 | 0 | 0 | 0 | 0 | 16384 | 923.4 |
 
+**[`chat_belebele_n900.tsv`](../data/chat_belebele_n900.tsv)** — n=900 instead of 150, prompt built from the template inside the GGUF
+
+| model | harness | n | correct | accuracy | tokens_mean | no_letter_in_top20 | seconds | thinking |
+|---|---|---|---|---|---|---|---|---|
+| ornith-9b | generate | 900 | 826 | 0.9178 | 178.1 | 0 | 2168 | off |
+| ornith-9b | logprob | 900 | 821 | 0.9122 | 1.0 | 0 | 118 | off |
+
 ## Coding
 
 Interpreted in [coding](../use-cases/coding.md).

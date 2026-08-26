@@ -1,0 +1,13 @@
+model	harness	n	correct	accuracy	tokens_mean	no_letter_in_top20	seconds	thinking
+deepseek-r1-14b	generate	900	834	0.9267	695.5	0	12939	off
+deepseek-r1-14b	logprob	900	207	0.23	1.0	873	101	off
+gpt-oss-20b	generate	900	835	0.9278	378.5	0	2445	off
+gpt-oss-20b	logprob	900	214	0.2378	1.0	581	102	off
+llama-3.2-3b	generate	900	569	0.6322	23.7	0	143	off
+llama-3.2-3b	logprob	900	554	0.6156	1.0	0	31	off
+ornith-9b	generate	900	826	0.9178	178.1	0	2168	off
+ornith-9b	logprob	900	821	0.9122	1.0	0	118	off
+qwen2.5-coder-14b	generate	900	808	0.8978	5.0	0	178	off
+qwen2.5-coder-14b	logprob	900	811	0.9011	1.0	0	105	off
+qwen3.5-9b	generate	900	811	0.9011	7.2	0	190	off
+qwen3.5-9b	logprob	900	811	0.9011	1.0	0	117	off

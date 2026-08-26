@@ -24,6 +24,13 @@ Interpreted in [language-understanding](../use-cases/language-understanding.md).
 | gpt-oss-20b | new | generate | off | 139 | 150 | 0.9267 | 47336 | 241 | 315.6 | 8 | 0 | 0 | 0 | 1024 | 273.2 |
 | gpt-oss-20b | new | generate | on | 139 | 150 | 0.9267 | 96512 | 237 | 643.4 | 0 | 0 | 0 | 0 | 16384 | 550.4 |
 
+**[`chat_belebele_n900.tsv`](../data/chat_belebele_n900.tsv)** — n=900 instead of 150, prompt built from the template inside the GGUF
+
+| model | harness | n | correct | accuracy | tokens_mean | no_letter_in_top20 | seconds | thinking |
+|---|---|---|---|---|---|---|---|---|
+| gpt-oss-20b | generate | 900 | 835 | 0.9278 | 378.5 | 0 | 2445 | off |
+| gpt-oss-20b | logprob | 900 | 214 | 0.2378 | 1.0 | 581 | 102 | off |
+
 ## Coding
 
 Not measured. Interpreted in [coding](../use-cases/coding.md) where it is.

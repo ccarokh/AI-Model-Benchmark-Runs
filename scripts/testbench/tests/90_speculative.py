@@ -29,6 +29,25 @@ PROMPTS = {
     "code": "Schreibe eine Python-Funktion, die eine Liste von Zahlen einliest "
             "und die Summe der Quadrate zurueckgibt. Danach erklaere Schritt "
             "fuer Schritt, was sie tut.",
+    # The two workloads this system actually runs. Retrieval answers quote the
+    # passage they were given, and structured output repeats its own keys --
+    # both are exactly what an ngram drafter can predict, and neither looks
+    # like the free prose the first two prompts measure. A rule about when
+    # speculation pays is worth nothing if it is drawn from prompts nobody
+    # sends.
+    "rag": "Beantworte die Frage ausschliesslich mit dem folgenden Text und "
+           "zitiere die belegende Stelle woertlich.\n\nText: Die Wartung der "
+           "Anlage erfolgt jaehrlich im Maerz. Zustaendig ist die Abteilung "
+           "Betriebstechnik. Ersatzteile werden ueber das zentrale Lager in "
+           "Halle 3 bezogen, die Bestellfrist betraegt vierzehn Tage. Bei "
+           "Stoerungen ausserhalb der Wartung ist die Rufbereitschaft unter "
+           "der Nummer 4711 zu erreichen.\n\nFrage: Wer ist zustaendig, wann "
+           "wird gewartet, und wie lange dauert eine Ersatzteilbestellung?",
+    "json": "Gib die folgenden drei Geraete als JSON-Liste aus, jeweils mit den "
+            "Feldern name, standort, wartungsintervall_monate und zustaendig: "
+            "Pumpe P1 in Halle 3, alle 12 Monate, Betriebstechnik. "
+            "Kompressor K7 in Halle 1, alle 6 Monate, Betriebstechnik. "
+            "Foerderband F2 in Halle 3, alle 3 Monate, Instandhaltung.",
 }
 
 # No draft model needed -- these draft from the text they have already produced,
@@ -144,8 +163,16 @@ def run(ctx):
                     done += 1
                     stored = ctx.results.value_of(NAME, "", build.backend, build.version,
                                                   f"{base_key}:hash")
+                    rate = ctx.results.value_of(NAME, "", build.backend, build.version,
+                                                f"{base_key}:tg")
                     if stored:
-                        baseline = {"hash": stored, "text": "", "tg": None}
+                        # THE RATE HAS TO COME BACK TOO, not only the hash. The
+                        # first repeat pass read back the baseline hash alone,
+                        # so every repeated run recorded its tokens per second
+                        # with no factor beside it -- the numbers were there and
+                        # the comparison they exist for was not.
+                        baseline = {"hash": stored, "text": "",
+                                    "tg": float(rate) if rate else None}
                 else:
                     if ctx.out_of_budget():
                         return

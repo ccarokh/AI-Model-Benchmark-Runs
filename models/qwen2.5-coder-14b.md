@@ -4,11 +4,18 @@ Everything measured about this model, by topic. **Every topic is listed, includi
 
 Generated from [`data/`](../data/) by [`scripts/genmodels.py`](../scripts/genmodels.py); every number traces to a row there.
 
-**Measured in 1 of 10 topics.**
+**Measured in 2 of 10 topics.**
 
 ## Language understanding — German chat
 
-Not measured. Interpreted in [language-understanding](../use-cases/language-understanding.md) where it is.
+Interpreted in [language-understanding](../use-cases/language-understanding.md).
+
+**[`chat_belebele_n900.tsv`](../data/chat_belebele_n900.tsv)** — n=900 instead of 150, prompt built from the template inside the GGUF
+
+| model | harness | n | correct | accuracy | tokens_mean | no_letter_in_top20 | seconds | thinking |
+|---|---|---|---|---|---|---|---|---|
+| qwen2.5-coder-14b | generate | 900 | 808 | 0.8978 | 5.0 | 0 | 178 | off |
+| qwen2.5-coder-14b | logprob | 900 | 811 | 0.9011 | 1.0 | 0 | 105 | off |
 
 ## Coding
 

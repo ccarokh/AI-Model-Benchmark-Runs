@@ -1,9 +1,11 @@
-model	quantisation	harness	n	correct	accuracy	tokens_mean	seconds	thinking
-gemma-4-12b	ordinary weights, Q4_0	generate	900	844	0.9378	67.9	1275.6	off
-gemma-4-12b	ordinary weights, Q4_0	logprob	900	846	0.94	1.0	173.5	off
-gemma-4-12b	ordinary weights, Q4_K_M	generate	900	848	0.9422	61.7	1237.8	off
-gemma-4-12b	ordinary weights, Q4_K_M	logprob	900	844	0.9378	1.0	176.3	off
-gemma-4-12b	QAT weights, Q4_0	generate	900	844	0.9378	67.8	1229.6	off
-gemma-4-12b	QAT weights, Q4_0	logprob	900	847	0.9411	1.0	162.3	off
-llama-3.1-8b	ordinary weights, Q4_K_M	generate	900	795	0.8833	5.8	104.3	off
-llama-3.1-8b	ordinary weights, Q4_K_M	logprob	900	766	0.8511	1.0	54.9	off
+model	quantisation	harness	n	correct	accuracy	tokens_mean	no_letter_in_top20	seconds	thinking
+gemma-4-12b	ordinary weights, Q4_0	generate	900	844	0.9378	67.9	0	1276	off
+gemma-4-12b	ordinary weights, Q4_0	logprob	900	846	0.94	1.0	0	174	off
+gemma-4-12b	ordinary weights, Q4_K_M	generate	900	848	0.9422	61.7	0	1238	off
+gemma-4-12b	ordinary weights, Q4_K_M	logprob	900	844	0.9378	1.0	0	176	off
+gemma-4-12b	QAT weights, Q4_0	generate	900	844	0.9378	67.8	0	1230	off
+gemma-4-12b	QAT weights, Q4_0	logprob	900	847	0.9411	1.0	0	162	off
+gemma-4-12b	QAT weights, requantised to Q4_K_M	generate	900	842	0.9356	60.4	0	1176	off
+gemma-4-12b	QAT weights, requantised to Q4_K_M	logprob	900	843	0.9367	1.0	0	175	off
+llama-3.1-8b	ordinary weights, Q4_K_M	generate	900	795	0.8833	5.8	0	104	off
+llama-3.1-8b	ordinary weights, Q4_K_M	logprob	900	766	0.8511	1.0	0	55	off

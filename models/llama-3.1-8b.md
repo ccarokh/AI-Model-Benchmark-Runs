@@ -12,10 +12,10 @@ Interpreted in [language-understanding](../use-cases/language-understanding.md).
 
 **[`chat_belebele_quantisation.tsv`](../data/chat_belebele_quantisation.tsv)** — the same weights in different quantisations, two harnesses, n=900
 
-| model | quantisation | harness | n | correct | accuracy | tokens_mean | seconds | thinking |
-|---|---|---|---|---|---|---|---|---|
-| llama-3.1-8b | ordinary weights, Q4_K_M | generate | 900 | 795 | 0.8833 | 5.8 | 104.3 | off |
-| llama-3.1-8b | ordinary weights, Q4_K_M | logprob | 900 | 766 | 0.8511 | 1.0 | 54.9 | off |
+| model | quantisation | harness | n | correct | accuracy | tokens_mean | no_letter_in_top20 | seconds | thinking |
+|---|---|---|---|---|---|---|---|---|---|
+| llama-3.1-8b | ordinary weights, Q4_K_M | generate | 900 | 795 | 0.8833 | 5.8 | 0 | 104 | off |
+| llama-3.1-8b | ordinary weights, Q4_K_M | logprob | 900 | 766 | 0.8511 | 1.0 | 0 | 55 | off |
 
 ## Coding
 

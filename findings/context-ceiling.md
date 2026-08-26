@@ -20,6 +20,30 @@ failing one gave. Found by
 | Qwen2.5-Coder-14B | 8.37 GiB | **16 384** | 32 768 |
 | gpt-oss-20B (MoE) | 11.28 GiB | **16 384** | 36 864 |
 
+## The 12B class, and what the file format is worth in context
+
+Three quantisations of one model, plus a Llama for scale. Vulkan first, CUDA second:
+
+| File | Size | f16 cache | q8_0 cache |
+|---|---:|---:|---:|
+| gemma-4-12b **QAT** Q4_0 | 6.50 GiB | **266 240** / 253 952 | **520 192** / 417 792 |
+| gemma-4-12B Q4_0 | 6.72 GiB | 253 952 / 241 664 | 491 520 / 397 312 |
+| gemma-4-12B Q4_K_M | 7.14 GiB | 225 280 / 212 992 | 446 464 / 360 448 |
+| Meta-Llama-3.1-8B Q4_K_M | 4.58 GiB | 57 344 / 53 248 | 106 496 / 98 304 |
+
+**Choosing the file is worth 18 % of the context.** 266 240 against 225 280 tokens is
+40 960 tokens of difference on the same card, the same model and the same card memory —
+decided by nothing but which quantisation was downloaded. The QAT file is the smallest of
+the three and holds the most.
+
+**The 8B holds a quarter of what the 12B holds** — 57 344 against 253 952 with 2.1 GiB
+*fewer* weights. Same lesson as the 3B below, one class up: the KV cache is an architecture
+property, not a size property.
+
+**CUDA leaves less room than Vulkan for the same card.** Every ceiling above is 4–20 % lower
+under CUDA — 417 792 against 520 192 tokens on the QAT file. The backend, not the card,
+decides how much of the memory is reachable.
+
 ## Three things this says that arithmetic did not
 
 **The 14B class hits a wall, and it is a property of the class.** Two unrelated 14B models

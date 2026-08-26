@@ -23,7 +23,7 @@ Three ways in:
 |---|---|---|
 | RAG — German chat | [Language understanding](use-cases/language-understanding.md) | 16 models; the 5.3 GB default was never beaten, not even by a model 3× its size — **now beaten by 4 points by [a model measured only for code](findings/harness-effect.md#part-2--eight-models-that-had-never-been-measured-on-german)** |
 | **RAG — long context** | **[Context depth](findings/context-depth.md)** | **The ranking inverts with a full cache. The linear-attention model, whose whole promise is long context, is the worst of all at 32k — 39× slower than a 35B MoE** |
-| **RAG — the harness itself** | **[Harness effect](findings/harness-effect.md)** | **How you ask is worth 1.3–2.7 points for ordinary models and 70 for two reasoning models. 8 more models measured; new best German reader at 0.9733** |
+| **RAG — the harness itself** | **[Harness effect](findings/harness-effect.md)** | **How you ask is worth 1.3–2.7 points for ordinary models and 70 for two reasoning models — confirmed at n=900, where one model had no answer letter in the top 20 in 873 of 900 questions. 8 more models measured; new best German reader at 0.9733** |
 | RAG — retrieval | [Embedding](use-cases/embedding.md) | A 9× larger model tied BGE-M3 exactly |
 | **RAG — chunk position and size** | **[Chunk position](findings/chunk-position.md)** | **60 % when the answer is at the start of a 3 000-char chunk, 5 % at the end. At 400 chars the effect is gone; a reranker recovers 0.05 → 0.53. A defect in our own running system** |
 | Coding | [Coding](use-cases/coding.md) | 18 models; the ranking inverted once the harness stopped naming the file |
@@ -32,6 +32,8 @@ Three ways in:
 | Image generation | [Image generation](use-cases/image-generation.md) | 5 models; the three tasks that carry a statement rather than a motif fail on every one |
 | Fine-tuning | [Fine-tuning](use-cases/finetuning.md) | A third-party fine-tune lost 26.7 points against its own base and doubled the non-answers |
 | **Abliteration** | **[Abliteration](findings/abliteration.md)** | **Costs nothing measurable on eight axes — but generates 37 % fewer tokens for the same answers** |
+| **Speed without new hardware** | **[Speculative decoding](findings/speculative-decoding.md)** | **Up to 5.2× generation on one model with the wording unchanged, nothing at all on three others — and more than half of all runs drafted nothing while reading like a measurement** |
+| **Quantisation — does QAT pay?** | **[QAT against ordinary weights](findings/qat-vs-ptq.md)** | **No measurable quality difference at n=900 (0.44 points across three files). The QAT file wins anyway: smallest, fastest, 18 % more context** |
 | Power draw | [Power](hardware/power.md) | 7-point curve from 276 W down to 159 W — at half the core clock, generation still delivers 85 %. Idle costs more per year than throttling saves |
 | Second GPU | [Multi-GPU](hardware/multi-gpu.md) | Capacity, not speed: ~62 % of single-card generation. The bus sat at 0–5 % and doubling its width changed nothing |
 | Backend | [Backends](hardware/backends.md) | Vulkan stays: ROCm is +11 % prefill, −11 % generation |

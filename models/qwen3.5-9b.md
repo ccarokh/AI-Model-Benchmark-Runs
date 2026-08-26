@@ -44,6 +44,13 @@ Interpreted in [language-understanding](../use-cases/language-understanding.md).
 |---|---|---|---|---|---|---|---|---|---|---|
 | qwen3.5-9b | generate | on | 135 | 150 | 0.900 | 395466 | 1131 | 2636 | 28 | 0 |
 
+**[`chat_belebele_n900.tsv`](../data/chat_belebele_n900.tsv)** — n=900 instead of 150, prompt built from the template inside the GGUF
+
+| model | harness | n | correct | accuracy | tokens_mean | no_letter_in_top20 | seconds | thinking |
+|---|---|---|---|---|---|---|---|---|
+| qwen3.5-9b | generate | 900 | 811 | 0.9011 | 7.2 | 0 | 190 | off |
+| qwen3.5-9b | logprob | 900 | 811 | 0.9011 | 1.0 | 0 | 117 | off |
+
 ## Coding
 
 Not measured. Interpreted in [coding](../use-cases/coding.md) where it is.
