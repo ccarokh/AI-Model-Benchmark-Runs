@@ -21,6 +21,16 @@ from harness import card_is_idle, server_load
 # Both are recorded. Only one of them shows up as an error.
 USERS = [1, 2, 4, 8, 16, 32, 64]
 
+# THE SECOND HALF OF THE QUESTION. Above, every user gets a slot of their own,
+# which answers "how many at the same instant" -- a memory question, and it ends
+# in a refusal to start. It is not the question a service asks. llama.cpp parks
+# an idle slot in a host-RAM prompt cache and fetches it back, so more people
+# than slots is a supported arrangement: 32 users on 4 slots all got answers
+# here, and what grew was the wait, not the failure count. So the same load is
+# run again against a FIXED, affordable number of slots.
+QUEUED_SLOTS = 4
+QUEUED_USERS = [4, 8, 16, 32, 64]
+
 # THE CONTEXT IS PER USER. A RAG turn carries its retrieved passages and some
 # history; 8 192 tokens is the budget this system actually gives a turn. The
 # server's total is scaled with the number of users so that the eighth user has
@@ -106,5 +116,48 @@ def run(ctx):
                                 f"does not run at {grenze_hart or '> ' + str(USERS[-1])}, "
                                 f"below {USABLE_TOKENS_PER_SECOND:.0f} t/s each at "
                                 f"{grenze_weich or '> ' + str(USERS[-1])}")
+            # Queued: the slot count stays put and the people keep coming.
+            if grenze_hart is not None and grenze_hart <= QUEUED_SLOTS:
+                # The card cannot even hold the fixed slot count for this model,
+                # so there is nothing to queue against.
+                ctx.results.add(NAME, "", build.backend, build.version,
+                                f"{model.stem}:queued", "not run", "",
+                                f"{QUEUED_SLOTS} slots do not fit -- hard limit is "
+                                f"{grenze_hart} users")
+                continue
+            for users in QUEUED_USERS:
+                total += 1
+                key = f"{model.stem}:q{users}on{QUEUED_SLOTS}"
+                if ctx.results.has_prefix(NAME, "", build.backend, build.version, key):
+                    done += 1
+                    continue
+                if ctx.out_of_budget():
+                    return
+                if not card_is_idle(ctx):
+                    ctx.defer(NAME, f"card busy before {key}")
+                    break
+                last = server_load(build, model, PROMPT, users, slots=QUEUED_SLOTS,
+                                   per_user_ctx=PER_USER_CTX, n_predict=N_PREDICT)
+                done += 1
+                if not last["ok"]:
+                    ctx.results.add(NAME, "", build.backend, build.version, key,
+                                    "failed", f"{users} users on {QUEUED_SLOTS} slots",
+                                    last["reason"])
+                    ctx.say(f"  {build.backend} {model.stem}: {users} on {QUEUED_SLOTS} "
+                            f"slots -- DOES NOT RUN: {last['reason']}")
+                    break
+                ctx.results.add(NAME, "", build.backend, build.version, f"{key}:aggregate",
+                                f"{last['aggregate']:.2f}", "tokens/s total",
+                                f"{users} users queued on {QUEUED_SLOTS} slots, "
+                                f"{last['failures']} failed")
+                ctx.results.add(NAME, "", build.backend, build.version, f"{key}:wait",
+                                f"{last['slowest']:.1f}", "s slowest answer",
+                                f"{last['per_user']:.2f} tokens/s each")
+                ctx.say(f"  {build.backend} {model.stem}: {users:2d} on {QUEUED_SLOTS} slots "
+                        f"-- {last['aggregate']:.1f} t/s total, {last['per_user']:.1f} each, "
+                        f"slowest {last['slowest']:.1f} s, {last['failures']} failed")
+
     ctx.coverage(NAME, done, total,
-                 f"{len(ctx.builds)} builds x {len(ctx.models)} models x {len(USERS)} user counts")
+                 f"{len(ctx.builds)} builds x {len(ctx.models)} models x "
+                 f"{len(USERS)} user counts, then {len(QUEUED_USERS)} queued on "
+                 f"{QUEUED_SLOTS} slots")

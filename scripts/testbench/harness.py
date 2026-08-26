@@ -622,7 +622,8 @@ def common_prefix(a: str, b: str) -> int:
 def server_load(build: Build, model: Path, prompt: str, users: int,
                 per_user_ctx: int = 8192, n_predict: int = 200,
                 ngl: int = 99, boot_timeout: int = 240,
-                request_timeout: int = 900) -> dict:
+                request_timeout: int = 900, slots: int | None = None,
+                extra: tuple = ()) -> dict:
     """How many people can this card serve at once, before it stops serving.
 
     Every other figure in this repository is a single request on an empty card
@@ -645,11 +646,18 @@ def server_load(build: Build, model: Path, prompt: str, users: int,
     import urllib.error
     import urllib.request
 
+    # SLOTS AND USERS ARE NOT THE SAME NUMBER. Every measurement here used to
+    # give each user a slot of their own, which answers "how many can be served
+    # simultaneously" and not "how many can use this service". llama.cpp parks
+    # an idle slot in a host-RAM prompt cache and fetches it back, so more people
+    # than slots is a supported arrangement -- it costs waiting, not failure,
+    # and the waiting is the number worth having.
+    slots = slots or users
     port = free_port()
     log = Path(os.environ.get("TMPDIR", "/tmp")) / f"server_load.{port}.log"
     cmd = [str(build.bin / "llama-server"), "-m", str(model),
-           "-ngl", str(ngl), "-c", str(users * per_user_ctx), "-np", str(users),
-           "--host", "127.0.0.1", "--port", str(port), "--no-warmup"]
+           "-ngl", str(ngl), "-c", str(slots * per_user_ctx), "-np", str(slots),
+           "--host", "127.0.0.1", "--port", str(port), "--no-warmup", *map(str, extra)]
     env = dict(os.environ, LD_LIBRARY_PATH=str(build.bin))
     out = {"ok": False, "aggregate": None, "per_user": None, "slowest": None,
            "failures": 0, "reason": "", "tokens": 0}
