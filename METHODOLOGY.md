@@ -328,6 +328,65 @@ floor before it is quoted.
 
 Where output is sampled rather than computed, **n = 1 is an anecdote wearing a number**.
 
+## A switch that is accepted is not a switch that did something
+
+`llama-server` takes `--spec-type draft-simple -md <file>` and starts. It also starts when
+the draft model cannot possibly draft for the target — a different vocabulary, an embedding
+model, an architecture mismatch that only shows up at the first token. It then serves the
+request **without speculating**, at exactly baseline speed, with exactly the baseline
+answer.
+
+That is the worst shape a failure can have here, because it is indistinguishable from a
+successful measurement of a method that does not pay:
+
+```
+draft-simple + an embedding model    1.00x baseline, wording identical
+```
+
+Thirty-six runs of that pairing were filed that way before the log was checked. **The
+server prints a `draft acceptance` line when, and only when, it actually drafted** — its
+absence is the evidence, and the row now says `speculation did not engage` instead of
+carrying a factor. Across the whole matrix that turned out to be **126 of 232 runs**, most
+of them legitimately (the ngram variants find nothing to draft in non-repetitive text) —
+but "found nothing to draft" and "does not pay" are different findings.
+
+**For every flag that can be ignored, find the artefact that proves it was not.**
+
+## A window checked only between steps is not a window
+
+The machine that serves gives up its GPU at night under a lease, and the night runner
+checks the clock before every step. On the night of 26.08. it started one step at 02:12 —
+throughput against context depth, across every model on the card — and that single step
+ran **550 minutes**. The check never came round again.
+
+The run held the lease until 11:22, **three hours and twenty minutes past the window it
+was started in**, and for all of that time the service refused every request it was asked
+to serve. Nothing in the logs said anything was wrong: the lease was renewed on schedule,
+the measurement was progressing, and the window had simply stopped being consulted.
+
+A window belongs where the time budget already was — **inside the tests, checked before
+every single measurement**, not between them. The closing hour is now a deadline like any
+other, and the same guard that stops a run when its hours are spent stops it when its
+window shuts.
+
+**Ask of every limit: what is the longest thing that can happen between two checks of it?**
+That interval, not the limit, is the promise you are actually making.
+
+## The power sensor has to belong to the card you are measuring
+
+Power detection here asked `nvidia-smi` first and took its answer. On the machine that
+holds an AMD card for measuring and an NVIDIA card for something else, every wattage and
+every VRAM peak would have come **from the card that was not being measured** — and would
+have been filed under the one that was.
+
+It was caught by one line of startup output, `power: nvidia`, on a run whose cards were
+`Vulkan0 AMD Radeon RX 7900 XTX` and `Vulkan1 NVIDIA GeForce RTX 2070`. Nothing had been
+written yet.
+
+With two vendors present and nothing configured, the tooling now reports **no** power and
+**no** VRAM rather than guessing. A missing figure is recoverable; a figure from the wrong
+card is not, because nothing downstream can tell it apart from a real one.
+
 ## Guard the harness as well as the card
 
 Every measurement script here waits for the GPU to be empty before it starts, so a

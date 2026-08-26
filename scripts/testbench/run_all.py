@@ -179,6 +179,28 @@ def in_window(window: str) -> bool:
     return (hour >= start or hour < end) if start > end else (start <= hour < end)
 
 
+def window_closes_at(window: str) -> float | None:
+    """When the window shuts, as a timestamp.
+
+    A WINDOW CHECKED ONLY BETWEEN TESTS IS NOT A WINDOW. On the night of 26.08.
+    the check sat between steps, one step -- throughput over context depth
+    across every model -- ran 550 minutes, and the run held the GPU lease of the
+    machine that serves until 11:22, three and a half hours past the window it
+    was started in. The service refused every request for that whole time.
+    Turning the window into a deadline puts it where the budget already is:
+    inside the tests, checked before every single measurement.
+    """
+    if not window:
+        return None
+    start, end = (int(x) for x in window.split("-"))
+    jetzt = time.localtime()
+    sekunden_heute = jetzt.tm_hour * 3600 + jetzt.tm_min * 60 + jetzt.tm_sec
+    bis_ende = end * 3600 - sekunden_heute
+    if bis_ende <= 0:                 # the closing hour is tomorrow
+        bis_ende += 24 * 3600
+    return time.time() + bis_ende
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(add_help=False)
     ap.add_argument("tests", nargs="*", help="run only tests whose name contains these")
@@ -218,6 +240,11 @@ def main() -> int:
         print(f"no models found. Searched: {cfg['model_search_paths']}", file=sys.stderr)
         return 2
 
+    # Whichever comes first: the time budget, or the closing of the window.
+    grenzen = [g for g in (time.time() + args.budget * 3600 if args.budget else None,
+                           window_closes_at(args.window)) if g]
+    frist = min(grenzen) if grenzen else None
+
     ctx = Context(
         host=host, out_dir=out_dir,
         results=Results(out_dir / "results.tsv", host),
@@ -226,7 +253,7 @@ def main() -> int:
         models=models,
         power=detect.detect_power(cfg),
         log_path=out_dir / "run.log",
-        deadline=time.time() + args.budget * 3600 if args.budget else None,
+        deadline=frist,
         config=cfg)
 
     ctx.say(f"=== {host} ===")
