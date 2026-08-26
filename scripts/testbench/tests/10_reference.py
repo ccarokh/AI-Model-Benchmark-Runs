@@ -2,7 +2,7 @@
 NAME = "reference"
 DESCRIPTION = "Fixed reference workload per card, build and model"
 
-from harness import bench, card_is_idle
+from harness import bench, card_is_idle, too_big_for
 
 # Upstream's own flags. DO NOT "improve" them -- the entire point is that the
 # numbers can be held against somebody else's. -r 5 instead of upstream's -r 2 is
@@ -19,6 +19,17 @@ def run(ctx):
                 card_id = card.index if card else "default"
                 if ctx.results.has_prefix(NAME, card_id, build.backend,
                                           build.version, model.stem):
+                    continue
+                # Permanent, not deferred: a model that outweighs the card will
+                # outweigh it again tomorrow. Deferring it meant this pair was
+                # retried every single night, and each retry was the attempt
+                # that killed the host.
+                zu_gross = too_big_for(model, card)
+                if zu_gross:
+                    ctx.skip_permanently(NAME, f"{model.stem}: {zu_gross}",
+                                         card=card_id, backend=build.backend,
+                                         build=build.version,
+                                         parameter=model.stem)
                     continue
                 if ctx.out_of_budget():
                     return

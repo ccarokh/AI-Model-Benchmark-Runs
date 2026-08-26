@@ -284,6 +284,29 @@ class AmdPower(PowerSource):
             return False
 
 
+def too_big_for(model: Path, card: "Card | None", margin: float = 0.92) -> str:
+    """Why this model cannot run on this card -- or "" if it can be tried.
+
+    A MEASUREMENT THAT CANNOT SUCCEED IS NOT WORTH ATTEMPTING, and on a machine
+    with little system memory it is worse than useless. On the night of 27.08.
+    the reference test worked its way through every model on both cards of a
+    host that has a 24 GB card and an 8 GB one. Handing a 20 GB model to the
+    8 GB card made llama-bench map 95 GB of address space on a box with 15 GB of
+    RAM; the kernel's OOM killer took it, and systemd took the whole night
+    service with it. The GPU lease died with the heartbeat, and the run was over
+    at 01:26 with no line in the log to say so.
+
+    Weights alone, before any cache: if they do not fit, nothing else matters.
+    """
+    if card is None or not card.vram_mib:
+        return ""
+    groesse = model.stat().st_size / 1024 ** 2
+    if groesse > card.vram_mib * margin:
+        return (f"weights {groesse / 1024:.2f} GiB do not fit on {card.index} "
+                f"({card.vram_mib} MiB)")
+    return ""
+
+
 def card_is_idle(ctx: Context, tries: int = 30, threshold_mib: int = 500) -> bool:
     """The card must be ours before a number counts.
 
