@@ -97,7 +97,7 @@ therefore carry a second variable.
 
 | Version | Period | State |
 |---|---|---|
-| **C v1.0** | from 2026-08-23 | Arch freshly installed, llama.cpp `70adb1b` on Vulkan, driver 610.57.04, BIOS A.D0 (05/2021) |
+| **C v1.0** | 2026-08-23 to 2026-08-27 | Arch freshly installed, llama.cpp `70adb1b` on Vulkan, driver 610.57.04, BIOS A.D0 (05/2021) |
 
 The CUDA build followed on 2026-08-25, including `llama-server`, which the first
 configuration had left out — without it the backend question cannot be asked of anything
@@ -107,7 +107,7 @@ until after the series rather than in the middle of it.
 ## What it measured while it was here
 
 Borrowed for four days, and it carries the best-covered card in this repository:
-**2 833 result rows**, twelve models, two backends, nine test types
+**4 379 result rows**, twelve models, two backends, twelve test types
 ([raw data](../data/testbench/system-c-rtx4070-super.tsv)).
 
 | Finding | Where |
@@ -119,6 +119,7 @@ Borrowed for four days, and it carries the best-covered card in this repository:
 | Bandwidth predicts generation across three architectures — and not for Ada | [card comparison](../data/karten/README.md) |
 | Up to 5.2× generation with the wording unchanged — and nothing at all on three of nine models | [speculative decoding](../findings/speculative-decoding.md) |
 | QAT weights against ordinary ones: 0.44 points across three files at n=900, and the QAT file wins on every other axis | [QAT against ordinary weights](../findings/qat-vs-ptq.md) |
+| 64 users on 4 slots without a single failure, and a slot costs what the architecture says, not what the quantisation does | [serving many users](../findings/serving-many-users.md) |
 
 It is also the only card here in the **12 GB class**, which is where most consumer
 purchases actually happen: 24 GB, 10 GB and 8 GB were represented, 12 GB was not.

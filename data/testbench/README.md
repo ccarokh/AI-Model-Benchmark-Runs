@@ -3,8 +3,8 @@
 One row per measurement, long format, so files from different machines concatenate.
 
 `system-c-rtx4070-super.tsv` — RTX 4070 Super, 12 282 MiB, llama.cpp `70adb1b` built twice
-from the same commit (Vulkan and CUDA 13.3), NVIDIA 610.57.04. Twelve models, nine test
-types, 2 833 rows.
+from the same commit (Vulkan and CUDA 13.3), NVIDIA 610.57.04. Twelve models, twelve test types, 4 379 rows -- the complete series; the card was
+returned on 2026-08-27.
 
 A `parameter` may carry two suffixes. `@r2`, `@r3` are repeat runs of the same cell — the
 speculative test measures three times wherever speculation actually happened, because the
