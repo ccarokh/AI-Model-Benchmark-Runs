@@ -6,16 +6,22 @@ Measured on an RTX 4070 Super, 12 282 MiB, Vulkan and CUDA from the same commit,
 
 ## One slot per user: the wall is memory, and it arrives early
 
-| Model | 1 | 2 | 4 | 8 | 16 | What stopped it |
-|---|---:|---:|---:|---:|---:|---|
-| Llama-3.2-3B | 187 | 332 | 466 | 427 | ✗ | KV cache |
-| ornith-9b | 76 | 116 | 213 | 253 | **267** | KV cache at 32 |
-| gemma-4-12b QAT | 54 | 103 | 175 | 202 | ✗ | KV cache |
-| Meta-Llama-3.1-8B | 89 | 166 | 279 | ✗ | | KV cache |
-| gpt-oss-20B | 138 | 124 | ✗ | | | **compute buffers** |
-| DeepSeek-R1-14B | 48 | 88 | ✗ | | | KV cache |
+| Model | 1 | 2 | 4 | 8 | 16 | Wall |
+|---|---:|---:|---:|---:|---:|---:|
+| Llama-3.2-3B | 187 | 332 | 466 | 427 | | 32 |
+| ornith-9b | 76 | 116 | 213 | 252 | **267** | 64 |
+| Qwen3.5-9B | 75 | 112 | 211 | 165 | 229 | 64 |
+| Meta-Llama-3.1-8B | 89 | 166 | 279 | | | 16 |
+| gemma-4-12b QAT Q4_0 | 56 | 102 | 174 | 202 | | 32 |
+| gemma-4-12B Q4_0 | 54 | 100 | 171 | | | 16 |
+| gemma-4-12b QAT → Q4_K_M | 53 | 97 | 131 | | | 16 |
+| gemma-4-12B Q4_K_M | 51 | 50 | 127 | | | 16 |
+| gpt-oss-20B | 138 | 124 | | | | **8** |
+| DeepSeek-R1-14B | 48 | 88 | | | | 8 |
+| Qwen2.5-Coder-14B | 50 | 92 | | | | 8 |
 
-*Aggregate tokens per second across all users. ✗ = the server will not start.*
+*Aggregate tokens per second across all users, Vulkan. "Wall" is the first user
+count at which the server refuses to start.*
 
 **The user ceiling is the context ceiling divided by the per-user budget.** DeepSeek-R1-14B stops at two users, and 2 × 8 192 = 16 384 is exactly [its measured context ceiling](context-ceiling.md) on this card. The two numbers are one number seen from different sides — which also names the lever: **halve the per-user context and the user count doubles.**
 
@@ -25,12 +31,22 @@ Measured on an RTX 4070 Super, 12 282 MiB, Vulkan and CUDA from the same commit,
 
 The obvious arithmetic — ten users at 32k needs 320k of cache — assumes that cutting a total into slots costs nothing. It does not:
 
-| Total held | 1 slot | 2 | 4 | 8 | 16 |
-|---|---:|---:|---:|---:|---:|
-| ornith-9b, 102 400 tokens | 8 313 MiB | 8 313 | 8 388 | 8 578 | **8 994** |
-| gemma-4-12b, 131 072 tokens | 9 476 MiB | 9 892 | **10 820** | ✗ | ✗ |
+Extra memory per slot, against the same model held in one slot:
 
-Same tokens, more slots, more memory. The 9B pays 681 MiB for sixteen slots; **the 12B pays 1 344 MiB for four and will not start at eight** — with a total it holds comfortably as one. Budget slots, not just tokens.
+| Model | 2 slots | 4 | 8 | 16 |
+|---|---:|---:|---:|---:|
+| ornith-9b | +0 | **+75** | +265 | +681 |
+| Qwen3.5-9B | +0 | **+75** | +265 | +680 |
+| gemma-4-12b QAT Q4_0 | +416 | **+1 344** | ✗ | ✗ |
+| gemma-4-12B Q4_0 | +418 | +1 347 | ✗ | ✗ |
+| gemma-4-12b QAT → Q4_K_M | +422 | +1 353 | ✗ | ✗ |
+| gemma-4-12B Q4_K_M | +425 | +1 358 | ✗ | ✗ |
+
+*MiB above the same total context in a single slot.*
+
+**The price of a slot is set by the architecture, and by nothing else.** Two unrelated 9B models pay +75, +265, +681 — the same numbers to within one mebibyte. All four quantisations of the 12B pay +416 to +425 and +1 344 to +1 358: **the format the weights are in does not change what a slot costs.**
+
+And the two classes are nowhere near each other. **At four slots the 12B pays eighteen times what the 9B pays** — 1 344 MiB against 75 — and it will not start at eight, with a total it holds comfortably as one. Budget slots, not just tokens, and do not carry a per-slot figure from one model family to another.
 
 ## More users than slots: the queue is real, and it is cheap
 
@@ -47,6 +63,23 @@ Slots are a memory question. **Users are a latency question**, because llama.cpp
 **Thirty-two people on four slots, nobody refused.** The card has a fixed aggregate rate; the queue divides it. Waiting grows linearly, failures do not appear at all.
 
 The last row is the warning in the other direction: **too few slots wastes the card.** Two slots deliver 107 t/s where four deliver 188 — batching needs something to batch.
+
+Across every model that fits four slots, the same load taken up to sixty-four people — **slowest answer, in seconds, and not one failure anywhere in the table:**
+
+| Model | 4 users | 8 | 16 | 32 | 64 |
+|---|---:|---:|---:|---:|---:|
+| Llama-3.2-3B | 2 | 4 | 7 | 14 | **28** |
+| ornith-9b | 4 | 8 | 16 | 31 | 62 |
+| Meta-Llama-3.1-8B | 3 | 6 | 11 | 23 | 46 |
+| Qwen3.5-9B | 4 | 6 | 11 | 27 | 53 |
+| gemma-4-12b QAT Q4_0 | 5 | 9 | 19 | 37 | 75 |
+| gemma-4-12B Q4_0 | 5 | 9 | 19 | 37 | 74 |
+| gemma-4-12B Q4_K_M | 6 | 11 | 22 | 44 | 90 |
+| gemma-4-12b QAT → Q4_K_M | 6 | 12 | 25 | 49 | **99** |
+
+**Every row doubles when the user count doubles.** There is no knee, no collapse and no error — the queue is exactly as fair and exactly as slow as arithmetic says it should be. Sizing for a wait is therefore a division, and the only thing that has to be measured is the aggregate rate.
+
+It also puts a price on a decision made two documents ago. The QAT Q4_0 file and the requantised Q4_K_M one differ by [0.11 points of quality](qat-vs-ptq.md) — and by **24 seconds of worst-case wait at sixty-four users**, 75 against 99.
 
 ## What a slot eviction costs, and the flag that decides it
 
