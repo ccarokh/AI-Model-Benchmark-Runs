@@ -23,6 +23,32 @@ COLUMNS = ["key", "host", "time", "test", "card", "backend", "build",
            "parameter", "value", "unit", "note"]
 
 
+# A measurement that kills the machine is not a measurement.
+#
+# Twice now a run on the host with 15 GB of RAM ended with the kernel's OOM
+# killer taking llama-bench -- and systemd taking the whole night service with
+# it, because they share a unit. The GPU lease died with the heartbeat, the
+# night ended hours early, and the log has no line that says so: the process
+# that would have written it was killed too.
+#
+# The processes were not even large. The last one held 638 MB resident and had
+# 57 GB of address space mapped, which is what mapping a 20 GiB model plus its
+# buffers looks like. Guessing which model is safe is not the answer; putting
+# each measurement in its own cgroup is. Then a runaway child is killed inside
+# its own scope, the test records "no measurement" -- which is a result -- and
+# the night carries on.
+MEMORY_SCOPE = os.environ.get("TESTBENCH_MEMORY_LIMIT", "")
+
+
+def _limited(cmd: list) -> list:
+    """The command, wrapped in a memory-capped scope if one was asked for."""
+    if not MEMORY_SCOPE:
+        return cmd
+    return ["systemd-run", "--scope", "-q", "--collect",
+            "-p", f"MemoryMax={MEMORY_SCOPE}", "-p", "MemorySwapMax=0",
+            *cmd]
+
+
 def run(cmd, timeout=None, env=None, stdin_null=True, capture_stderr=False):
     """One subprocess call, with the failure mode kept visible.
 
@@ -34,7 +60,7 @@ def run(cmd, timeout=None, env=None, stdin_null=True, capture_stderr=False):
     full.update(env or {})
     try:
         p = subprocess.run(
-            cmd, timeout=timeout, env=full,
+            _limited(cmd), timeout=timeout, env=full,
             stdin=subprocess.DEVNULL if stdin_null else None,
             capture_output=True, text=True)
         return p.returncode, p.stdout, p.stderr
@@ -574,7 +600,7 @@ def server_probe(build: Build, model: Path, prompt: str, *extra,
         return "server exited without a usable message"
 
     with log.open("w") as handle:
-        proc = subprocess.Popen(cmd, stdout=handle, stderr=subprocess.STDOUT,
+        proc = subprocess.Popen(_limited(cmd), stdout=handle, stderr=subprocess.STDOUT,
                                 stdin=subprocess.DEVNULL, env=env)
     try:
         deadline = time.time() + boot_timeout
@@ -686,7 +712,7 @@ def server_load(build: Build, model: Path, prompt: str, users: int,
            "failures": 0, "reason": "", "tokens": 0}
 
     with log.open("w") as handle:
-        proc = subprocess.Popen(cmd, stdout=handle, stderr=subprocess.STDOUT,
+        proc = subprocess.Popen(_limited(cmd), stdout=handle, stderr=subprocess.STDOUT,
                                 stdin=subprocess.DEVNULL, env=env)
     try:
         deadline = time.time() + boot_timeout

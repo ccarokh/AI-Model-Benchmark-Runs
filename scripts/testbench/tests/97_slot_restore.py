@@ -6,7 +6,7 @@ import json
 import time
 import urllib.request
 
-from harness import card_is_idle, free_port, run as run_cmd  # noqa: F401
+from harness import _limited, card_is_idle, free_port  # noqa: F401
 from harness import Build  # noqa: F401
 import os
 import subprocess
@@ -63,7 +63,7 @@ def _serve(build, model, cache_ram):
            "--cache-ram", str(cache_ram),
            "--host", "127.0.0.1", "--port", str(port), "--no-warmup"]
     with log.open("w") as handle:
-        proc = subprocess.Popen(cmd, stdout=handle, stderr=subprocess.STDOUT,
+        proc = subprocess.Popen(_limited(cmd), stdout=handle, stderr=subprocess.STDOUT,
                                 stdin=subprocess.DEVNULL,
                                 env=dict(os.environ, LD_LIBRARY_PATH=str(build.bin)))
     deadline = time.time() + 240

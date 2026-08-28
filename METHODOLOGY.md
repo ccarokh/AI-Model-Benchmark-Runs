@@ -352,6 +352,40 @@ but "found nothing to draft" and "does not pay" are different findings.
 
 **For every flag that can be ignored, find the artefact that proves it was not.**
 
+## A measurement that kills the machine is not a measurement
+
+Twice on the serving host — 15 GB of RAM, a 24 GB card — the kernel's OOM killer took
+`llama-bench` mid-run. Both times systemd took **the whole night service** with it, because
+they share a unit: the GPU lease died with its heartbeat, the night ended hours early, and
+the log has no line saying so. The process that would have written it was killed too.
+
+The processes were not large. The last one held **638 MB resident with 57 GB of address
+space mapped** — what a 20 GiB model plus its buffers looks like through `mmap`. So the
+rule cannot be "do not measure big models": it is the whole point of the machine.
+
+Two guards, and they are different:
+
+- **Weights against card memory**, checked before the attempt. Handing a 20 GiB model to
+  an 8 GiB card is not a measurement that might fail, it is one that cannot succeed, and
+  it was being retried every single night because the failure was recorded as *deferred*
+  rather than permanent.
+- **Every measurement in its own memory-capped scope** (`systemd-run --scope
+  -p MemoryMax=…`). Then a runaway child is killed inside its own cgroup, the test records
+  "no measurement" — which is a result — and the queue carries on.
+
+**A failure that takes the harness with it destroys the run, not just the measurement.**
+Bound the child, not the ambition.
+
+## The longest job in a queue is the one that runs
+
+The same night, the queue was worked strictly top to bottom: the multi-hour context-depth
+test stood first, ran from 00:40 until it was killed at 05:48, and **the short test that
+answered a live sizing question never got its turn** — for the second night running.
+
+Nothing was wrong with either test. The order was wrong, and a queue has no opinion about
+that: the first entry gets the whole night if it wants it. Shortest first, so what fits
+gets done and only the last entry can be the one that does not finish.
+
 ## A window checked only between steps is not a window
 
 The machine that serves gives up its GPU at night under a lease, and the night runner
