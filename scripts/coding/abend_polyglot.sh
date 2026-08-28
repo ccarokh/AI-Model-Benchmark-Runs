@@ -25,7 +25,7 @@ fertig(){ find "$BASIS/$LAUF" -name ".aider.results.json" 2>/dev/null | wc -l; }
 
 # Do not start if someone else needs the card. The whole point of this chain is
 # NOT to be in the way -- so it gives up without a fight instead of waiting.
-belegt=$(ssh -o BatchMode=yes -o ConnectTimeout=10 root@192.168.40.192 \
+belegt=$(ssh -o BatchMode=yes -o ConnectTimeout=10 "${MESSRECHNER:?MESSRECHNER ist nicht gesetzt, z.B. root@10.0.0.2}" \
   'v=$(( $(cat /sys/class/drm/card1/device/mem_info_vram_used)/1048576 )); \
    b=$(pgrep -x llama-bench|wc -l); [ $v -lt 500 ] && [ $b -eq 0 ] && echo nein || echo ja' 2>/dev/null)
 if [ "$belegt" != nein ]; then

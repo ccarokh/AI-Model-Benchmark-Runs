@@ -14,7 +14,7 @@
 set -u
 HIER=$(dirname "$(readlink -f "$0")")
 E=${PRUEF_DIR:-/root/pruef}
-MESS=${MESSRECHNER:-192.168.40.192}
+MESS=${MESSRECHNER:?MESSRECHNER ist nicht gesetzt, z.B. 10.0.0.2}
 # NOT 18099: llm-runtime.service sits there, the on-demand server of the live
 # infrastructure. The harness moves aside rather than getting in its way.
 PORT=18199

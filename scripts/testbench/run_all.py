@@ -55,6 +55,11 @@ DEFAULTS = {
     # has cards from both vendors.
     "power_source": "auto",
     "out_dir": "",
+    # Where the measuring happens. Empty means here. Anything else is an ssh
+    # destination, and then only the measurement and its sampler run on that
+    # machine -- the orchestration stays on the controller, which is the point.
+    "target": "",
+    "target_path": "/root/scripts",
     "lease_url": "http://127.0.0.1:8080",
     "lease_token_file": "/etc/bench/lease.token",
 }

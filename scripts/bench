@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import shlex
 import subprocess
 import sys
 from pathlib import Path
@@ -38,9 +39,46 @@ def teil(*pfad: str) -> Path:
     return p
 
 
-def fuehre_aus(cmd: list, env: dict | None = None, trocken: bool = False) -> int:
-    zeile = " ".join(f"{k}={v}" for k, v in sorted((env or {}).items()))
-    gezeigt = (zeile + " " if zeile else "") + " ".join(str(c) for c in cmd)
+def ziel_aus(args) -> tuple[str, str]:
+    """Which machine measures, and where the checkout is on it.
+
+    Comes from the configuration file, which is not in git: the address of a
+    measuring machine is nobody else's business. Five older scripts in this
+    repository carried one hard-coded until somebody went looking.
+    """
+    cfg = konfiguration(args)
+    ziel = getattr(args, "target", None) or cfg.get("target", "")
+    pfad = getattr(args, "target_path", None) or cfg.get("target_path", "/root/scripts")
+    return ziel, pfad
+
+
+def konfiguration(args) -> dict:
+    sys.path.insert(0, str(teil("testbench")))
+    import run_all                                    # noqa: E402
+    datei = Path(args.conf) if getattr(args, "conf", None) else teil("testbench") / "testbench.conf"
+    return run_all.load_config(datei)
+
+
+def fuehre_aus(cmd: list, env: dict | None = None, trocken: bool = False,
+               ziel: str = "", pfad: str = "") -> int:
+    """Run it here, or run it there.
+
+    WHAT STAYS ON THE MEASURED MACHINE MATTERS. Locally, this process sits in
+    subprocess.run while llama-bench works -- it costs nothing during the window
+    except the power sampler, which has to be there to read the card at all. But
+    it also shares a systemd unit with what it started, and twice that meant an
+    OOM killed both. With a target set, the only things on that machine are the
+    measurement and the sampler.
+    """
+    zeile = " ".join(f"{k}={shlex.quote(str(v))}" for k, v in sorted((env or {}).items()))
+    ortlich = (zeile + " " if zeile else "") + " ".join(shlex.quote(str(c)) for c in cmd)
+    if ziel:
+        fern = f"cd {shlex.quote(pfad)} && {ortlich}"
+        cmd = ["ssh", "-o", "BatchMode=yes", ziel, fern]
+        gezeigt = " ".join(shlex.quote(str(c)) for c in cmd)
+        env = None
+    else:
+        gezeigt = ortlich
     if trocken:
         print(gezeigt)
         return 0
@@ -70,7 +108,9 @@ def umgebung_aus(args) -> dict:
 
 
 def befehl_run(args) -> int:
-    cmd = [sys.executable, str(teil("testbench", "run_all.py"))]
+    ziel, pfad = ziel_aus(args)
+    cmd = [sys.executable if not ziel else "python3",
+           str(teil("testbench", "run_all.py")) if not ziel else "testbench/run_all.py"]
     if args.window:
         cmd += ["--window", args.window]
     if args.budget:
@@ -78,12 +118,42 @@ def befehl_run(args) -> int:
     if args.lease:
         cmd += ["--lease"]
     cmd += args.tests
-    return fuehre_aus(cmd, umgebung_aus(args), args.dry_run)
+    return fuehre_aus(cmd, umgebung_aus(args), args.dry_run, ziel, pfad)
 
 
 def befehl_list(args) -> int:
-    return fuehre_aus([sys.executable, str(teil("testbench", "run_all.py")), "--list"],
-                      umgebung_aus(args), args.dry_run)
+    ziel, pfad = ziel_aus(args)
+    cmd = ([sys.executable, str(teil("testbench", "run_all.py")), "--list"] if not ziel
+           else ["python3", "testbench/run_all.py", "--list"])
+    return fuehre_aus(cmd, umgebung_aus(args), args.dry_run, ziel, pfad)
+
+
+def befehl_deploy(args) -> int:
+    """Put the entry point and the suite on the measuring machine.
+
+    Only those two: the machine that measures does not need the build script,
+    the document generators or the data. Results stay where they are made and
+    come back with `bench fetch`.
+    """
+    ziel, pfad = ziel_aus(args)
+    if not ziel:
+        sys.exit("bench: no target configured -- deploy needs one")
+    cmd = ["rsync", "-a", "--delete", "--exclude", "results", "--exclude", "__pycache__",
+           "--exclude", "testbench.conf",
+           str(teil("testbench")) + "/", f"{ziel}:{pfad}/testbench/"]
+    rc = fuehre_aus(cmd, {}, args.dry_run)
+    return rc or fuehre_aus(["rsync", "-a", str(teil("bench")), f"{ziel}:{pfad}/bench"],
+                            {}, args.dry_run)
+
+
+def befehl_fetch(args) -> int:
+    """Bring the results back, without touching what made them."""
+    ziel, pfad = ziel_aus(args)
+    if not ziel:
+        sys.exit("bench: no target configured -- fetch needs one")
+    nach = Path(args.into).resolve() if args.into else WURZEL / "data" / "testbench"
+    return fuehre_aus(["rsync", "-a", f"{ziel}:{pfad}/testbench/results/", str(nach) + "/"],
+                      {}, args.dry_run)
 
 
 def befehl_status(args) -> int:
@@ -94,17 +164,20 @@ def befehl_status(args) -> int:
     to the card being measured, that a model was present. This prints all of it
     and measures nothing.
     """
+    ziel, pfad = ziel_aus(args)
+    if ziel:
+        # The question is what the MEASURING machine is, so it is asked there.
+        return fuehre_aus(["./bench", "status", "--show-models", str(args.show_models)],
+                          umgebung_aus(args), args.dry_run, ziel, pfad)
     sys.path.insert(0, str(teil("testbench")))
     import pathlib                                    # noqa: E402
     import detect                                     # noqa: E402
     from harness import Results                       # noqa: E402
-    import run_all                                    # noqa: E402
     import socket
 
     for k, v in umgebung_aus(args).items():
         os.environ[k] = v
-    cfg = run_all.load_config(Path(args.conf) if args.conf
-                              else teil("testbench") / "testbench.conf")
+    cfg = konfiguration(args)
     host = socket.gethostname()
     print(f"machine   {host}")
 
@@ -132,7 +205,8 @@ def befehl_status(args) -> int:
         print(f"  ... and {len(modelle) - args.show_models} more (--show-models to list)")
 
     quelle = detect.detect_power(cfg)
-    print(f"power     {type(quelle).__name__.replace('Power', '').lower() or 'none'}")
+    benannt = {"NvidiaPower": "nvidia", "AmdPower": "amd"}
+    print(f"power     {benannt.get(type(quelle).__name__, 'none -- nothing will be recorded')}")
 
     aus = Path(cfg["out_dir"]) if cfg.get("out_dir") else teil("testbench") / "results"
     datei = aus / host / "results.tsv"
@@ -200,6 +274,9 @@ def main() -> int:
                                         the way an unattended night should be run
   bench run --models /opt/models/a.gguf --dry-run
                                         print the command instead of running it
+  bench --target root@10.0.0.2 status     ask a machine that is not this one
+  bench deploy                          put bench and the suite on the target
+  bench fetch                           bring its results back
   bench night --queue /root/eval/queue.txt
   bench build v0.2.0                    build that version and measure it
   bench drift                           upstream master against the pinned build
@@ -217,6 +294,11 @@ def main() -> int:
                             "must be set on a host with two vendors")
         p.add_argument("--out-dir", metavar="DIR", help="where results are written")
         p.add_argument("--conf", metavar="FILE", help="configuration file")
+        p.add_argument("--target", metavar="[USER@]HOST",
+                       help="measure on this machine instead of here; overrides "
+                            "the target in the configuration file")
+        p.add_argument("--target-path", metavar="DIR",
+                       help="where the checkout lives on the target")
         if mit_lauf:
             p.add_argument("--window", metavar="A-B",
                            help="only work inside these hours, e.g. 0-8; the closing "
@@ -244,6 +326,15 @@ def main() -> int:
     mess_optionen(p, mit_lauf=False)
     p.add_argument("--show-models", type=int, default=8, metavar="N")
     p.set_defaults(fn=befehl_status, window=None, budget=None, memory_limit=None, lease=False)
+
+    p = unter.add_parser("deploy", help="put the entry point and the suite on the target")
+    mess_optionen(p, mit_lauf=False)
+    p.set_defaults(fn=befehl_deploy, window=None, budget=None, memory_limit=None, lease=False)
+
+    p = unter.add_parser("fetch", help="bring the results back from the target")
+    p.add_argument("--into", metavar="DIR", help="default: data/testbench/")
+    mess_optionen(p, mit_lauf=False)
+    p.set_defaults(fn=befehl_fetch, window=None, budget=None, memory_limit=None, lease=False)
 
     p = unter.add_parser("night", help="hand a queue to the night window")
     p.add_argument("--queue", metavar="FILE", help="the queue file to work through")

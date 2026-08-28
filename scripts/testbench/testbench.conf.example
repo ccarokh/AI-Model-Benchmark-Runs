@@ -4,6 +4,22 @@
 # environment, which is how a scheduler overrides one value without editing this
 # file.
 
+[target]
+# WHERE THE MEASURING HAPPENS. Empty means this machine.
+#
+# Anything else is an ssh destination, and then `bench` runs the suite there
+# instead of here: only the measurement and its power sampler are on the
+# measured machine, and the orchestration -- argument parsing, the queue, the
+# results file -- stays on the controller.
+#
+# This file is not in git for exactly this reason: the address of a measuring
+# machine is nobody else's business, and five older scripts in this repository
+# carried one hard-coded until it was found by grepping for it.
+target =
+#   root@10.0.0.2
+# Where the checkout lives on that machine. `bench deploy` puts it there.
+target_path = /root/scripts
+
 [paths]
 # Where to look for llama.cpp. A directory counts if it holds bin/llama-bench --
 # an installed prefix and a cmake build directory are both fine, and both are

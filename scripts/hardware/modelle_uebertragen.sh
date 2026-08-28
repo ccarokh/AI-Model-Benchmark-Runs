@@ -8,7 +8,7 @@
 VM=${VM:-}                                  # e.g. root@192.168.122.50 -- MUST be set
 ZIEL=${ZIEL:-/mnt/opt/mess/models}          # path INSIDE the VM, on the target disk
 LOKAL=${LOKAL:-/home/arokh/KI/Coding/models}
-FERN=${FERN:-root@192.168.40.192:/opt/llm-infra/models}
+FERN=${FERN:?FERN ist nicht gesetzt, z.B. root@10.0.0.2:/opt/llm-infra/models}
 MODELLE=${MODELLE:-qwen3.5-9b ornith-9b qwen2.5-coder-14b bge-m3}
 # =============================================================================
 #

@@ -17,7 +17,7 @@ docker run --rm \
   --cpus=3 --memory=12g --memory-swap=12g --pids-limit=1024 \
   --add-host=host.docker.internal:host-gateway \
   -v "$PWD":/aider -v "$PWD/tmp.benchmarks/.":/benchmarks \
-  -e OPENAI_API_BASE="http://192.168.40.192:${PORT}/v1" \
+  -e OPENAI_API_BASE="http://${MESSRECHNER:?MESSRECHNER ist nicht gesetzt}:${PORT}/v1" \
   -e OPENAI_API_KEY=dummy -e AIDER_DOCKER=1 -e AIDER_BENCHMARK_DIR=/benchmarks \
   -e AIDER_MAX_REFLECTIONS=3 \
   aider-benchmark \

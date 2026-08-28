@@ -1,7 +1,7 @@
 #!/bin/bash
 # Ein Abendfenster polyglot: Server holen, N Aufgaben fortsetzen, Server zurueck.
 # Aufruf: orchestrate_resume.sh <datiertes-verzeichnis> <gguf> <num-tests> <timeout-sek>
-H=root@192.168.40.192
+H=${MESSRECHNER:?MESSRECHNER ist nicht gesetzt, z.B. root@10.0.0.2}
 DIR="$1"; GGUF="$2"; NT="${3:-30}"; TMO="${4:-36000}"; PORT=8181
 source /root/coding-eval/kartenwacht.sh
 kw_karte_sichern "abend-polyglot" 600 || { echo "[$(date +%H:%M)] Karte nicht zu bekommen"; exit 1; }

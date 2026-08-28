@@ -39,6 +39,28 @@ results   .../results.tsv -- 1816 measurements on file
 A machine only needs [`bench`](bench) and [`testbench/`](testbench/) for `status`,
 `list` and `run`; the other commands say which piece is missing if it is not there.
 
+## Measuring a machine that is not this one
+
+```
+bench deploy                       put bench and the suite on the target
+bench --target root@10.0.0.2 status
+bench run --window 0-8 concurrency  runs there, not here
+bench fetch                        bring the results back
+```
+
+The target lives in `testbench.conf`, **which is not in git** — the address of a
+measuring machine is nobody else's business, and five older scripts in here carried
+one hard-coded until somebody went looking for it. Every command takes `--target` as
+well, and `--dry-run` prints the `ssh` line it would run.
+
+**This is also the answer to a fair objection: does the harness disturb its own
+measurement?** Run locally, the runner sits blocked in `subprocess.run` while
+`llama-bench` works, so it costs nothing during the window — except the power
+sampler, which has to be on that machine to read the card at all. But it does share
+a process tree with what it starts, and twice an out-of-memory kill took both. With
+a target set, **only the measurement and its sampler are on the measured machine**;
+the argument parsing, the queue and the results file stay on the controller.
+
 ## The harnesses themselves
 
 These are the measurement harnesses in the form they actually ran, with host
