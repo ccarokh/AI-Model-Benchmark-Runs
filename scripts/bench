@@ -1,0 +1,278 @@
+#!/usr/bin/env python3
+"""One way in.
+
+This repository grew a piece at a time: a build script, a system capture, a
+drift check, a night window, and a twelve-test measurement suite. Each of them
+works and each of them is invoked differently -- one takes a positional version,
+one reads four environment variables, one wants a queue file in a path it does
+not document. Knowing which is which was knowledge that lived in a person.
+
+So this is the front door, and nothing else. Every command here hands off to the
+script that already did the job; none of them reimplement it. What this adds is
+the part that was missing: named options instead of remembered environment
+variables, a refusal when a piece is not there, and --dry-run, so the command
+that would run can be read before it does.
+"""
+from __future__ import annotations
+
+import argparse
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+HIER = Path(__file__).resolve().parent
+WURZEL = HIER.parent
+
+
+def teil(*pfad: str) -> Path:
+    """A path inside this checkout, checked.
+
+    A missing piece has to say which piece and where it was looked for. The
+    alternative is an exit code from a shell that was handed a path it could not
+    find, three layers down.
+    """
+    p = HIER.joinpath(*pfad)
+    if not p.exists():
+        sys.exit(f"bench: {p} is missing -- this checkout is incomplete")
+    return p
+
+
+def fuehre_aus(cmd: list, env: dict | None = None, trocken: bool = False) -> int:
+    zeile = " ".join(f"{k}={v}" for k, v in sorted((env or {}).items()))
+    gezeigt = (zeile + " " if zeile else "") + " ".join(str(c) for c in cmd)
+    if trocken:
+        print(gezeigt)
+        return 0
+    print(f"→ {gezeigt}", flush=True)
+    return subprocess.run(cmd, env={**os.environ, **(env or {})}).returncode
+
+
+# -- measuring ---------------------------------------------------------------
+def umgebung_aus(args) -> dict:
+    """Named options in, TESTBENCH_* out.
+
+    The suite reads its configuration from the environment, which is right for
+    a program started by a queue file and wrong for one started by a person.
+    """
+    env = {}
+    if args.models:
+        env["TESTBENCH_MODELS"] = " ".join(str(Path(m).resolve()) for m in args.models)
+    if args.builds:
+        env["TESTBENCH_BUILD_SEARCH_PATHS"] = " ".join(args.builds)
+    if args.power_source:
+        env["TESTBENCH_POWER_SOURCE"] = args.power_source
+    if args.memory_limit:
+        env["TESTBENCH_MEMORY_LIMIT"] = args.memory_limit
+    if args.out_dir:
+        env["TESTBENCH_OUT_DIR"] = str(Path(args.out_dir).resolve())
+    return env
+
+
+def befehl_run(args) -> int:
+    cmd = [sys.executable, str(teil("testbench", "run_all.py"))]
+    if args.window:
+        cmd += ["--window", args.window]
+    if args.budget:
+        cmd += ["--budget", str(args.budget)]
+    if args.lease:
+        cmd += ["--lease"]
+    cmd += args.tests
+    return fuehre_aus(cmd, umgebung_aus(args), args.dry_run)
+
+
+def befehl_list(args) -> int:
+    return fuehre_aus([sys.executable, str(teil("testbench", "run_all.py")), "--list"],
+                      umgebung_aus(args), args.dry_run)
+
+
+def befehl_status(args) -> int:
+    """What this machine is, before anything is measured on it.
+
+    Every failed night in this repository began with an assumption about the
+    machine: that a build was the one intended, that the power reading belonged
+    to the card being measured, that a model was present. This prints all of it
+    and measures nothing.
+    """
+    sys.path.insert(0, str(teil("testbench")))
+    import pathlib                                    # noqa: E402
+    import detect                                     # noqa: E402
+    from harness import Results                       # noqa: E402
+    import run_all                                    # noqa: E402
+    import socket
+
+    for k, v in umgebung_aus(args).items():
+        os.environ[k] = v
+    cfg = run_all.load_config(Path(args.conf) if args.conf
+                              else teil("testbench") / "testbench.conf")
+    host = socket.gethostname()
+    print(f"machine   {host}")
+
+    builds = detect.find_builds(cfg["build_search_paths"].split())
+    if not builds:
+        print("builds    none found -- looked in: " + cfg["build_search_paths"])
+    for b in builds:
+        hat = [n for n in ("llama-bench", "llama-server", "llama-completion")
+               if (b.bin / n).exists()]
+        print(f"build     {b.path} [{b.backend}] {b.version}  ({', '.join(hat) or 'no binaries'})")
+        for c in detect.find_cards(b):
+            print(f"  card    {c.index}  {c.name}  {c.vram_mib} MiB")
+
+    # RESOLVED THE SAME WAY THE RUNNER RESOLVES IT, not a second implementation.
+    # The first version of this passed the whole configuration to a function that
+    # takes a list of paths. Iterating a dict yields its keys, none of which is a
+    # directory, so it reported "models 0" on a machine holding twenty of them --
+    # a wrong answer that looked like a finding.
+    modelle = ([pathlib.Path(m) for m in cfg["models"].split()] if cfg["models"]
+               else detect.find_models(cfg["model_search_paths"].split()))
+    print(f"models    {len(modelle)}")
+    for m in modelle[:args.show_models]:
+        print(f"  {m.stat().st_size / 1024 ** 3:6.2f} GiB  {m.name}")
+    if len(modelle) > args.show_models:
+        print(f"  ... and {len(modelle) - args.show_models} more (--show-models to list)")
+
+    quelle = detect.detect_power(cfg)
+    print(f"power     {type(quelle).__name__.replace('Power', '').lower() or 'none'}")
+
+    aus = Path(cfg["out_dir"]) if cfg.get("out_dir") else teil("testbench") / "results"
+    datei = aus / host / "results.tsv"
+    if datei.exists():
+        r = Results(datei, host)
+        print(f"results   {datei} -- {len(r.keys)} measurements on file")
+    else:
+        print(f"results   {datei} -- nothing measured here yet")
+    return 0
+
+
+# -- the rest of the toolbox -------------------------------------------------
+def befehl_night(args) -> int:
+    env = {}
+    if args.queue:
+        env["WARTESCHLANGE"] = str(Path(args.queue).resolve())
+    if args.window:
+        start, ende = args.window.split("-")
+        env["START_STD"], env["ENDE_STD"] = start, ende
+    return fuehre_aus(["bash", str(teil("nachtfenster.sh"))], env, args.dry_run)
+
+
+def befehl_build(args) -> int:
+    return fuehre_aus(["bash", str(teil("suite", "suite.sh")), args.ref]
+                      + ([args.model_key] if args.model_key else []),
+                      {}, args.dry_run)
+
+
+def befehl_drift(args) -> int:
+    return fuehre_aus(["bash", str(teil("hardware", "upstream_drift.sh"))]
+                      + ([args.ref] if args.ref else []), {}, args.dry_run)
+
+
+def befehl_capture(args) -> int:
+    return fuehre_aus(["bash", str(teil("systems", "erfassen.sh"))], {}, args.dry_run)
+
+
+def befehl_docs(args) -> int:
+    """The generated pages, both of them, from the repository root.
+
+    They read data/ by relative path, so they only work from there -- which has
+    caught people out, this author included.
+    """
+    rc = 0
+    for skript in ("genmodels.py", teil("systems", "gensystems.py")):
+        pfad = teil(skript) if isinstance(skript, str) else skript
+        if args.dry_run:
+            print(f"cd {WURZEL} && {sys.executable} {pfad}")
+            continue
+        print(f"→ cd {WURZEL} && {sys.executable} {pfad}", flush=True)
+        rc |= subprocess.run([sys.executable, str(pfad)], cwd=WURZEL).returncode
+    return rc
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(
+        prog="bench", description=__doc__.split("\n")[0],
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""examples:
+  bench status                          what this machine is, measuring nothing
+  bench list                            the tests this checkout has
+  bench run                             every test, resuming where it stopped
+  bench run concurrency speculative     only those two
+  bench run --window 0-8 --memory-limit 10G --lease
+                                        the way an unattended night should be run
+  bench run --models /opt/models/a.gguf --dry-run
+                                        print the command instead of running it
+  bench night --queue /root/eval/queue.txt
+  bench build v0.2.0                    build that version and measure it
+  bench drift                           upstream master against the pinned build
+  bench capture                         record what this machine is
+  bench docs                            regenerate the model and system pages""")
+    unter = ap.add_subparsers(dest="befehl", required=True)
+
+    def mess_optionen(p, mit_lauf=True):
+        p.add_argument("--models", nargs="+", metavar="GGUF",
+                       help="measure exactly these files instead of what is found")
+        p.add_argument("--builds", nargs="+", metavar="PREFIX",
+                       help="look for llama.cpp builds in these prefixes")
+        p.add_argument("--power-source", choices=("auto", "nvidia", "amd", "none"),
+                       help="which card the wattage and VRAM figures come from; "
+                            "must be set on a host with two vendors")
+        p.add_argument("--out-dir", metavar="DIR", help="where results are written")
+        p.add_argument("--conf", metavar="FILE", help="configuration file")
+        if mit_lauf:
+            p.add_argument("--window", metavar="A-B",
+                           help="only work inside these hours, e.g. 0-8; the closing "
+                                "hour is a deadline, not a check between tests")
+            p.add_argument("--budget", type=float, metavar="HOURS",
+                           help="stop when this many hours are spent")
+            p.add_argument("--memory-limit", metavar="SIZE",
+                           help="cap each measurement's memory, e.g. 10G, so a "
+                                "runaway child cannot take the host with it")
+            p.add_argument("--lease", action="store_true",
+                           help="hold the GPU lease of a service sharing this card")
+        p.add_argument("--dry-run", action="store_true",
+                       help="print the command that would run")
+
+    p = unter.add_parser("run", help="measure")
+    p.add_argument("tests", nargs="*", help="run only tests whose name contains these")
+    mess_optionen(p)
+    p.set_defaults(fn=befehl_run)
+
+    p = unter.add_parser("list", help="the tests this checkout has")
+    mess_optionen(p, mit_lauf=False)
+    p.set_defaults(fn=befehl_list, window=None, budget=None, memory_limit=None, lease=False)
+
+    p = unter.add_parser("status", help="what this machine is, measuring nothing")
+    mess_optionen(p, mit_lauf=False)
+    p.add_argument("--show-models", type=int, default=8, metavar="N")
+    p.set_defaults(fn=befehl_status, window=None, budget=None, memory_limit=None, lease=False)
+
+    p = unter.add_parser("night", help="hand a queue to the night window")
+    p.add_argument("--queue", metavar="FILE", help="the queue file to work through")
+    p.add_argument("--window", metavar="A-B", help="the hours the window is open")
+    p.add_argument("--dry-run", action="store_true")
+    p.set_defaults(fn=befehl_night)
+
+    p = unter.add_parser("build", help="build a llama.cpp version and measure it")
+    p.add_argument("ref", help="tag, branch, or installed:/path")
+    p.add_argument("model_key", nargs="?")
+    p.add_argument("--dry-run", action="store_true")
+    p.set_defaults(fn=befehl_build)
+
+    p = unter.add_parser("drift", help="a candidate build against the pinned one")
+    p.add_argument("ref", nargs="?", help="tag or branch; default is upstream master")
+    p.add_argument("--dry-run", action="store_true")
+    p.set_defaults(fn=befehl_drift)
+
+    p = unter.add_parser("capture", help="record what this machine is")
+    p.add_argument("--dry-run", action="store_true")
+    p.set_defaults(fn=befehl_capture)
+
+    p = unter.add_parser("docs", help="regenerate the model and system pages")
+    p.add_argument("--dry-run", action="store_true")
+    p.set_defaults(fn=befehl_docs)
+
+    args = ap.parse_args()
+    return args.fn(args)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

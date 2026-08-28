@@ -1,5 +1,46 @@
 # Scripts
 
+## One way in
+
+```
+bench status                       what this machine is, measuring nothing
+bench list                         the tests this checkout has
+bench run                          every test, resuming where it stopped
+bench run concurrency speculative  only those two
+bench run --window 0-8 --memory-limit 10G --lease
+                                   the way an unattended night should be run
+bench build v0.2.0                 build that version and measure it
+bench drift                        upstream master against the pinned build
+bench capture                      record what this machine is
+bench docs                         regenerate the model and system pages
+```
+
+Everything below existed before [`bench`](bench) did, and every command above hands
+off to one of them — nothing is reimplemented. What the front door adds is the part
+that was missing: **named options instead of remembered environment variables**, a
+refusal that names the missing piece instead of an exit code from three layers down,
+and `--dry-run`, so the command can be read before it runs.
+
+**Start with `bench status`.** Every failed night in this repository began with an
+assumption about the machine — that a build was the one intended, that the power
+reading belonged to the card being measured, that a model was present. It prints all
+of that and measures nothing:
+
+```
+machine   LLMWorkerHost
+build     /opt/llama-cpp [vulkan] v0.2.0  (llama-bench, llama-server, llama-completion)
+  card    Vulkan0  AMD Radeon RX 7900 XTX  24560 MiB
+  card    Vulkan1  NVIDIA GeForce RTX 2070  8438 MiB
+models    40
+power     amd
+results   .../results.tsv -- 1816 measurements on file
+```
+
+A machine only needs [`bench`](bench) and [`testbench/`](testbench/) for `status`,
+`list` and `run`; the other commands say which piece is missing if it is not there.
+
+## The harnesses themselves
+
 These are the measurement harnesses in the form they actually ran, with host
 addresses and local paths pulled up into a configuration block at the top of each
 file. They are published so the numbers can be checked — not as a polished tool.
