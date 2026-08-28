@@ -277,3 +277,62 @@ def run(ctx):
     if skipped_sweeps:
         note += f"; {skipped_sweeps} threshold sweeps not run -- pairing gained under {SWEEP_IF_FACTOR_ABOVE}x"
     ctx.coverage(NAME, done, total, note)
+
+
+def report(rows):
+    """What each model gained, and whether it still said the same thing.
+
+    Repeats are folded into a range rather than an average: a cell whose three
+    runs disagree is not described by their mean, and the first run of a cell
+    was measured to be an outlier often enough that hiding it would be a lie.
+    """
+    import collections
+    import re
+    rate, wording, never = {}, {}, collections.Counter()
+    for r in rows:
+        p, backend = r["parameter"], r["backend"]
+        if p.endswith(":wording"):
+            wording[(backend, p[:-8])] = r["value"] == "identical"
+        if not p.endswith(":tg"):
+            continue
+        key = p[:-3]
+        if "did not engage" in r["note"]:
+            never[key.split(":")[-1].split("@")[0]] += 1
+            continue
+        try:
+            rate[(backend, key)] = float(r["value"])
+        except ValueError:
+            pass
+
+    cells = collections.defaultdict(list)
+    for (backend, key), v in rate.items():
+        parts = key.split(":")
+        if len(parts) < 3 or parts[2].startswith("none"):
+            continue
+        model, prompt, variant = parts[0], parts[1], ":".join(parts[2:])
+        if "@p" in variant:
+            continue
+        base = rate.get((backend, f"{model}:{prompt}:none"))
+        if base:
+            cells[(backend, model, prompt, variant.split("@r")[0])].append(
+                (v / base, wording.get((backend, key))))
+
+    best = {}
+    for (backend, model, prompt, variant), v in cells.items():
+        faktoren = [f for f, _ in v]
+        gleich = {w for _, w in v}
+        eintrag = (max(faktoren), min(faktoren), variant, prompt, backend,
+                   "identical" if gleich == {True} else
+                   ("DIFFERS" if gleich == {False} else "mixed"))
+        if model not in best or eintrag[0] > best[model][0]:
+            best[model] = eintrag
+    if best:
+        print("  best variant per model, across repeats")
+        print("    %-36s %-9s %-28s %-6s %s" % ("model", "factor", "variant", "prompt", "wording"))
+        for model, (hi, lo, variant, prompt, backend, w) in sorted(best.items(), key=lambda x: -x[1][0]):
+            spanne = f"{hi:.2f}x" if abs(hi - lo) < 0.02 else f"{lo:.2f}-{hi:.2f}x"
+            print("    %-36s %-9s %-28s %-6s %s" % (model[:36], spanne, variant[:28], prompt, w))
+    if never:
+        print("  variants that drafted nothing at all:")
+        for variant, n in never.most_common():
+            print("    %-40s %3d runs" % (variant[:40], n))

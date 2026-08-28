@@ -58,6 +58,8 @@ DEFAULTS = {
     # Where the measuring happens. Empty means here. Anything else is an ssh
     # destination, and then only the measurement and its sampler run on that
     # machine -- the orchestration stays on the controller, which is the point.
+    # Only these device ids. Empty means every card the build reports.
+    "cards": "",
     "target": "",
     "target_path": "/root/scripts",
     "lease_url": "http://127.0.0.1:8080",
@@ -175,6 +177,24 @@ def discover_tests(only: list[str]) -> list[tuple[str, Path, str]]:
     return found
 
 
+def auf_karten(karten: list, cfg: dict) -> list:
+    """The cards asked for, or all of them.
+
+    Named by the device id the backend itself uses -- Vulkan0, CUDA0 -- because
+    that is the only id that can be handed back to llama-bench. A name that
+    matches nothing is refused rather than silently measuring every card: asking
+    for one card and getting four is not a smaller answer, it is a different one.
+    """
+    gewuenscht = cfg.get("cards", "").split()
+    if not gewuenscht:
+        return karten
+    gewaehlt = [k for k in karten if k.index in gewuenscht]
+    if not gewaehlt and karten:
+        sys.exit(f"cards: none of {gewuenscht} is present -- this build reports "
+                 + ", ".join(k.index for k in karten))
+    return gewaehlt
+
+
 def in_window(window: str) -> bool:
     """A window is for machines somebody else needs during the day."""
     if not window:
@@ -254,7 +274,7 @@ def main() -> int:
         host=host, out_dir=out_dir,
         results=Results(out_dir / "results.tsv", host),
         builds=builds,
-        cards_by_build={str(b.path): detect.find_cards(b) for b in builds},
+        cards_by_build={str(b.path): auf_karten(detect.find_cards(b), cfg) for b in builds},
         models=models,
         power=detect.detect_power(cfg),
         log_path=out_dir / "run.log",

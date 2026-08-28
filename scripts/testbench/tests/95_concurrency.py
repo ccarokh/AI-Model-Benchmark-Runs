@@ -161,3 +161,46 @@ def run(ctx):
                  f"{len(ctx.builds)} builds x {len(ctx.models)} models x "
                  f"{len(USERS)} user counts, then {len(QUEUED_USERS)} queued on "
                  f"{QUEUED_SLOTS} slots")
+
+
+def report(rows):
+    """Two tables: where the wall is, and what a queue costs.
+
+    Written here rather than in the reporting command, because what these
+    numbers mean is this test's knowledge. The framework only decides when to
+    ask for it.
+    """
+    import collections
+    aggregate = collections.defaultdict(dict)
+    queued = collections.defaultdict(dict)
+    wall = {}
+    for r in rows:
+        p, backend = r["parameter"], r["backend"]
+        model = p.split(":")[0]
+        if r["value"] == "failed" and ":u" in p and ":q" not in p:
+            n = int(p.split(":u")[1])
+            wall[(backend, model)] = min(wall.get((backend, model), 10 ** 9), n)
+        if p.endswith(":aggregate") and ":u" in p:
+            aggregate[(backend, model)][int(p.split(":u")[1].split(":")[0])] = float(r["value"])
+        if p.endswith(":wait") and ":q" in p:
+            queued[(backend, model)][int(p.split(":q")[1].split("on")[0])] = float(r["value"])
+
+    if aggregate:
+        stufen = sorted({u for v in aggregate.values() for u in v})
+        print("  one slot per user -- aggregate tokens/s, and where the server refuses")
+        print("    %-8s %-34s %s   wall" % ("backend", "model",
+                                            " ".join("%6d" % u for u in stufen)))
+        for (backend, model), v in sorted(aggregate.items()):
+            print("    %-8s %-34s %s   %s" % (
+                backend, model[:34],
+                " ".join(("%6.0f" % v[u]) if u in v else "     ." for u in stufen),
+                wall.get((backend, model), "> tested")))
+    if queued:
+        stufen = sorted({u for v in queued.values() for u in v})
+        print("  more users than slots -- slowest answer in seconds")
+        print("    %-8s %-34s %s" % ("backend", "model",
+                                     " ".join("%5d" % u for u in stufen)))
+        for (backend, model), v in sorted(queued.items()):
+            print("    %-8s %-34s %s" % (
+                backend, model[:34],
+                " ".join(("%5.0f" % v[u]) if u in v else "    ." for u in stufen)))
