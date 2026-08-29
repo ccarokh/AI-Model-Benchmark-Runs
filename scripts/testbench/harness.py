@@ -40,16 +40,23 @@ COLUMNS = ["key", "host", "time", "test", "card", "backend", "build",
 MEMORY_SCOPE = os.environ.get("TESTBENCH_MEMORY_LIMIT", "")
 
 
-def _limited(cmd: list) -> list:
-    """The command, wrapped in a memory-capped scope if one was asked for."""
-    if not MEMORY_SCOPE:
+def _limited(cmd: list, limit: str | None = None) -> list:
+    """The command, wrapped in a memory-capped scope if one was asked for.
+
+    The cap can be overridden per call, because a guard that changes the numbers
+    is not a guard -- and the only way to know is to measure the same work with
+    it and without it.
+    """
+    scope = MEMORY_SCOPE if limit is None else limit
+    if not scope:
         return cmd
     return ["systemd-run", "--scope", "-q", "--collect",
-            "-p", f"MemoryMax={MEMORY_SCOPE}", "-p", "MemorySwapMax=0",
+            "-p", f"MemoryMax={scope}", "-p", "MemorySwapMax=0",
             *cmd]
 
 
-def run(cmd, timeout=None, env=None, stdin_null=True, capture_stderr=False):
+def run(cmd, timeout=None, env=None, stdin_null=True, capture_stderr=False,
+        memory=None):
     """One subprocess call, with the failure mode kept visible.
 
     Returns (returncode, stdout, stderr). Nothing here raises on a non-zero
@@ -60,7 +67,7 @@ def run(cmd, timeout=None, env=None, stdin_null=True, capture_stderr=False):
     full.update(env or {})
     try:
         p = subprocess.run(
-            _limited(cmd), timeout=timeout, env=full,
+            _limited(cmd, memory), timeout=timeout, env=full,
             stdin=subprocess.DEVNULL if stdin_null else None,
             capture_output=True, text=True)
         return p.returncode, p.stdout, p.stderr
@@ -357,7 +364,8 @@ def kernel_events() -> int:
 
 
 def bench(build: Build, model: Path, *args, device: str | None = None,
-          timeout: int = 3600, env: dict | None = None) -> dict | None:
+          timeout: int = 3600, env: dict | None = None,
+          memory: str | None = None) -> dict | None:
     """One llama-bench run in a fresh process. None means it produced nothing.
 
     llama-bench and llama-server both carry state between runs; a warm process
@@ -366,7 +374,7 @@ def bench(build: Build, model: Path, *args, device: str | None = None,
     cmd = [str(build.bin / "llama-bench"), "-m", str(model), *map(str, args), "-o", "json"]
     if device:
         cmd += ["-dev", device]
-    rc, out, err = run(cmd, timeout=timeout,
+    rc, out, err = run(cmd, timeout=timeout, memory=memory,
                        env={"LD_LIBRARY_PATH": str(build.bin), **(env or {})})
     try:
         entries = json.loads(out)
