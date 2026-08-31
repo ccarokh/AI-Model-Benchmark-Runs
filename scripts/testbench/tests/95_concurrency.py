@@ -60,6 +60,7 @@ PROMPT = (
 def run(ctx):
     done = total = 0
     for build in ctx.builds:
+        card = ctx.card_for(build) or ""
         if not (build.bin / "llama-server").exists():
             ctx.skip_permanently(NAME, f"{build.backend} build has no llama-server",
                                  backend=build.backend, build=build.version)
@@ -70,7 +71,7 @@ def run(ctx):
             for users in USERS:
                 total += 1
                 key = f"{model.stem}:u{users}"
-                if ctx.results.has_prefix(NAME, "", build.backend, build.version, key):
+                if ctx.results.has_prefix(NAME, card, build.backend, build.version, key):
                     done += 1
                     continue
                 if ctx.out_of_budget():
@@ -78,21 +79,21 @@ def run(ctx):
                 if not card_is_idle(ctx):
                     ctx.defer(NAME, f"card busy before {key}")
                     break
-                last = server_load(build, model, PROMPT, users,
+                last = server_load(build, model, PROMPT, users, device=card or None,
                                    per_user_ctx=PER_USER_CTX, n_predict=N_PREDICT)
                 done += 1
                 if not last["ok"]:
-                    ctx.results.add(NAME, "", build.backend, build.version, key,
+                    ctx.results.add(NAME, card, build.backend, build.version, key,
                                     "failed", f"{users} users", last["reason"])
                     ctx.say(f"  {build.backend} {model.stem}: {users} users -- "
                             f"DOES NOT RUN: {last['reason']}")
                     grenze_hart = users
                     break
-                ctx.results.add(NAME, "", build.backend, build.version, f"{key}:aggregate",
+                ctx.results.add(NAME, card, build.backend, build.version, f"{key}:aggregate",
                                 f"{last['aggregate']:.2f}", "tokens/s total",
                                 f"{users} users, {PER_USER_CTX} context each, "
                                 f"{last['failures']} failed")
-                ctx.results.add(NAME, "", build.backend, build.version, f"{key}:per_user",
+                ctx.results.add(NAME, card, build.backend, build.version, f"{key}:per_user",
                                 f"{last['per_user']:.2f}", "tokens/s each",
                                 f"slowest answer {last['slowest']:.1f} s")
                 ctx.say(f"  {build.backend} {model.stem}: {users:2d} users -- "
@@ -110,7 +111,7 @@ def run(ctx):
                          if (grenze_hart is None or u < grenze_hart)
                          and (grenze_weich is None or u < grenze_weich)]
             if grenze_hart or grenze_weich:
-                ctx.results.add(NAME, "", build.backend, build.version,
+                ctx.results.add(NAME, card, build.backend, build.version,
                                 f"{model.stem}:usable_users",
                                 str(max(brauchbar) if brauchbar else 0), "users",
                                 f"does not run at {grenze_hart or '> ' + str(USERS[-1])}, "
@@ -120,7 +121,7 @@ def run(ctx):
             if grenze_hart is not None and grenze_hart <= QUEUED_SLOTS:
                 # The card cannot even hold the fixed slot count for this model,
                 # so there is nothing to queue against.
-                ctx.results.add(NAME, "", build.backend, build.version,
+                ctx.results.add(NAME, card, build.backend, build.version,
                                 f"{model.stem}:queued", "not run", "",
                                 f"{QUEUED_SLOTS} slots do not fit -- hard limit is "
                                 f"{grenze_hart} users")
@@ -128,7 +129,7 @@ def run(ctx):
             for users in QUEUED_USERS:
                 total += 1
                 key = f"{model.stem}:q{users}on{QUEUED_SLOTS}"
-                if ctx.results.has_prefix(NAME, "", build.backend, build.version, key):
+                if ctx.results.has_prefix(NAME, card, build.backend, build.version, key):
                     done += 1
                     continue
                 if ctx.out_of_budget():
@@ -137,20 +138,21 @@ def run(ctx):
                     ctx.defer(NAME, f"card busy before {key}")
                     break
                 last = server_load(build, model, PROMPT, users, slots=QUEUED_SLOTS,
+                                   device=card or None,
                                    per_user_ctx=PER_USER_CTX, n_predict=N_PREDICT)
                 done += 1
                 if not last["ok"]:
-                    ctx.results.add(NAME, "", build.backend, build.version, key,
+                    ctx.results.add(NAME, card, build.backend, build.version, key,
                                     "failed", f"{users} users on {QUEUED_SLOTS} slots",
                                     last["reason"])
                     ctx.say(f"  {build.backend} {model.stem}: {users} on {QUEUED_SLOTS} "
                             f"slots -- DOES NOT RUN: {last['reason']}")
                     break
-                ctx.results.add(NAME, "", build.backend, build.version, f"{key}:aggregate",
+                ctx.results.add(NAME, card, build.backend, build.version, f"{key}:aggregate",
                                 f"{last['aggregate']:.2f}", "tokens/s total",
                                 f"{users} users queued on {QUEUED_SLOTS} slots, "
                                 f"{last['failures']} failed")
-                ctx.results.add(NAME, "", build.backend, build.version, f"{key}:wait",
+                ctx.results.add(NAME, card, build.backend, build.version, f"{key}:wait",
                                 f"{last['slowest']:.1f}", "s slowest answer",
                                 f"{last['per_user']:.2f} tokens/s each")
                 ctx.say(f"  {build.backend} {model.stem}: {users:2d} on {QUEUED_SLOTS} slots "
@@ -175,7 +177,11 @@ def report(rows):
     queued = collections.defaultdict(dict)
     wall = {}
     for r in rows:
-        p, backend = r["parameter"], r["backend"]
+        p = r["parameter"]
+        # The card belongs in the key: rows from before the suite pinned
+        # a device measured whatever the backend picked, and on a two-card
+        # host that is a different machine from either card alone.
+        backend = r["backend"] + "/" + (r["card"] or "chosen")
         model = p.split(":")[0]
         if r["value"] == "failed" and ":u" in p and ":q" not in p:
             n = int(p.split(":u")[1])

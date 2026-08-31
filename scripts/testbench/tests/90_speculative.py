@@ -83,11 +83,11 @@ SWEEP_IF_FACTOR_ABOVE = 1.1
 REPEATS = 3
 
 
-def _record(ctx, build, key, probe, baseline, factor_note=""):
+def _record(ctx, build, card, key, probe, baseline, factor_note=""):
     """One variant's rows: the rate, and whether the answer survived."""
     b = ctx.results
     if not probe["ok"]:
-        b.add(NAME, "", build.backend, build.version, key, "failed", "",
+        b.add(NAME, card, build.backend, build.version, key, "failed", "",
               probe["reason"])
         return None
     # A DRAFT THAT NEVER RAN IS NOT A SLOW DRAFT. The first run of this test
@@ -103,13 +103,13 @@ def _record(ctx, build, key, probe, baseline, factor_note=""):
         factor_note = ""
     if factor_note:
         note = f"{factor_note}{'; ' + note if note else ''}"
-    b.add(NAME, "", build.backend, build.version, f"{key}:tg",
+    b.add(NAME, card, build.backend, build.version, f"{key}:tg",
           f"{probe['tg']:.2f}", "tokens/s", note)
     if baseline is None or not engaged and key.rsplit(":", 1)[-1] != "none":
         return probe if engaged else None
     same = probe["hash"] == baseline["hash"]
     where = common_prefix(baseline["text"], probe["text"])
-    b.add(NAME, "", build.backend, build.version, f"{key}:wording",
+    b.add(NAME, card, build.backend, build.version, f"{key}:wording",
           "identical" if same else "differs", "",
           f"hash {probe['hash']} vs baseline {baseline['hash']}"
           + ("" if same else f", diverges at character {where} of {len(baseline['text'])}"))
@@ -133,6 +133,7 @@ def run(ctx):
             + ", ".join(d.stem for d in drafters))
 
     for build in ctx.builds:
+        card = ctx.card_for(build) or ""
         # Not every build has one. The CUDA build on System C was configured
         # without the server, and the first run of this test died on a
         # FileNotFoundError halfway through the matrix -- taking the vulkan
@@ -159,11 +160,11 @@ def run(ctx):
                 # baseline would report every variant as identical.
                 base_key = f"{stem}:none"
                 baseline = None
-                if ctx.results.has_prefix(NAME, "", build.backend, build.version, base_key):
+                if ctx.results.has_prefix(NAME, card, build.backend, build.version, base_key):
                     done += 1
-                    stored = ctx.results.value_of(NAME, "", build.backend, build.version,
+                    stored = ctx.results.value_of(NAME, card, build.backend, build.version,
                                                   f"{base_key}:hash")
-                    rate = ctx.results.value_of(NAME, "", build.backend, build.version,
+                    rate = ctx.results.value_of(NAME, card, build.backend, build.version,
                                                 f"{base_key}:tg")
                     if stored:
                         # THE RATE HAS TO COME BACK TOO, not only the hash. The
@@ -179,15 +180,15 @@ def run(ctx):
                     if not card_is_idle(ctx):
                         ctx.defer(NAME, f"card busy before {stem}")
                         continue
-                    probe = server_probe(build, model, prompt,
+                    probe = server_probe(build, model, prompt, device=card or None,
                                          n_predict=N_PREDICT, ctx_size=CTX)
-                    _record(ctx, build, base_key, probe, None)
+                    _record(ctx, build, card, base_key, probe, None)
                     if not probe["ok"]:
                         ctx.say(f"  {build.backend} {stem}: no baseline -- {probe['reason']}")
                         continue
                     # The hash gets its own row so a later run can compare
                     # against it without re-measuring the baseline.
-                    ctx.results.add(NAME, "", build.backend, build.version,
+                    ctx.results.add(NAME, card, build.backend, build.version,
                                     f"{base_key}:hash", probe["hash"], "",
                                     f"{N_PREDICT} tokens at temperature 0")
                     baseline = probe
@@ -207,14 +208,14 @@ def run(ctx):
                             total += 1
                             if not entwarf:
                                 break
-                        if ctx.results.has_prefix(NAME, "", build.backend, build.version, key):
+                        if ctx.results.has_prefix(NAME, card, build.backend, build.version, key):
                             done += 1
                             # A stored run counts as having drafted only if it
                             # wrote a wording row -- that row exists exactly when
                             # speculation happened.
                             if lauf == 1:
                                 entwarf = ctx.results.value_of(
-                                    NAME, "", build.backend, build.version,
+                                    NAME, card, build.backend, build.version,
                                     f"{key}:wording") is not None
                             continue
                         if ctx.out_of_budget():
@@ -222,12 +223,12 @@ def run(ctx):
                         if not card_is_idle(ctx):
                             ctx.defer(NAME, f"card busy before {key}")
                             break
-                        probe = server_probe(build, model, prompt, *args,
+                        probe = server_probe(build, model, prompt, *args, device=card or None,
                                              n_predict=N_PREDICT, ctx_size=CTX)
                         factor = ""
                         if probe["ok"] and base_tg:
                             factor = f"{probe['tg'] / base_tg:.2f}x baseline"
-                        _record(ctx, build, key, probe, baseline, factor)
+                        _record(ctx, build, card, key, probe, baseline, factor)
                         done += 1
                         if not probe["ok"]:
                             ctx.say(f"  {build.backend} {key}: did not run -- {probe['reason']}")
@@ -252,7 +253,7 @@ def run(ctx):
                     for p in P_MIN:
                         p_key = f"{stem}:{name}@p{p}"
                         total += 1
-                        if ctx.results.has_prefix(NAME, "", build.backend, build.version, p_key):
+                        if ctx.results.has_prefix(NAME, card, build.backend, build.version, p_key):
                             done += 1
                             continue
                         if ctx.out_of_budget():
@@ -262,9 +263,10 @@ def run(ctx):
                             continue
                         sweep = server_probe(build, model, prompt, *args,
                                              "--spec-draft-p-min", p,
+                                             device=card or None,
                                              n_predict=N_PREDICT, ctx_size=CTX)
                         f2 = f"{sweep['tg'] / base_tg:.2f}x baseline" if sweep["ok"] else ""
-                        _record(ctx, build, p_key, sweep, baseline, f2)
+                        _record(ctx, build, card, p_key, sweep, baseline, f2)
                         done += 1
                         if sweep["ok"]:
                             same = sweep["hash"] == baseline["hash"]

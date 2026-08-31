@@ -17,14 +17,14 @@ def run(ctx):
         total += 1
         digests = {}
         for build in ctx.builds:
-            key = ctx.results.key(NAME, "", build.backend, build.version, model.stem)
+            key = ctx.results.key(NAME, ctx.card_for(build) or "", build.backend, build.version, model.stem)
             if ctx.results.has(key) or ctx.out_of_budget():
                 continue
             if not card_is_idle(ctx):
                 ctx.defer(NAME, "card busy")
                 continue
-            digest, note = output_hash(build, model)
-            ctx.results.add(NAME, "", build.backend, build.version, model.stem,
+            digest, note = output_hash(build, model, device=ctx.card_for(build) or None)
+            ctx.results.add(NAME, ctx.card_for(build) or "", build.backend, build.version, model.stem,
                             digest or "", "sha256:16", note)
             ctx.say(f"  {build.backend} {build.version} {model.stem}: {digest or note}")
             if digest:
@@ -35,7 +35,7 @@ def run(ctx):
         if len(digests) > 1:
             done += 1
             agree = len(set(digests.values())) == 1
-            ctx.results.add(NAME, "", "all", "", f"{model.stem}:agreement",
+            ctx.results.add(NAME, ctx.card_for(build) or "", "all", "", f"{model.stem}:agreement",
                             "yes" if agree else "NO", "",
                             "; ".join(f"{k}={v}" for k, v in digests.items()))
     ctx.coverage(NAME, done, total, f"{len(ctx.builds)} builds compared per model")

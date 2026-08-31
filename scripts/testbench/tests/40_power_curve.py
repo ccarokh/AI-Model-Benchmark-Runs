@@ -34,12 +34,13 @@ def run(ctx):
     # a limitation nobody can see in the results is indistinguishable from an
     # oversight -- which is exactly how the other five got theirs.
     build = ctx.builds[0]
+    card = ctx.card_for(build) or ""
     done = total = 0
     try:
         for model in ctx.models:
             for watts in steps:
                 total += 1
-                if ctx.results.has_prefix(NAME, "", build.backend, build.version,
+                if ctx.results.has_prefix(NAME, card, build.backend, build.version,
                                           f"{model.stem}:{watts}W"):
                     done += 1
                     continue
@@ -62,25 +63,26 @@ def run(ctx):
                 # jump exactly at each model's FIRST step: 3B at 220 W came out
                 # at 6 936 tok/Wh against 5 315 at 160 W, breaking an otherwise
                 # monotone curve. Three of four models had it, in the same place.
-                bench(build, model, "-p", "512", "-n", "32", "-r", "1", "-ngl", "99")
+                bench(build, model, "-p", "512", "-n", "32", "-r", "1", "-ngl", "99",
+                      device=card or None)
                 with WattSampler(ctx.power, interval=0.25) as sampler:
-                    r = bench(build, model, *ARGS)
+                    r = bench(build, model, *ARGS, device=card or None)
                 if not r:
                     ctx.defer(NAME, f"no measurement for {model.stem} at {watts} W")
                     continue
                 mean, peak = sampler.mean, sampler.peak
                 per_wh = r["tg"] * 3600 / mean if mean else None
                 base = f"{model.stem}:{watts}W"
-                ctx.results.add(NAME, "", build.backend, build.version, base + ":tg",
+                ctx.results.add(NAME, card, build.backend, build.version, base + ":tg",
                                 f"{r['tg']:.2f}", "t/s generation")
-                ctx.results.add(NAME, "", build.backend, build.version, base + ":pp",
+                ctx.results.add(NAME, card, build.backend, build.version, base + ":pp",
                                 f"{r['pp']:.2f}", "t/s prefill")
                 if mean:
-                    ctx.results.add(NAME, "", build.backend, build.version, base + ":watt",
+                    ctx.results.add(NAME, card, build.backend, build.version, base + ":watt",
                                     f"{mean:.1f}", "W mean",
                                     f"peak {peak:.1f} W, {sampler.count} samples, "
                                     f"sensor {ctx.power.kind}")
-                    ctx.results.add(NAME, "", build.backend, build.version,
+                    ctx.results.add(NAME, card, build.backend, build.version,
                                     base + ":tok_per_wh", f"{per_wh:.0f}", "tok/Wh",
                                     f"sensor {ctx.power.kind}")
                 done += 1

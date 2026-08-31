@@ -13,18 +13,18 @@ GRANULARITY = 4096    # stop bisecting when the gap is this small
 CEILING = 2_097_152   # a stop for models that never fail -- not a limit of the card
 
 
-def _state(ctx, build, model, cache, size):
+def _state(ctx, build, card, model, cache, size):
     """What is already known about this exact probe, from an earlier run."""
     base = f"{model.stem}:{cache}:d{size}"
     for outcome in ("ok", "fail"):
-        if ctx.results.has(ctx.results.key(NAME, "", build.backend, build.version,
+        if ctx.results.has(ctx.results.key(NAME, card, build.backend, build.version,
                                            f"{base}:{outcome}")):
             return outcome
     return None
 
 
-def _probe(ctx, build, model, cache, size):
-    known = _state(ctx, build, model, cache, size)
+def _probe(ctx, build, card, model, cache, size):
+    known = _state(ctx, build, card, model, cache, size)
     if known:
         return known == "ok"
     if not card_is_idle(ctx):
@@ -34,8 +34,8 @@ def _probe(ctx, build, model, cache, size):
     # token. Filling the depth instead took seven minutes for one probe at
     # 327 680 -- which put the search out of reach for more than a model or two.
     with WattSampler(ctx.power, interval=0.25) as sampler:
-        ok, reason = alloc_probe(build, model, size, cache)
-    ctx.results.add(NAME, "", build.backend, build.version,
+        ok, reason = alloc_probe(build, model, size, cache, device=card or None)
+    ctx.results.add(NAME, card, build.backend, build.version,
                     f"{model.stem}:{cache}:d{size}:{'ok' if ok else 'fail'}",
                     str(sampler.peak_vram or 0) if ok else "",
                     "MiB peak" if ok else "",
@@ -45,29 +45,29 @@ def _probe(ctx, build, model, cache, size):
     return ok
 
 
-def _search(ctx, build, model, cache):
+def _search(ctx, build, card, model, cache):
     """Double until it breaks, then halve until the gap stops mattering."""
     good, bad, size = 0, None, FIRST
     while size <= CEILING:
-        if _probe(ctx, build, model, cache, size):
+        if _probe(ctx, build, card, model, cache, size):
             good = size
             size *= 2
         else:
             bad = size
             break
     if bad is None:
-        ctx.results.add(NAME, "", build.backend, build.version,
+        ctx.results.add(NAME, card, build.backend, build.version,
                         f"{model.stem}:{cache}:ceiling", str(good), "tokens",
                         f"never failed up to {CEILING} -- stopped there, not a limit of the card")
         ctx.say(f"  {build.backend} {model.stem} {cache}: no ceiling below {CEILING}")
         return
     while bad - good > GRANULARITY:
         middle = (good + bad) // 2
-        if _probe(ctx, build, model, cache, middle):
+        if _probe(ctx, build, card, model, cache, middle):
             good = middle
         else:
             bad = middle
-    ctx.results.add(NAME, "", build.backend, build.version,
+    ctx.results.add(NAME, card, build.backend, build.version,
                     f"{model.stem}:{cache}:ceiling", str(good), "tokens",
                     f"first failure at {bad}")
     ctx.say(f"  {build.backend} {model.stem} {cache}: CEILING {good} tokens "
@@ -80,17 +80,18 @@ def run(ctx):
     # "the ceiling of this card" assumes exactly what it should be reporting.
     done = total = 0
     for build in ctx.builds:
+        card = ctx.card_for(build) or ""
         for model in ctx.models:
             for cache in ("f16", "q8_0"):
                 total += 1
-                if ctx.results.has_prefix(NAME, "", build.backend, build.version,
+                if ctx.results.has_prefix(NAME, card, build.backend, build.version,
                                           f"{model.stem}:{cache}:ceiling"):
                     done += 1
                     continue
                 if ctx.out_of_budget():
                     continue
                 try:
-                    _search(ctx, build, model, cache)
+                    _search(ctx, build, card, model, cache)
                     done += 1
                 except RuntimeError as e:
                     ctx.defer(NAME, f"{model.stem}/{cache}: {e}")

@@ -31,13 +31,13 @@ MEMORY_ARMS = [("uncapped", ""), ("10G", "10G"), ("20G", "20G")]
 SAMPLER_ARMS = [("off", None), ("1Hz", 1.0), ("4Hz", 0.25)]
 
 
-def _record(ctx, build, model, arm, run_no, result, note):
+def _record(ctx, build, card, model, arm, run_no, result, note):
     if not result:
-        ctx.results.add(NAME, "", build.backend, build.version,
+        ctx.results.add(NAME, card, build.backend, build.version,
                         f"{model.stem}:{arm}:r{run_no}", "failed", "", note)
         return
     for phase, unit in (("pp", "t/s prefill"), ("tg", "t/s generation")):
-        ctx.results.add(NAME, "", build.backend, build.version,
+        ctx.results.add(NAME, card, build.backend, build.version,
                         f"{model.stem}:{arm}:r{run_no}:{phase}",
                         f"{result[phase]:.2f}", unit, note)
 
@@ -53,13 +53,14 @@ def run(ctx):
         return
 
     for build in ctx.builds:
+        card = ctx.card_for(build) or ""
         arms = ([(f"memory:{name}", ("memory", value)) for name, value in MEMORY_ARMS]
                 + [(f"sampler:{name}", ("sampler", value)) for name, value in SAMPLER_ARMS])
         for run_no in range(1, REPEATS + 1):
             for arm, (kind, value) in arms:
                 total += 1
                 key = f"{model.stem}:{arm}:r{run_no}"
-                if ctx.results.has_prefix(NAME, "", build.backend, build.version, key):
+                if ctx.results.has_prefix(NAME, card, build.backend, build.version, key):
                     done += 1
                     continue
                 if ctx.out_of_budget():
@@ -70,16 +71,16 @@ def run(ctx):
                 if kind == "memory":
                     # No sampler in this arm at all, so the two instruments are
                     # never varied at the same time.
-                    result = bench(build, model, *ARGS, memory=value)
+                    result = bench(build, model, *ARGS, memory=value, device=card or None)
                     note = f"memory cap {value or 'none'}, no sampler"
                 else:
                     if value is None:
-                        result = bench(build, model, *ARGS, memory="")
+                        result = bench(build, model, *ARGS, memory="", device=card or None)
                     else:
                         with WattSampler(ctx.power, interval=value):
-                            result = bench(build, model, *ARGS, memory="")
+                            result = bench(build, model, *ARGS, memory="", device=card or None)
                     note = f"sampler {arm.split(':')[1]}, no memory cap"
-                _record(ctx, build, model, arm, run_no, result,
+                _record(ctx, build, card, model, arm, run_no, result,
                         note if result else "produced no result")
                 done += 1
                 if result:
@@ -98,6 +99,7 @@ def report(rows):
     """
     import collections
     import statistics
+    WAHL = "device chosen by the backend"
     values = collections.defaultdict(list)
     for r in rows:
         p = r["parameter"]
@@ -107,16 +109,21 @@ def report(rows):
         if len(teile) < 4:
             continue
         arm = ":".join(teile[1:-2])
+        # KEYED ON THE CARD TOO. Rows written before the suite pinned a device
+        # carry an empty card column and measured whatever the backend picked --
+        # on a two-card host that is both of them, and 35 percent slower. Folded
+        # into one arm they showed up as a 29 t/s "spread within one arm", which
+        # is not spread at all but two different measurements stacked.
         try:
-            values[(r["backend"], arm)].append(float(r["value"]))
+            values[(r["backend"], r["card"] or WAHL, arm)].append(float(r["value"]))
         except ValueError:
             pass
     if not values:
         return
-    for backend in sorted({b for b, _ in values}):
-        arme = {a: v for (b, a), v in values.items() if b == backend}
+    for backend, karte in sorted({(b, c) for b, c, _ in values}):
+        arme = {a: v for (b, c, a), v in values.items() if (b, c) == (backend, karte)}
         alle = [x for v in arme.values() for x in v]
-        print(f"  {backend}: generation t/s per arm, {len(alle)} runs")
+        print(f"  {backend} on {karte}: generation t/s per arm, {len(alle)} runs")
         for arm in sorted(arme):
             v = arme[arm]
             print("    %-16s %s   spread within arm %.2f" % (

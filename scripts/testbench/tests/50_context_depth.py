@@ -20,11 +20,12 @@ def run(ctx):
     # is the whole reason the 14B turned out to be the interesting case.
     done = total = 0
     for build in ctx.builds:
+     card = ctx.card_for(build) or ""
      for model in ctx.models:
       for cache in CACHES:
        for depth in DEPTHS:
             total += 1
-            if ctx.results.has_prefix(NAME, "", build.backend, build.version,
+            if ctx.results.has_prefix(NAME, card, build.backend, build.version,
                                       f"{model.stem}:{cache}:d{depth}"):
                 done += 1
                 continue
@@ -38,23 +39,24 @@ def run(ctx):
             # while the run is happening.
             with WattSampler(ctx.power) as sampler:
                 r = bench(build, model, "-p", "512", "-n", "128", "-d", str(depth),
-                          "-fa", "on", "-ctk", cache, "-ctv", cache, "-r", "2", "-ngl", "99")
+                          "-fa", "on", "-ctk", cache, "-ctv", cache, "-r", "2", "-ngl", "99",
+                          device=card or None)
             if not r:
                 # The most likely reason is exactly what is being measured. A
                 # depth that fails is the number somebody needs; a blank line is
                 # not, so this one is recorded rather than deferred.
-                ctx.results.add(NAME, "", build.backend, build.version,
+                ctx.results.add(NAME, card, build.backend, build.version,
                                 f"{model.stem}:{cache}:d{depth}", "", "",
                                 "no measurement -- most likely too little VRAM for the cache")
                 ctx.say(f"  {cache} depth {depth}: NO MEASUREMENT (probably out of VRAM)")
                 continue
             for phase, unit in (("pp", "t/s prefill"), ("tg", "t/s generation")):
-                ctx.results.add(NAME, "", build.backend, build.version,
+                ctx.results.add(NAME, card, build.backend, build.version,
                                 f"{model.stem}:{cache}:d{depth}:{phase}",
                                 f"{r[phase]:.2f}", unit,
                                 f"peak {sampler.peak_vram or 0} MiB VRAM during the run")
             done += 1
-            ctx.results.add(NAME, "", build.backend, build.version,
+            ctx.results.add(NAME, card, build.backend, build.version,
                             f"{model.stem}:{cache}:d{depth}:vram", str(sampler.peak_vram or 0),
                             "MiB peak")
             ctx.say(f"  {cache} depth {depth}: pp={r['pp']:.1f} tg={r['tg']:.2f} "

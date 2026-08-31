@@ -199,6 +199,22 @@ class Context:
     def cards_of(self, build: Build) -> list[Card]:
         return self.cards_by_build.get(str(build.path), [])
 
+    def card_for(self, build: Build) -> str | None:
+        """The card a test should pin, or None when there is nothing to pin.
+
+        WITHOUT THIS, A TEST MEASURES WHATEVER THE BACKEND PICKED. On a host
+        holding a 7900 XTX and an RTX 2070, llama.cpp spreads a model across
+        both unless told otherwise -- and that is 35 to 65 percent slower than
+        the fast card alone. Thirty-one models were measured both ways there and
+        every single one was faster pinned, by 1.5x to 3.5x.
+
+        Only 10_reference passed a device, and the rule sits in its comment: a
+        number that silently used two cards is not a card's number. Every other
+        test filed two-card figures under an empty card column.
+        """
+        cards = self.cards_of(build)
+        return cards[0].index if cards else None
+
     def say(self, msg: str):
         line = f"[{time.strftime('%H:%M:%S')}] {msg}"
         print(line, flush=True)
@@ -415,7 +431,7 @@ def bench_probe(build: Build, model: Path, *args, device: str | None = None,
 
 
 def alloc_probe(build: Build, model: Path, ctx_size: int, cache: str = "f16",
-                timeout: int = 300) -> tuple[bool, str]:
+                timeout: int = 300, device: str | None = None) -> tuple[bool, str]:
     """Does a context of this size ALLOCATE -- without paying to fill it.
 
     The ceiling is an allocation limit, not a compute one: what fails is the KV
@@ -433,7 +449,8 @@ def alloc_probe(build: Build, model: Path, ctx_size: int, cache: str = "f16",
         return False, "no llama-completion/llama-cli in the build"
     cmd = [str(binary), "-m", str(model), "-ngl", "99", "--ctx-size", str(ctx_size),
            "-n", "1", "--temp", "0", "--seed", "1", "-fa", "on",
-           "-ctk", cache, "-ctv", cache, *cli_flags(build), "-p", "x"]
+           "-ctk", cache, "-ctv", cache, *(["-dev", device] if device else []),
+           *cli_flags(build), "-p", "x"]
     rc, out, err = run(cmd, timeout=timeout, env={"LD_LIBRARY_PATH": str(build.bin)})
     text = out + err
     fail = re.search(r"(failed to allocate|allocation of size \d+ failed|out of memory|"
@@ -482,7 +499,8 @@ def cli_flags(build: Build) -> list[str]:
     return flags
 
 
-def output_hash(build: Build, model: Path) -> tuple[str | None, str]:
+def output_hash(build: Build, model: Path,
+                device: str | None = None) -> tuple[str | None, str]:
     """Same answer, or only a faster one?
 
     A build that got faster and answers differently has not made the same work
@@ -495,6 +513,7 @@ def output_hash(build: Build, model: Path) -> tuple[str | None, str]:
         return None, "no llama-completion/llama-cli in the build"
     cmd = [str(binary), "-m", str(model), "-ngl", "99", "--seed", "1234",
            "--temp", "0", "-n", "96", "--ctx-size", "4096",
+           *(["-dev", device] if device else []),
            *cli_flags(build), "-p", "List the first ten prime numbers."]
     rc, out, err = run(cmd, timeout=240, env={"LD_LIBRARY_PATH": str(build.bin)})
     digest = hashlib.sha256(out.encode()).hexdigest()[:16]
@@ -578,7 +597,8 @@ def free_port(start: int = 8099, tries: int = 50) -> int:
 
 def server_probe(build: Build, model: Path, prompt: str, *extra,
                  n_predict: int = 256, ngl: int = 99, ctx_size: int = 8192,
-                 boot_timeout: int = 180, request_timeout: int = 600) -> dict:
+                 boot_timeout: int = 180, request_timeout: int = 600,
+                 device: str | None = None) -> dict:
     """One fresh server, one request. Always returns a dict, never raises.
 
     Keys: ok, tg, pp, hash, text, acceptance, reason. When ok is false, `reason`
@@ -595,7 +615,7 @@ def server_probe(build: Build, model: Path, prompt: str, *extra,
     cmd = [str(build.bin / "llama-server"), "-m", str(model),
            "-ngl", str(ngl), "-c", str(ctx_size),
            "--host", "127.0.0.1", "--port", str(port), "--no-warmup",
-           *map(str, extra)]
+           *(["-dev", device] if device else []), *map(str, extra)]
     env = dict(os.environ, LD_LIBRARY_PATH=str(build.bin))
     out = {"ok": False, "tg": None, "pp": None, "hash": None, "text": "",
            "acceptance": None, "reason": ""}
@@ -680,7 +700,7 @@ def server_load(build: Build, model: Path, prompt: str, users: int,
                 per_user_ctx: int = 8192, n_predict: int = 200,
                 ngl: int = 99, boot_timeout: int = 240,
                 request_timeout: int = 900, slots: int | None = None,
-                extra: tuple = ()) -> dict:
+                extra: tuple = (), device: str | None = None) -> dict:
     """How many people can this card serve at once, before it stops serving.
 
     Every other figure in this repository is a single request on an empty card
@@ -714,7 +734,8 @@ def server_load(build: Build, model: Path, prompt: str, users: int,
     log = Path(os.environ.get("TMPDIR", "/tmp")) / f"server_load.{port}.log"
     cmd = [str(build.bin / "llama-server"), "-m", str(model),
            "-ngl", str(ngl), "-c", str(slots * per_user_ctx), "-np", str(slots),
-           "--host", "127.0.0.1", "--port", str(port), "--no-warmup", *map(str, extra)]
+           "--host", "127.0.0.1", "--port", str(port), "--no-warmup",
+           *(["-dev", device] if device else []), *map(str, extra)]
     env = dict(os.environ, LD_LIBRARY_PATH=str(build.bin))
     out = {"ok": False, "aggregate": None, "per_user": None, "slowest": None,
            "failures": 0, "reason": "", "tokens": 0}

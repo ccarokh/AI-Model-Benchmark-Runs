@@ -352,6 +352,40 @@ but "found nothing to draft" and "does not pay" are different findings.
 
 **For every flag that can be ignored, find the artefact that proves it was not.**
 
+## Name the card, or the backend names it for you
+
+One test in this suite passed a device to the benchmark. Its comment carried the rule --
+*a number that silently used two cards is not a card's number* -- and the eleven other
+tests did not follow it.
+
+On a host holding a 7900 XTX and an RTX 2070, llama.cpp spreads a model across both
+unless told which to use. Thirty-one models were measured both ways there, and **every
+single one was faster pinned:**
+
+| Model | pinned | backend's choice | |
+|---|---:|---:|---:|
+| gemma-4-12b Q4_K_M | 77.61 | 50.85 | 1.53× |
+| ornith-35b | 141.00 | 81.74 | 1.72× |
+| gpt-oss-20B | 213.48 | 107.24 | 1.99× |
+| Nanbeige-4.2-3B | 130.28 | 37.21 | **3.50×** |
+
+Thirty-one models, one direction, no exceptions. The multi-GPU test measured the same
+thing from the other side the same night: the fast card alone at 37.57 tokens/s, split
+7:1 across both at 23.72 — a factor of 1.58, which is the factor above.
+
+**The symptom was a number that disagreed with itself.** A concurrency figure came out
+45 % below the reference measurement of the same model on the same card, and the first
+suspicion fell on a guard added days earlier. It was innocent: an isolation test found
+0.47 t/s between its arms. What differed was not the guard but which hardware the two
+tests had been using all along.
+
+Two habits follow:
+
+- **Pin the device, and write down which one.** An empty card column now means *the
+  backend chose* — which is a fact about the measurement, not a missing field.
+- **When a number disagrees with another number, suspect the setup before the change
+  you just made.** The recent change is the salient suspect and rarely the guilty one.
+
 ## A measurement that kills the machine is not a measurement
 
 Twice on the serving host — 15 GB of RAM, a 24 GB card — the kernel's OOM killer took

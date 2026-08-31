@@ -55,13 +55,14 @@ def _ask(port, prompt):
             "cached": data.get("tokens_cached")}
 
 
-def _serve(build, model, cache_ram):
+def _serve(build, model, cache_ram, device=None):
     port = free_port()
     log = Path(os.environ.get("TMPDIR", "/tmp")) / f"slot_restore.{port}.log"
     cmd = [str(build.bin / "llama-server"), "-m", str(model), "-ngl", "99",
            "-c", str(SLOTS * CTX_PER_SLOT), "-np", str(SLOTS),
            "--cache-ram", str(cache_ram),
-           "--host", "127.0.0.1", "--port", str(port), "--no-warmup"]
+           "--host", "127.0.0.1", "--port", str(port), "--no-warmup",
+           *(["-dev", device] if device else [])]
     with log.open("w") as handle:
         proc = subprocess.Popen(_limited(cmd), stdout=handle, stderr=subprocess.STDOUT,
                                 stdin=subprocess.DEVNULL,
@@ -83,6 +84,7 @@ def _serve(build, model, cache_ram):
 def run(ctx):
     done = total = 0
     for build in ctx.builds:
+        card = ctx.card_for(build) or ""
         if not (build.bin / "llama-server").exists():
             ctx.skip_permanently(NAME, f"{build.backend} build has no llama-server",
                                  backend=build.backend, build=build.version)
@@ -91,7 +93,7 @@ def run(ctx):
             for cache_ram, name in ((8192, "cache-ram 8192"), (0, "cache-ram off")):
                 total += 1
                 key = f"{model.stem}:{name.replace(' ', '-')}"
-                if ctx.results.has_prefix(NAME, "", build.backend, build.version, key):
+                if ctx.results.has_prefix(NAME, card, build.backend, build.version, key):
                     done += 1
                     continue
                 if ctx.out_of_budget():
@@ -99,9 +101,9 @@ def run(ctx):
                 if not card_is_idle(ctx):
                     ctx.defer(NAME, f"card busy before {key}")
                     break
-                proc, port, fehler = _serve(build, model, cache_ram)
+                proc, port, fehler = _serve(build, model, cache_ram, card or None)
                 if not proc:
-                    ctx.results.add(NAME, "", build.backend, build.version, key,
+                    ctx.results.add(NAME, card, build.backend, build.version, key,
                                     "failed", "", fehler)
                     ctx.say(f"  {build.backend} {model.stem} {name}: {fehler}")
                     done += 1
@@ -125,16 +127,16 @@ def run(ctx):
                         proc.kill()
                 done += 1
                 kalt = erst[0]
-                ctx.results.add(NAME, "", build.backend, build.version, f"{key}:cold",
+                ctx.results.add(NAME, card, build.backend, build.version, f"{key}:cold",
                                 f"{kalt['prompt_ms']:.0f}", "ms prefill",
                                 f"{kalt['evaluated']} tokens evaluated, "
                                 f"{kalt['cached']} cached")
-                ctx.results.add(NAME, "", build.backend, build.version, f"{key}:returning",
+                ctx.results.add(NAME, card, build.backend, build.version, f"{key}:returning",
                                 f"{wieder['prompt_ms']:.0f}", "ms prefill",
                                 f"{wieder['evaluated']} tokens evaluated, "
                                 f"{wieder['cached']} cached, after {USERS - 1} others "
                                 f"used {SLOTS} slots")
-                ctx.results.add(NAME, "", build.backend, build.version, f"{key}:still_warm",
+                ctx.results.add(NAME, card, build.backend, build.version, f"{key}:still_warm",
                                 f"{sofort['prompt_ms']:.0f}", "ms prefill",
                                 f"{sofort['evaluated']} tokens evaluated, "
                                 f"{sofort['cached']} cached")

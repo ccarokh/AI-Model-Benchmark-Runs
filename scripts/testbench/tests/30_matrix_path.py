@@ -25,6 +25,7 @@ ARGS = ("-p", "2048", "-n", "128", "-r", "5", "-ngl", "99")
 
 def run(ctx):
     for build in ctx.builds:
+        card = ctx.card_for(build) or ""
         variants = SWITCHES.get(build.backend.split("+")[0])
         if not variants:
             ctx.skip_permanently(NAME, f"no known switches for backend {build.backend}",
@@ -32,18 +33,18 @@ def run(ctx):
             continue
         for model in ctx.models:
             for label, env in variants:
-                if ctx.results.has_prefix(NAME, "", build.backend, build.version,
+                if ctx.results.has_prefix(NAME, card, build.backend, build.version,
                                           f"{model.stem}:{label}") or ctx.out_of_budget():
                     continue
                 if not card_is_idle(ctx):
                     ctx.defer(NAME, "card busy")
                     continue
-                r = bench(build, model, *ARGS, env=env)
+                r = bench(build, model, *ARGS, env=env, device=card or None)
                 if not r:
                     ctx.defer(NAME, f"no measurement for {model.stem}/{label}")
                     continue
                 for phase, unit in (("pp", "t/s prefill"), ("tg", "t/s generation")):
-                    ctx.results.add(NAME, "", build.backend, build.version,
+                    ctx.results.add(NAME, card, build.backend, build.version,
                                     f"{model.stem}:{label}:{phase}", f"{r[phase]:.2f}", unit)
                 ctx.say(f"  {build.backend} {model.stem}/{label}: "
                         f"pp={r['pp']:.1f} tg={r['tg']:.2f}")

@@ -26,6 +26,7 @@ MIN_SAMPLES = 4
 def run(ctx):
     done = total_cells = 0
     for build in ctx.builds:
+        card = ctx.card_for(build) or ""
         if not (build.bin / "llama-server").exists():
             ctx.skip_permanently(NAME, f"{build.backend} build has no llama-server",
                                  backend=build.backend, build=build.version)
@@ -42,7 +43,7 @@ def run(ctx):
             except (TypeError, ValueError):
                 gesamt = 0
             if gesamt < 4096 * max(SPLITS):
-                ctx.results.add(NAME, "", build.backend, build.version, model.stem,
+                ctx.results.add(NAME, card, build.backend, build.version, model.stem,
                                 "not run", "",
                                 f"measured ceiling {decke or 'unknown'} -- too small to "
                                 f"split {max(SPLITS)} ways at 4096 each")
@@ -50,7 +51,7 @@ def run(ctx):
             for slots in SPLITS:
                 total_cells += 1
                 key = f"{model.stem}:{gesamt}:{slots}slots"
-                if ctx.results.has_prefix(NAME, "", build.backend, build.version, key):
+                if ctx.results.has_prefix(NAME, card, build.backend, build.version, key):
                     done += 1
                     continue
                 if ctx.out_of_budget():
@@ -60,13 +61,13 @@ def run(ctx):
                     break
                 with WattSampler(ctx.power, interval=SAMPLE_INTERVAL) as sampler:
                     probe = server_probe(build, model, "Nenne drei Farben.",
-                                         "-np", str(slots),
+                                         "-np", str(slots), device=card or None,
                                          n_predict=16, ctx_size=gesamt)
                 peak = sampler.peak_vram or 0
                 proben = len(sampler.vram)
                 done += 1
                 if not probe["ok"]:
-                    ctx.results.add(NAME, "", build.backend, build.version, key,
+                    ctx.results.add(NAME, card, build.backend, build.version, key,
                                     "failed", f"{gesamt} total, {slots} slots",
                                     probe["reason"])
                     ctx.say(f"  {build.backend} {model.stem}: {gesamt} in {slots} slots "
@@ -74,7 +75,7 @@ def run(ctx):
                     continue
                 zweifel = ("only %d samples -- undersampled, do not read as a peak" % proben
                            if proben < MIN_SAMPLES else "")
-                ctx.results.add(NAME, "", build.backend, build.version, f"{key}:vram",
+                ctx.results.add(NAME, card, build.backend, build.version, f"{key}:vram",
                                 str(peak), "MiB peak",
                                 f"{gesamt} tokens total across {slots} slots, "
                                 f"{gesamt // slots} each, {proben} samples"

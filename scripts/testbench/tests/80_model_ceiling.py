@@ -27,8 +27,9 @@ def run(ctx):
     # same shortcut this suite keeps finding in its own tests.
     done = total = 0
     for build, model in [(b, m) for b in ctx.builds for m in ctx.models]:
+        card = ctx.card_for(build) or ""
         total += 1
-        if ctx.results.has_prefix(NAME, "", build.backend, build.version, model.stem):
+        if ctx.results.has_prefix(NAME, card, build.backend, build.version, model.stem):
             done += 1
             continue
         if ctx.out_of_budget():
@@ -38,9 +39,9 @@ def run(ctx):
             continue
         size_gib = model.stat().st_size / 1024 ** 3
         with WattSampler(ctx.power, interval=INTERVAL) as sampler:
-            ok, reason = bench_probe(build, model, *PROBE)
+            ok, reason = bench_probe(build, model, *PROBE, device=card or None)
         peak = sampler.peak_vram or 0
-        ctx.results.add(NAME, "", build.backend, build.version,
+        ctx.results.add(NAME, card, build.backend, build.version,
                         f"{model.stem}:fits", "yes" if ok else "no", "",
                         reason if not ok else f"file {size_gib:.2f} GiB")
         if ok:
@@ -51,7 +52,7 @@ def run(ctx):
                 doubt = f"only {samples} samples -- undersampled, do not read as a peak"
             elif overhead < 0:
                 doubt = "peak below the file size -- the load was not caught, treat as invalid"
-            ctx.results.add(NAME, "", build.backend, build.version,
+            ctx.results.add(NAME, card, build.backend, build.version,
                             f"{model.stem}:vram", str(peak), "MiB peak",
                             f"file {size_gib:.2f} GiB, overhead {overhead:.0f} MiB, "
                             f"{samples} samples{'; ' + doubt if doubt else ''}")

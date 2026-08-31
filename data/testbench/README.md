@@ -14,7 +14,7 @@ threshold settings within one variant.
 | Column | |
 |---|---|
 | `key` | `test\|card\|backend\|build\|parameter` — unique per measurement; a key already present is never measured again |
-| `card` | the device id the backend itself uses (`Vulkan0`, `CUDA0`) |
+| `card` | the device id the backend itself uses (`Vulkan0`, `CUDA0`). **Empty means the device was not pinned** -- the backend chose, and on a host with two cards it spreads the model across both. Rows written before 2026-08-31 are empty for every test except `reference`, and on the two-card host those figures are 35 to 65 percent below the same model on its fast card alone. They are not wrong; they measure a different thing, and they must not be compared with pinned rows |
 | `note` | how the figure was taken, or why there is none |
 
 Rows whose `note` starts with `skipped:` are **permanent** skips — one card, no power
