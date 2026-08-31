@@ -95,6 +95,7 @@ class Lease:
         self.url, self.holder = url.rstrip("/"), holder
         self.token = Path(token_file).read_text().strip() if Path(token_file).exists() else None
         self.id = None
+        self.reason = ""      # what the supervisor last said about refusing
         self._stop = False
 
     def hold(self, window: str = "") -> bool:
@@ -114,8 +115,15 @@ class Lease:
                 return True
             if window and not in_window(window):
                 return False
-            if tries == 1 or tries % 10 == 0:
-                print(f"[lease] not granted (attempt {tries}) -- retrying", flush=True)
+            if tries == 1 or tries % 5 == 0:
+                # THE SERVER'S OWN REASON, not "not granted". On 31.08. a run
+                # waited sixteen minutes in this loop while the supervisor sat
+                # in a grant that never completed -- and every line it printed
+                # said only that it was retrying. The reason was one field away:
+                # "a GPU lease is currently being granted", which names the
+                # stuck party immediately.
+                print(f"[lease] attempt {tries}: {self.reason or 'no answer from the supervisor'}"
+                      f" -- retrying at {self.url}", flush=True)
             if not window and tries > 60:
                 return False
             _t.sleep(60)
@@ -135,7 +143,9 @@ class Lease:
                           "-H", "Content-Type: application/json",
                           "-d", json.dumps({"holder": self.holder})], timeout=20)
         try:
-            self.id = json.loads(out)["lease_id"]
+            antwort = json.loads(out)
+            self.reason = antwort.get("reason") or antwort.get("code") or ""
+            self.id = antwort["lease_id"]
         except Exception:
             return False
         import threading
