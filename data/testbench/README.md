@@ -21,4 +21,13 @@ Rows whose `note` starts with `skipped:` are **permanent** skips — one card, n
 sensor — recorded so a rerun does not ask again. A row with an empty `value` is a
 measurement that failed, which for the ceiling tests is the result.
 
+`system-a-7900xtx.tsv` — the machine that serves: a 24 560 MiB Radeon RX 7900 XTX beside
+an 8 438 MiB RTX 2070, llama.cpp v0.2.0 on Vulkan, 3672 rows. It measures under a GPU
+lease, at night, in whatever time the service leaves it.
+
+**Read the `card` column first on this file.** Rows measured before 2026-08-31 leave it
+empty, which means the backend chose — and with two cards present it spread each model
+across both. Those figures are one to two times below the same model pinned to the fast
+card. They are measurements of a machine, not of a card.
+
 Produced by [`run_all.py`](../../scripts/testbench/run_all.py).

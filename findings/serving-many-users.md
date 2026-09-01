@@ -2,9 +2,9 @@
 
 Every other figure in this repository is one request on an empty card — the number a person sees when nobody else is using the machine. **That is not the number a service delivers.** This is the same hardware asked the question a deployment actually has.
 
-Measured on an RTX 4070 Super, 12 282 MiB, Vulkan and CUDA from the same commit, by [`95_concurrency`](../scripts/testbench/tests/95_concurrency.py), [`96_context_split`](../scripts/testbench/tests/96_context_split.py) and [`97_slot_restore`](../scripts/testbench/tests/97_slot_restore.py). Each user is a retrieval turn: a passage, a question, a 200-token answer, **8 192 tokens of context per user**.
+Two cards: an RTX 4070 Super with 12 282 MiB, Vulkan and CUDA from the same commit, and the 24 560 MiB 7900 XTX that serves. Measured by [`95_concurrency`](../scripts/testbench/tests/95_concurrency.py), [`96_context_split`](../scripts/testbench/tests/96_context_split.py) and [`97_slot_restore`](../scripts/testbench/tests/97_slot_restore.py). Each user is a retrieval turn: a passage, a question, a 200-token answer, **8 192 tokens of context per user**.
 
-## One slot per user: the wall is memory, and it arrives early
+## One slot per user on 12 GB: the wall is memory, and it arrives early
 
 | Model | 1 | 2 | 4 | 8 | 16 | Wall |
 |---|---:|---:|---:|---:|---:|---:|
@@ -26,6 +26,29 @@ count at which the server refuses to start.*
 **The user ceiling is the context ceiling divided by the per-user budget.** DeepSeek-R1-14B stops at two users, and 2 × 8 192 = 16 384 is exactly [its measured context ceiling](context-ceiling.md) on this card. The two numbers are one number seen from different sides — which also names the lever: **halve the per-user context and the user count doubles.**
 
 **gpt-oss-20B is the exception and fails differently.** Not the KV cache but the compute buffers, and its aggregate rate *falls* from one user to two — 138 to 124 t/s. The MoE takes parallelism badly.
+
+## On a 24 GB card the memory stops mattering, and something else stops you
+
+The same test on the card that serves, one slot per user, 8 192 tokens each — **aggregate tokens per second, and what one user gets:**
+
+| Model | 1 | 2 | 4 | 8 | 16 | 32 | 64 |
+|---|---|---|---|---|---|---|---|
+| ornith-35b | 108 / 108 | 139 / 76 | 220 / 57 | 217 / 26 | **246 / 16** | | |
+| Qwen3.5-9B | 93 / 93 | 152 / 76 | 210 / 59 | 245 / 33 | **237 / 16** | 284 / 9 | **22 / 0.35** |
+| gemma-4-12b | 68 / 68 | 111 / 55 | 142 / 41 | 202 / 25 | **170 / 11** | 152 / 5 | ✗ |
+
+**Twice the memory did not buy twice the users. It bought a different limit.**
+
+On the 12 GB card the server refused to start and that was the answer. Here the memory holds — 64 × 8 192 is half a million tokens of cache and it allocates — and **the card gives up anyway**:
+
+```
+Qwen3.5-9B, 32 users   284.42 t/s total     9.33 each    13.2 s     0 failed
+Qwen3.5-9B, 64 users    22.49 t/s total     0.35 each   329.8 s     0 failed
+```
+
+**Not one request failed.** The aggregate collapsed by a factor of 12.6 and the slowest answer took five and a half minutes. This is the soft ceiling the test was built to separate from the hard one, and it is the first time it arrived first — on the smaller card the allocator always spoke before the throughput did.
+
+**So the usable number is sixteen, not sixty-four.** Taking ten tokens a second per user as the floor — below it an answer arrives slower than it is read — every model on this card seats **16 users**, and the next step down is already under the floor.
 
 ## Splitting the same context is not free
 
@@ -102,12 +125,37 @@ What to size, in order:
 
 1. **Slots × per-user context** must fit in VRAM alongside the weights — measure it, do not multiply it.
 2. **Slots** decide the aggregate rate. Too few wastes the card.
-3. **Users** divide that rate. Their number is bounded by patience, not memory.
+3. **Users** divide that rate. Their number is bounded by patience, not memory — **and on a large card, by a collapse that arrives before the memory does.**
 4. **`--cache-ram`** must be large enough for the parked conversations, or every return is a cold start.
+5. **Name the card.** On a host with more than one, everything above is measured on a machine instead of a card, and comes out one to two times too slow.
+
+## The number this whole page nearly got wrong
+
+Every figure above for the 24 GB card is from a run that **named the card**. The first
+attempt did not, and on a host that also holds an RTX 2070 llama.cpp spread each model
+across both:
+
+| | pinned | backend's choice |
+|---|---|---|
+| Qwen3.5-9B, 4 users | 210 t/s | 76 |
+| gemma-4-12b, 8 users | 202 t/s | 59 |
+| gemma-4-12b, 64 queued on 4 slots | 54 s | 117 s |
+
+Between one and two times too slow, in a table that looked perfectly plausible — the
+figures rose with the user count, the walls were where memory said they should be, and
+nothing in the file said which hardware had produced them. It was caught because one
+number disagreed with a *different* test on the same model, and only 10_reference had
+been pinning its card all along. Details in
+[METHODOLOGY](../METHODOLOGY.md#name-the-card-or-the-backend-names-it-for-you).
+
+**In the data, an empty `card` column means the backend chose.** Those rows are not
+wrong; they measure a machine rather than a card, and they must not be read beside
+pinned ones.
 
 ## What this does not say
 
-- **One card, one prompt shape.** A 200-token answer to a retrieval question. Longer answers hold slots longer and change every number above.
+- **Two cards, one prompt shape.** A 200-token answer to a retrieval question. Longer answers hold slots longer and change every number above.
+- **Why the 24 GB card collapses at 64 users is not established.** The memory allocates and no request fails, so it is not the cache running out. Whether it is the unified KV buffer, the compute buffers, or scheduling across sixty-four slots would need a test that varies one of those.
 - **The RAM cache was measured at ~6 800 tokens per conversation, not 32 768.** The restore cost of a full 32k context is untested, and it is a copy whose size grows with the context.
 - **All users arrive at the same instant here.** Real traffic does not, and a queue that never empties behaves differently from one that does.
 - **`--cache-ram` was measured at its default and at zero**, not swept. How many parked conversations fit before the oldest is dropped is untested.
