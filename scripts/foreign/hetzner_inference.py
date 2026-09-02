@@ -82,7 +82,35 @@ def frage(modell: str, inhalt: str, **kw) -> dict:
 
 
 def text_von(antwort: dict) -> str:
-    return antwort["body"]["choices"][0]["message"]["content"] if antwort["ok"] else ""
+    """The answer, or an empty string -- never None.
+
+    THE FIRST REQUEST OF THIS PROBE CRASHED ON A NULL. A reasoning model handed
+    64 tokens spends all of them thinking and returns `content: null`, with the
+    thinking in `reasoning_content`. That is the same shape as the local finding
+    where a model scored 35 % because its answer was not where the harness
+    looked -- and it is exactly what a probe exists to surface rather than die on.
+    """
+    if not antwort["ok"]:
+        return ""
+    m = antwort["body"]["choices"][0].get("message", {})
+    return m.get("content") or ""
+
+
+def form_von(antwort: dict) -> str:
+    """What shape the answer came back in, when it is not plain content."""
+    if not antwort["ok"]:
+        return f"failed {antwort['status']}"
+    wahl = antwort["body"]["choices"][0]
+    m = wahl.get("message", {})
+    teile = [f"finish={wahl.get('finish_reason')}"]
+    if not m.get("content"):
+        teile.append("content=null")
+    if m.get("reasoning_content"):
+        teile.append(f"reasoning_content={len(m['reasoning_content'])} chars")
+    n = antwort["body"].get("usage", {})
+    if n:
+        teile.append(f"tokens={n.get('completion_tokens')}")
+    return ", ".join(teile)
 
 
 def probe():
@@ -105,11 +133,17 @@ def probe():
         hashes = []
         for _ in range(2):
             time.sleep(ABSTAND)
-            a = frage(modell, "Nenne die ersten zehn Primzahlen.", temperature=0, max_tokens=64)
+            # 2048 rather than 64: a reasoning model given a small budget
+            # returns nothing but thinking, and an empty answer measured twice
+            # is deterministic in the least useful way.
+            a = frage(modell, "Nenne die ersten zehn Primzahlen.", temperature=0, max_tokens=2048)
             if not a["ok"]:
                 print(f"  request failed: {a['status']} {a.get('error','')}")
                 break
-            hashes.append(hashlib.sha256(text_von(a).encode()).hexdigest()[:16])
+            t = text_von(a)
+            print(f"  answer: {form_von(a)}"
+                  + (f", {len(t)} chars" if t else "  <- NO ANSWER TEXT"))
+            hashes.append(hashlib.sha256(t.encode()).hexdigest()[:16])
         if len(hashes) == 2:
             print(f"  temperature 0 twice: {hashes[0]} / {hashes[1]}"
                   f"  -> {'deterministic' if hashes[0] == hashes[1] else 'NOT deterministic'}")
@@ -129,7 +163,7 @@ def probe():
         # A rate, recorded only so that nobody mistakes it for one of ours.
         time.sleep(ABSTAND)
         t0 = time.time()
-        a = frage(modell, "Schreibe drei Saetze ueber Wartung.", temperature=0, max_tokens=200)
+        a = frage(modell, "Schreibe drei Saetze ueber Wartung.", temperature=0, max_tokens=2048)
         if a["ok"]:
             n = a["body"].get("usage", {}).get("completion_tokens", 0)
             print(f"  {n} tokens in {time.time() - t0:.1f} s -- THEIR hardware under THEIR load, "
