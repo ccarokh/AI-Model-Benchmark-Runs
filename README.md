@@ -64,6 +64,7 @@ Everything above that is untested — see [open](#open).
 | Item | Status |
 |---|---|
 | Models above ~24 GB — incl. GLM-4.5-Air, Hunyuan-A13B | never run |
+| **Qwen3.8-Flash-Next** — 177B, the first open-weight release of the Qwen4 architecture, and the next step of the exact line this repository has been tracking: Gated DeltaNet paired with Qwen Sparse Attention. [Kimi-Linear lost 87.9 % of prefill at depth](findings/context-depth.md) and [the hybrid 27B lost 30.3 %, matching the dense model it replaced](findings/context-depth.md#qwen38-27b-a-hybrid-that-behaves-exactly-like-the-dense-model-it-replaces) — QSA is the third data point and the most interesting one on the list. **Q4_K_M is 119.6 GB against a 24 GB card, an 8 GB second card and 15 GB of system memory.** Its `qwen4_exp` architecture also landed in llama.cpp master on 2026-08-27, after the pinned build. Not served by the [foreign endpoint](scripts/foreign/) either, checked 2026-09-02 | **cannot be run here** — watch for it appearing on a hosted endpoint, which is the only route that does not need different hardware |
 | Image generation across several seeds — every figure there is one sample | planned |
 | TTS | planned |
 | Home Assistant voice pipeline | planned |

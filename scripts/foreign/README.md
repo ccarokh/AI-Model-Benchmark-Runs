@@ -42,6 +42,15 @@ The published rate limit is ten requests per sixty seconds, so the script waits 
 seconds **before** each request rather than reacting to refusals: a 429 is not a
 measurement, and a run that collects them is measuring its own impatience.
 
+## Why the model list is worth re-reading
+
+The published list is two models; the endpoint's own `/v1/models` is definitive and the
+selection changes during the experimental phase. That matters for one model in
+particular: **Qwen3.8-Flash-Next**, 177B, whose Q4_K_M weights are 119.6 GB against a
+24 GB card here. It is [on the open list](../../README.md#open) as *cannot be run here*,
+and a hosted endpoint is the only route to it that does not require different hardware.
+`probe` prints the live list every time it runs.
+
 ## Reading whatever comes out of it
 
 Results carry a provider, a precision and a date, and belong in their own file. **They
