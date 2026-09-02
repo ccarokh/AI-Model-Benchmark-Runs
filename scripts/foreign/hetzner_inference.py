@@ -187,27 +187,51 @@ def belebele(n: int = 900):
     BUCHSTABE = re.compile(r"\b([ABCD])\b")
     zeilen = []
     for modell in MODELLE:
-        richtig = ohne = 0
+        richtig = ohne = leer = 0
         t0 = time.time()
         for i, ex in enumerate(ds):
             time.sleep(ABSTAND)
+            # 4096, NOT 512. The first attempt at this used 512 and scored
+            # 0.007 over 150 questions -- below the 0.25 of guessing, because a
+            # reasoning model spent every token thinking and returned
+            # content: null. The probe in this same file had already asked for
+            # 2048 and the model needed about 900.
             a = frage(modell, vorlage.format(
                 passage=ex["flores_passage"], question=ex["question"],
                 a=ex["mc_answer1"], b=ex["mc_answer2"], c=ex["mc_answer3"], d=ex["mc_answer4"]),
-                temperature=0, max_tokens=512)
+                temperature=0, max_tokens=4096)
             if not a["ok"]:
                 ohne += 1
                 continue
-            treffer = BUCHSTABE.findall(text_von(a))
+            t = text_von(a)
+            if not t:
+                # AN EMPTY ANSWER IS NOT A WRONG ANSWER. Counting it as one is
+                # how a broken stand comes back looking like a bad model.
+                leer += 1
+                continue
+            treffer = BUCHSTABE.findall(t)
             gold = ["A", "B", "C", "D"][int(ex["correct_answer_num"]) - 1]
             if treffer and treffer[-1] == gold:
                 richtig += 1
             if (i + 1) % 25 == 0:
-                print(f"  {modell} {i+1}/{n} -- {richtig/(i+1):.3f}", file=sys.stderr, flush=True)
+                print(f"  {modell} {i+1}/{n} -- {richtig/(i+1):.3f}"
+                      + (f"  ({leer} without text)" if leer else ""),
+                      file=sys.stderr, flush=True)
+            # BELOW CHANCE IS NOT A RESULT. Four options means 0.25 by guessing;
+            # anything under that says the stand cannot read this model, and
+            # continuing for another 850 questions only makes a wrong number
+            # more precise.
+            if i + 1 >= 50 and richtig / (i + 1) < 0.20:
+                print(f"  {modell}: {richtig}/{i+1} is below chance -- the stand is not "
+                      f"reading this model ({leer} answers had no text). Stopping.",
+                      file=sys.stderr, flush=True)
+                break
+        beantwortet = n - ohne - leer
         zeilen.append({"provider": "hetzner-inference-experimental", "model": modell,
                        "precision": "FP8", "harness": "generate", "n": n,
                        "correct": richtig, "accuracy": round(richtig / n, 4),
-                       "no_answer": ohne, "seconds": round(time.time() - t0),
+                       "answered": beantwortet, "no_text": leer, "request_failed": ohne,
+                       "seconds": round(time.time() - t0),
                        "measured": time.strftime("%Y-%m-%d")})
         print(json.dumps(zeilen[-1]))
     kopf = list(zeilen[0])
