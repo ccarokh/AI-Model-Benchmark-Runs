@@ -275,3 +275,16 @@ repository was recovered from the instance count.
 
 That is the incident behind
 [the naming rule in METHODOLOGY](../METHODOLOGY.md#put-every-varying-parameter-into-the-output-filename).
+
+## Fallback node
+
+`fallback_node_cpu_vs_gpu.tsv` and `fallback_node_thermal.tsv` — a 2014 laptop
+(i7-4710HQ, GTX 850M 4 GB DDR3) that stands in when the serving host has no GPU to
+spare. The card doubles generation and does nothing for prefill, which is the wrong way
+round for embedding and reranking.
+
+**The thermal file is a `before-service` baseline, recorded on purpose.** The machine is
+due a clean and fresh thermal paste; after that the same script produces an `after`
+series and the two can be held against each other. Recording it first is the only reason
+that comparison will be possible at all — the state being measured is about to be
+destroyed.
