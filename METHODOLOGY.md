@@ -386,6 +386,37 @@ Two habits follow:
 - **When a number disagrees with another number, suspect the setup before the change
   you just made.** The recent change is the salient suspect and rarely the guilty one.
 
+## An efficiency is not a constant you can extrapolate with
+
+This repository has a calibrated scale: generation rate times model size is the bandwidth
+a card actually achieves. Across four cards it looked like a property of the hardware.
+
+| Card | Bandwidth | `tg128` | achieved | efficiency |
+|---|---:|---:|---:|---:|
+| RX 7900 XTX | 960 GB/s | 251.23 | 507 | 52.8 % |
+| RTX 3080 | 760 | 218.90 | 442 | 58.1 % |
+| RTX 2070 | 448 | 126.29 | 255 | 56.9 % |
+
+Handed a fifth card whose memory type was unknown — a GTX 850M, sold with either DDR3 at
+32 GB/s or GDDR5 at 64 — the scale was used backwards to identify it. It achieved
+26.6 GB/s. **On DDR3 that is 83 % efficiency, above every card in the table, so the
+conclusion was GDDR5.** Two independent reviews of that exact laptop say DDR3.
+
+The reasoning was wrong in a way the numbers could not show. **Efficiency is not an
+architecture's constant, it is a function of speed.** Every token carries fixed costs
+beside the weight streaming — kernel launches, attention, sampling. At 250 tokens a
+second those costs are a visible share, which is why the fast cards sit near 55 %. At
+**13** tokens a second they vanish into the noise and the run is almost pure streaming,
+where 83 % is ordinary rather than suspicious.
+
+So the extrapolation ran ten times below its calibration range and inverted a figure that
+moves with the very quantity being extrapolated. **A ratio derived from a measurement
+range is evidence only inside that range** — and a scale built to predict one direction
+(bandwidth → generation) does not automatically run backwards.
+
+What survives is the useful part: the card reaches 83 % of a 32 GB/s bus, so it is
+saturated. No model, setting or newer runtime will find headroom that is not there.
+
 ## A measurement that kills the machine is not a measurement
 
 Twice on the serving host — 15 GB of RAM, a 24 GB card — the kernel's OOM killer took
