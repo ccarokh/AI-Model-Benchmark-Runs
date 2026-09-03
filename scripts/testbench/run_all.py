@@ -254,6 +254,10 @@ def main() -> int:
     host = Path("/etc/hostname").read_text().strip() if Path("/etc/hostname").exists() else socket.gethostname()
     out_dir = Path(cfg["out_dir"]) if cfg["out_dir"] else HERE / "results" / host
     out_dir.mkdir(parents=True, exist_ok=True)
+    # Probe logs land beside the results, not in a temporary directory that is
+    # swept, and on one machine is RAM.
+    import harness
+    harness.LOG_DIR = out_dir / "logs"
 
     tests = discover_tests(args.tests)
     if args.list:

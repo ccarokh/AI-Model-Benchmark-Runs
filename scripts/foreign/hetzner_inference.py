@@ -38,6 +38,7 @@ them.
 """
 import hashlib
 import json
+import pathlib
 import os
 import sys
 import time
@@ -45,6 +46,20 @@ import urllib.error
 import urllib.request
 
 BASIS = "https://inference.hetzner.com/api/v1"
+
+# WHERE THE RESULTS GO, AND THAT IT IS NOT A TEMPORARY FILE.
+# The first attempt at this wrote its answers to stdout and nowhere else. Nine
+# hours in, the workstation rebooted; the log went with the reboot and the
+# temporary directory was swept an hour later. Four hundred answered questions
+# existed and none of them survived.
+#
+# So: a durable path inside the repository, written PER QUESTION rather than at
+# the end, and read back at startup so a run continues where it stopped. That is
+# the testbench's own rule -- the results are the state, and there is no separate
+# state file to fall out of step with them.
+HIER = pathlib.Path(__file__).resolve().parent
+ROH = HIER.parent.parent / "data" / "foreign_hetzner_belebele_raw.jsonl"
+ERGEBNIS = HIER.parent.parent / "data" / "foreign_hetzner_belebele.tsv"
 MODELLE = ["Qwen/Qwen3.6-35B-A3B-FP8", "Qwen3.8-27B"]
 
 # Ten requests per sixty seconds, per the published limits. Six seconds between
@@ -185,11 +200,29 @@ def belebele(n: int = 900):
                "\n\nText: {passage}\n\nFrage: {question}\nA) {a}\nB) {b}\nC) {c}\nD) {d}")
     ds = load_dataset("facebook/belebele", "deu_Latn", split="test").select(range(n))
     BUCHSTABE = re.compile(r"\b([ABCD])\b")
+    ROH.parent.mkdir(parents=True, exist_ok=True)
+    schon = {}
+    if ROH.exists():
+        for zeile in ROH.read_text().splitlines():
+            if zeile.strip():
+                d = json.loads(zeile)
+                schon[(d["model"], d["i"])] = d
+    if schon:
+        print(f"  {len(schon)} answers already on file in {ROH.name} -- continuing",
+              file=sys.stderr, flush=True)
+
     zeilen = []
     for modell in MODELLE:
         richtig = ohne = leer = 0
         t0 = time.time()
         for i, ex in enumerate(ds):
+            gold = ["A", "B", "C", "D"][int(ex["correct_answer_num"]) - 1]
+            alt_ = schon.get((modell, i))
+            if alt_ is not None:
+                richtig += alt_["hit"]
+                leer += alt_["empty"]
+                ohne += alt_["failed"]
+                continue
             time.sleep(ABSTAND)
             # 4096, NOT 512. The first attempt at this used 512 and scored
             # 0.007 over 150 questions -- below the 0.25 of guessing, because a
@@ -200,19 +233,18 @@ def belebele(n: int = 900):
                 passage=ex["flores_passage"], question=ex["question"],
                 a=ex["mc_answer1"], b=ex["mc_answer2"], c=ex["mc_answer3"], d=ex["mc_answer4"]),
                 temperature=0, max_tokens=4096)
-            if not a["ok"]:
-                ohne += 1
-                continue
             t = text_von(a)
-            if not t:
-                # AN EMPTY ANSWER IS NOT A WRONG ANSWER. Counting it as one is
-                # how a broken stand comes back looking like a bad model.
-                leer += 1
-                continue
-            treffer = BUCHSTABE.findall(t)
-            gold = ["A", "B", "C", "D"][int(ex["correct_answer_num"]) - 1]
-            if treffer and treffer[-1] == gold:
-                richtig += 1
+            treffer = BUCHSTABE.findall(t) if t else []
+            # AN EMPTY ANSWER IS NOT A WRONG ANSWER. Counting it as one is how a
+            # broken stand comes back looking like a bad model.
+            satz = {"model": modell, "i": i, "hit": int(bool(treffer) and treffer[-1] == gold),
+                    "empty": int(a["ok"] and not t), "failed": int(not a["ok"]),
+                    "chars": len(t), "at": time.strftime("%Y-%m-%dT%H:%M:%S")}
+            with ROH.open("a") as f:      # written before it is counted
+                f.write(json.dumps(satz) + "\n")
+            richtig += satz["hit"]
+            leer += satz["empty"]
+            ohne += satz["failed"]
             if (i + 1) % 25 == 0:
                 print(f"  {modell} {i+1}/{n} -- {richtig/(i+1):.3f}"
                       + (f"  ({leer} without text)" if leer else ""),
@@ -235,9 +267,9 @@ def belebele(n: int = 900):
                        "measured": time.strftime("%Y-%m-%d")})
         print(json.dumps(zeilen[-1]))
     kopf = list(zeilen[0])
-    print("\t".join(kopf))
-    for z in zeilen:
-        print("\t".join(str(z[k]) for k in kopf))
+    ERGEBNIS.write_text("\t".join(kopf) + "\n"
+                        + "".join("\t".join(str(z[k]) for k in kopf) + "\n" for z in zeilen))
+    print(f"written to {ERGEBNIS}", file=sys.stderr)
 
 
 if __name__ == "__main__":

@@ -6,7 +6,7 @@ import json
 import time
 import urllib.request
 
-from harness import _limited, card_is_idle, free_port  # noqa: F401
+from harness import _limited, card_is_idle, free_port, log_path_for  # noqa: F401
 from harness import Build  # noqa: F401
 import os
 import subprocess
@@ -57,7 +57,7 @@ def _ask(port, prompt):
 
 def _serve(build, model, cache_ram, device=None):
     port = free_port()
-    log = Path(os.environ.get("TMPDIR", "/tmp")) / f"slot_restore.{port}.log"
+    log = log_path_for(f"slot_restore.{port}.log")
     cmd = [str(build.bin / "llama-server"), "-m", str(model), "-ngl", "99",
            "-c", str(SLOTS * CTX_PER_SLOT), "-np", str(SLOTS),
            "--cache-ram", str(cache_ram),

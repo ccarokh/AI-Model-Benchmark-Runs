@@ -39,6 +39,24 @@ COLUMNS = ["key", "host", "time", "test", "card", "backend", "build",
 # the night carries on.
 MEMORY_SCOPE = os.environ.get("TESTBENCH_MEMORY_LIMIT", "")
 
+# WHERE A PROBE'S SERVER LOG GOES, AND WHY NOT /tmp.
+# Two reasons, and the second is the serious one. A probe reads the failure
+# reason out of the server's own output, and after the run that output is the
+# only record of what a refusal actually said -- in /tmp it is gone by the time
+# anyone asks. And on the machine that serves, /tmp is a 7.8 GB tmpfs: it is
+# RAM, on a host with 15 GB of it that the OOM killer has already visited twice.
+# A server logging for hours writes into memory there.
+#
+# run_all points this at the results directory once it knows it. The fallback is
+# only for a harness used directly, outside the runner.
+LOG_DIR = Path(os.environ.get("TESTBENCH_LOG_DIR", "")) if os.environ.get("TESTBENCH_LOG_DIR") \
+    else Path(__file__).resolve().parent / "results" / "logs"
+
+
+def log_path_for(name: str) -> Path:
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
+    return LOG_DIR / name
+
 
 def _limited(cmd: list, limit: str | None = None) -> list:
     """The command, wrapped in a memory-capped scope if one was asked for.
@@ -611,7 +629,7 @@ def server_probe(build: Build, model: Path, prompt: str, *extra,
     import urllib.request
 
     port = free_port()
-    log = Path(os.environ.get("TMPDIR", "/tmp")) / f"server_probe.{port}.log"
+    log = log_path_for(f"server_probe.{port}.log")
     cmd = [str(build.bin / "llama-server"), "-m", str(model),
            "-ngl", str(ngl), "-c", str(ctx_size),
            "--host", "127.0.0.1", "--port", str(port), "--no-warmup",
@@ -731,7 +749,7 @@ def server_load(build: Build, model: Path, prompt: str, users: int,
     # and the waiting is the number worth having.
     slots = slots or users
     port = free_port()
-    log = Path(os.environ.get("TMPDIR", "/tmp")) / f"server_load.{port}.log"
+    log = log_path_for(f"server_load.{port}.log")
     cmd = [str(build.bin / "llama-server"), "-m", str(model),
            "-ngl", str(ngl), "-c", str(slots * per_user_ctx), "-np", str(slots),
            "--host", "127.0.0.1", "--port", str(port), "--no-warmup",
