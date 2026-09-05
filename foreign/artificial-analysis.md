@@ -88,7 +88,29 @@ That is one model at three points, not a correlation. It is enough to say their 
 
 **Of the ~31 bars on their open-weights chart, exactly one model runs here** — the Qwen3.8 27B above. GLM 5/5.1/5.2/5.3, Kimi K3 and K2, DeepSeek V4 Pro and Flash, MiniMax M2.7 and M3, Qwen3.8 2.4T A95B and Flash-Next, and the smaller names on the tail have never been run.
 
-The reason is the [size ceiling](../README.md#size-ceiling), not an omission: almost nothing on that chart fits 24 GB. Flash-Next alone is 119.6 GB at Q4_K_M.
+The reason is the [size ceiling](../README.md#size-ceiling), not an omission. Sizes looked up 05.09.2026, smallest first:
+
+| Model | Total / active | Q4_K_M |
+|---|---|---:|
+| Qwen3.8-Flash-Next | 177B | **119.6 GB** |
+| MiniMax-M2.7 | 229B / 10B | ~126 GB |
+| Inkling Small | 276B / 12B | ~150 GB |
+| Hy3 | 295B / 21B | ~160 GB |
+| Motif 3 | 314B / 13.2B | ~170 GB |
+| GLM-5.3-Flash | 320B / 18B | **199.7 GB** |
+| K2 Horizon | 375B / 23B | ~205 GB |
+| Nex-N2-Pro · Agnes-2.5 Pro Alpha | 397B / 17B | ~215 GB |
+| MiniMax-M3 | 428B / 23B | ~265 GB |
+| MiMo-V2.5-Pro | 1.02T / 42B | — |
+| Qwen3.8 2.4T A95B | 2.4T / 95B | — |
+
+Only the two bold figures are published numbers; the rest are scaled from the parameter count and are indicative.
+
+**The smallest is 119.6 GB against 24 + 8 GB of VRAM and 15 GB of system memory.** A factor of 2.5 in the best case, and low active-parameter counts do not help: a GGUF needs *all* weights resident, not only the active ones.
+
+**So the "might run, needs proving" list is empty** — not deferred, empty. Nothing on that chart is a candidate.
+
+⚠️ The chart was read from a screenshot that cuts off at index 30. It is sorted descending, so anything runnable would sit in the part not seen.
 
 ## Open
 
