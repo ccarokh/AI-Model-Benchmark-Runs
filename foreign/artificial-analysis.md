@@ -125,7 +125,11 @@ Two are worth a slot on their own terms rather than for the chart: **Ling 3.0 Ti
 
 Also out: Qwen3.5-122B-A10B, gpt-oss-120b, Solar Open2 250B, Ring-2.6-1T, Command A+.
 
-A low active-parameter count does not help: a GGUF needs **all** weights resident, not only the active ones.
+A low active-parameter count does not reduce what has to be held: a GGUF needs **all** weights resident. But resident means **VRAM plus system memory together**, not VRAM alone — with MoE offloading the weights sit in host memory and only the active experts move to the card. Unsloth quotes GLM-5.2 at 744B/40B as needing *one* 24 GB GPU and **256 GB of RAM**.
+
+**So the ceiling here is ~39 GB** — 24 GB on the card and 15 GB of host memory — not the 24 GB the card alone suggests. It changes none of the rows above, because nothing on that chart lands between 24 and 39 GB; the next entry up is Flash-Next at 119.6 GB.
+
+**It does name the cheapest lever this project has, and it is not the card.** Host memory is the binding constraint. More of it would put the whole MoE class within reach through the dynamic 2-bit quants that the [open list](../README.md#open) still carries as untested — two questions answered at once: whether a model of that class runs here at all, and what dynamic quantisation costs in quality.
 
 ## Open
 
