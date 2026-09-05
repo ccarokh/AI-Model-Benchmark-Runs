@@ -86,13 +86,31 @@ That is one model at three points, not a correlation. It is enough to say their 
 
 ## Coverage
 
-**Of the ~31 bars on their open-weights chart, exactly one model runs here** — the Qwen3.8 27B above. GLM 5/5.1/5.2/5.3, Kimi K3 and K2, DeepSeek V4 Pro and Flash, MiniMax M2.7 and M3, Qwen3.8 2.4T A95B and Flash-Next, and the smaller names on the tail have never been run.
+Their open-weights chart, read in full on 05.09.2026. Sizes looked up the same day.
 
-The reason is the [size ceiling](../README.md#size-ceiling), not an omission. Sizes looked up 05.09.2026, smallest first:
+**Already measured here — six of them:** Qwen3.6-27B, Qwen3.5-27B, Qwen3.8-27B, Qwen3.6-35B-A3B, Gemma-4-26B-A4B, Gemma-4-12B.
+
+**Might run, not yet proven — six.** All have finished GGUFs, and all fit the 24 GB card:
+
+| Model | Their index | Size | Q4_K_M |
+|---|---:|---|---:|
+| Ling 3.0 Tiny | 16 | 7.9B / 1.3B active | **~4.5 GB** |
+| Apriel-v1.5-15B Thinker | 15 | 15B dense | ~9 GB |
+| Gemma 4 31B | 22 | 31B dense | **~16 GB** |
+| Granite 4.2 30B | 16 | 29.3B dense | ~17 GB |
+| Nemotron 3.5 Lightning | 16 | 31.6B / 3.6B | ~18 GB |
+| Qwen3.5-35B-A3B | 22 | 35B / 3B | **23 GB** — tight |
+
+Two are worth a slot on their own terms rather than for the chart: **Ling 3.0 Tiny at 4.5 GB would run on the [fallback node](../data/fallback_node_cpu_vs_gpu.tsv)**, and **Qwen3.5-35B-A3B is the generation-to-generation comparison** to the Qwen3.6-35B-A3B already measured.
+
+**K-EXAONE 2.0** could not be sized — unresolved, not excluded.
+
+**Out of reach.** The size ceiling, not an omission; sizes are published figures where bold, otherwise scaled from the parameter count:
 
 | Model | Total / active | Q4_K_M |
 |---|---|---:|
 | Qwen3.8-Flash-Next | 177B | **119.6 GB** |
+| Step 3.5 Flash | 196B / 11B | ~110 GB |
 | MiniMax-M2.7 | 229B / 10B | ~126 GB |
 | Inkling Small | 276B / 12B | ~150 GB |
 | Hy3 | 295B / 21B | ~160 GB |
@@ -102,15 +120,12 @@ The reason is the [size ceiling](../README.md#size-ceiling), not an omission. Si
 | Nex-N2-Pro · Agnes-2.5 Pro Alpha | 397B / 17B | ~215 GB |
 | MiniMax-M3 | 428B / 23B | ~265 GB |
 | MiMo-V2.5-Pro | 1.02T / 42B | — |
+| LongCat 2.0 | 1.6T / 48B | — |
 | Qwen3.8 2.4T A95B | 2.4T / 95B | — |
 
-Only the two bold figures are published numbers; the rest are scaled from the parameter count and are indicative.
+Also out: Qwen3.5-122B-A10B, gpt-oss-120b, Solar Open2 250B, Ring-2.6-1T, Command A+.
 
-**The smallest is 119.6 GB against 24 + 8 GB of VRAM and 15 GB of system memory.** A factor of 2.5 in the best case, and low active-parameter counts do not help: a GGUF needs *all* weights resident, not only the active ones.
-
-**So the "might run, needs proving" list is empty** — not deferred, empty. Nothing on that chart is a candidate.
-
-⚠️ The chart was read from a screenshot that cuts off at index 30. It is sorted descending, so anything runnable would sit in the part not seen.
+A low active-parameter count does not help: a GGUF needs **all** weights resident, not only the active ones.
 
 ## Open
 
