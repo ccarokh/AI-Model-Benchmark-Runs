@@ -65,6 +65,31 @@ These are variables, not constants. They belong in the document rather than insi
 
 **Not usable for:** German quality, quantisation, embedding, reranking, energy, or any speed figure meant to predict this hardware.
 
+## Does their index predict our ranking?
+
+For one model, across three points, it does not.
+
+Their open-weights chart carries **Qwen3.8 27B at three reasoning-effort settings**, and we ran all three. Same model, same settings, different task.
+
+| Setting | Their index | belebele `deu_Latn`, n=150 | Tokens | Seconds |
+|---|---:|---:|---:|---:|
+| low | 34 | 0.9200 | 46 187 | 1 365 |
+| medium | 35 | 0.9200 | 53 626 | 1 571 |
+| xhigh | 41 | 0.9267 | 45 637 | 1 343 |
+| **thinking off** | *not on their chart* | **0.9667** | **28 884** | **898** |
+
+**Their index rises 21 % across the three settings. German reading moves 0.67 points** — at n=150 the noise band is about ±4, so it is flat.
+
+**And the setting they do not carry wins outright.** Switching thinking off is 4 points better than the best effort level, at **37 % fewer tokens and a third less time**. The axis their index rewards most is, for this task, the most expensive one and not the best one.
+
+That is one model at three points, not a correlation. It is enough to say their composite does not transfer to this slot, and not enough to say how it fails in general.
+
+## Coverage
+
+**Of the ~31 bars on their open-weights chart, exactly one model runs here** — the Qwen3.8 27B above. GLM 5/5.1/5.2/5.3, Kimi K3 and K2, DeepSeek V4 Pro and Flash, MiniMax M2.7 and M3, Qwen3.8 2.4T A95B and Flash-Next, and the smaller names on the tail have never been run.
+
+The reason is the [size ceiling](../README.md#size-ceiling), not an omission: almost nothing on that chart fits 24 GB. Flash-Next alone is 119.6 GB at Q4_K_M.
+
 ## Open
 
-**Does their English index predict our German ranking?** The interesting question, and not yet answerable: of the 16+ models measured here, exactly one carries an Intelligence Index value on their open-weights list. Needs the per-model pages, one slug at a time.
+**A real correlation** needs an index value for more of the models measured here. Their open-weights list carries one; the rest would have to come from the per-model pages, one slug at a time.
