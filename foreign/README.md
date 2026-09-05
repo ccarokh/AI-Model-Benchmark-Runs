@@ -30,6 +30,15 @@ an 11-second run.
 |---|---|---|
 | [geerlingguy/ai-benchmarks](https://github.com/geerlingguy/ai-benchmarks) | [geerlingguy-ai-benchmarks.md](geerlingguy-ai-benchmarks.md) | Comparable token rates per card, plus an Ollama-vs-llama.cpp comparison on one machine |
 
+## Cited, not run
+
+Public leaderboards. Nothing is executed here — their published figures are placed
+next to ours, with the column headers saying who measured what.
+
+| Source | Document | What it gave us |
+|---|---|---|
+| [Artificial Analysis](https://artificialanalysis.ai/) | [artificial-analysis.md](artificial-analysis.md) | One model measured on both sides: a consumer card reaches 87–89 % of a hosted endpoint. And the cost comparison **reverses** depending on the input/output mix |
+
 ## Considered, not run
 
 | Benchmark | Why not |

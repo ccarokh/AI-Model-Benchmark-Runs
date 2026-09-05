@@ -38,7 +38,7 @@ Three ways in:
 | Power draw | [Power](hardware/power.md) | 7-point curve from 276 W down to 159 W — at half the core clock, generation still delivers 85 %. Idle costs more per year than throttling saves |
 | Second GPU | [Multi-GPU](hardware/multi-gpu.md) | Capacity, not speed: ~62 % of single-card generation. The bus sat at 0–5 % and doubling its width changed nothing |
 | Backend | [Backends](hardware/backends.md) | Vulkan stays: ROCm is +11 % prefill, −11 % generation |
-| **Foreign benchmarks** | **[foreign/](foreign/)** | Generation scales almost exactly with memory bandwidth. Ollama is llama.cpp underneath — and 25 % slower on identical hardware |
+| **Foreign benchmarks** | **[foreign/](foreign/)** | Generation scales almost exactly with memory bandwidth. Ollama is llama.cpp underneath — and 25 % slower on identical hardware. **Against a public leaderboard, one model measured on both sides: a consumer card reaches 87–89 % of a hosted endpoint, and the cost comparison reverses depending on the input/output mix** |
 | **Method** | **[METHODOLOGY.md](METHODOLOGY.md)** | **The measurement mistakes, with the evidence that exposed each one** |
 
 ## Failed
