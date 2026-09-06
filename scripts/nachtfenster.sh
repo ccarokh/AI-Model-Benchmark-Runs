@@ -30,6 +30,13 @@ L=$E/nachtfenster.log
 RUNTIME=${RUNTIME:-http://127.0.0.1:8080}
 PACHT_SCHLUESSEL=${PACHT_SCHLUESSEL:-/etc/bench/lease.token}
 PACHT_ID=""; HERZ=""
+# Cross-process handshake between the heartbeat (a forked subshell) and the
+# step loop: the loop writes the running step's PID here, the heartbeat kills
+# it there and drops the marker when the lease is provably gone (variables set
+# after the fork are invisible to the subshell, so this goes through files).
+SCHRITT_PID_DATEI="$E/.schritt.pid"
+PACHT_VERLOREN_DATEI="$E/.pacht_verloren"
+rm -f "$SCHRITT_PID_DATEI" "$PACHT_VERLOREN_DATEI"
 WARTESCHLANGE=${WARTESCHLANGE:-$E/warteschlange.txt}
 START_STD=${START_STD:-0}
 ENDE_STD=${ENDE_STD:-8}
@@ -59,9 +66,28 @@ pacht_nehmen(){
   export PACHT_ID
   sag "Pacht $PACHT_ID gehalten"
   # Heartbeat well below the lease TTL (LLM_RUNTIME_LEASE_TTL=300).
+  # No `|| true` here: a swallowed heartbeat is exactly how the night of
+  # 06.09. measured on a shared card for over an hour. A 404 means the lease is
+  # provably gone (expired/returned/revoked) -- do NOT keep beating a dead id
+  # while a step runs. Abort the running step at once (its PID is in the file),
+  # drop the marker so the loop knows the measurement is void, and let this
+  # heartbeat die; `pacht_sichern` re-acquires and starts a fresh one before the
+  # next step. A non-404 error (timeout/5xx/unreachable) may be a blip -- log it
+  # and leave it to the between-step check, rather than end the night on a hiccup.
   ( while :; do sleep 120
-      curl -s -m 10 -o /dev/null -X POST \
-        "$RUNTIME/_manager/lease/$PACHT_ID/heartbeat" -H "x-lease-token: $t" || true
+      code=$(curl -s -m 10 -o /dev/null -w '%{http_code}' -X POST \
+        "$RUNTIME/_manager/lease/$PACHT_ID/heartbeat" -H "x-lease-token: $t" 2>/dev/null)
+      case "$code" in
+        200|204) : ;;
+        404)
+          echo "[$(date '+%d.%m. %H:%M:%S')] HERZSCHLAG: Pacht $PACHT_ID weg (404) -- laufenden Schritt abbrechen, Messung verworfen" >> $L
+          : > "$PACHT_VERLOREN_DATEI"
+          p=$(cat "$SCHRITT_PID_DATEI" 2>/dev/null)
+          [ -n "$p" ] && kill -TERM "$p" 2>/dev/null
+          exit 0 ;;
+        *)
+          echo "[$(date '+%d.%m. %H:%M:%S')] HERZSCHLAG: unerwarteter Status '$code' -- Pacht wird beim naechsten Schritt geprueft" >> $L ;;
+      esac
     done ) & HERZ=$!
   return 0
 }
@@ -106,6 +132,7 @@ pacht_zurueck(){
 }
 
 aufraeumen(){
+  rm -f "$SCHRITT_PID_DATEI" "$PACHT_VERLOREN_DATEI"
   pacht_zurueck
   # Only the server we started ourselves. A pattern match would hit the
   # production runtime as well.
@@ -176,9 +203,22 @@ while read -r zeile; do
   pacht_sichern || { sag "  Fenster zu und keine Pacht -- der Rest bleibt liegen"; break; }
 
   sag "--- $zeile ---"
+  rm -f "$PACHT_VERLOREN_DATEI"
   t0=$(date +%s)
-  bash -c "$zeile" >> $L 2>&1
-  rc=$?
+  # Run the step in the background so the heartbeat can abort it the moment the
+  # lease is gone -- a foreground step is unreachable until it returns, which is
+  # how an hour of shared-card measurement slipped through before.
+  bash -c "$zeile" >> $L 2>&1 & SCHRITT_PID=$!
+  echo "$SCHRITT_PID" > "$SCHRITT_PID_DATEI"
+  wait "$SCHRITT_PID"; rc=$?
+  rm -f "$SCHRITT_PID_DATEI"
+  if [ -f "$PACHT_VERLOREN_DATEI" ]; then
+    rm -f "$PACHT_VERLOREN_DATEI"
+    sag "--- ABGEBROCHEN nach $(( ($(date +%s) - t0) / 60 )) min: Pacht mitten im Schritt verloren -- Messung verworfen, NICHT gezaehlt: $zeile ---"
+    # Not counted as done. The next iteration's pacht_sichern re-acquires the
+    # lease (or ends the night if the window is closed / it cannot be had).
+    continue
+  fi
   sag "--- rc=$rc nach $(( ($(date +%s) - t0) / 60 )) min ---"
   erledigt=$((erledigt+1))
 done < "$WARTESCHLANGE"
