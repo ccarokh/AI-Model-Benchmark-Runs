@@ -58,7 +58,11 @@ BASIS = "https://inference.hetzner.com/api/v1"
 # the testbench's own rule -- the results are the state, and there is no separate
 # state file to fall out of step with them.
 HIER = pathlib.Path(__file__).resolve().parent
-ROH = HIER.parent.parent / "data" / "foreign_hetzner_belebele_raw.jsonl"
+# Two levels up is the repository root when this file sits in scripts/foreign/.
+# Copied anywhere else -- onto a measuring host, say -- it resolves somewhere
+# else entirely, so the destination is overridable rather than merely assumed.
+ROH = pathlib.Path(os.environ.get("HETZNER_ROH", "")) if os.environ.get("HETZNER_ROH") \
+      else HIER.parent.parent / "data" / "foreign_hetzner_belebele_raw.jsonl"
 ERGEBNIS = HIER.parent.parent / "data" / "foreign_hetzner_belebele.tsv"
 MODELLE = ["Qwen/Qwen3.6-35B-A3B-FP8", "Qwen3.8-27B"]
 
