@@ -43,11 +43,19 @@ Boot from the stick, and nothing else. Two things worth telling them beforehand:
 
 Vulkan, not CUDA, for the same reason: it is the one backend measured on all three machines here, so it is the only one whose numbers stand next to the existing rows.
 
-## The one rule this deliberately breaks
+## There is no secret in the image
 
-Elsewhere in this project a WireGuard private key never leaves the host that generated it. Here it is generated at build time and written onto the stick, because the alternative is asking the borrower to read a key off their screen and send it back before anything works at all.
+The machine generates its own WireGuard key on first boot and shows the public half on screen — as text and as a QR code, so reading it back is a photograph rather than twenty transcribed characters. Everything the image carries is public: a hub address, a hub public key, an SSH public key.
 
-The deviation is bounded rather than ignored: the key is good for **one address in the overlay and nothing else**, it reaches exactly one hub, and deleting the peer ends it. Treat the stick as the credential it is.
+Two things follow. The private key never leaves the machine that uses it, which is the rule every other host in this project already follows. And **the ISO itself is not a credential** — it can be rebuilt, copied, and handed to the next person with a card. Access is granted per machine by adding one peer, and revoked by removing it.
+
+The tunnel cannot come up before that peer exists, so it retries every 30 seconds and the machine simply waits. That is the normal state after boot, not a fault.
+
+## Why not encrypt a key to the borrower's public key
+
+Because there is nothing to encrypt. That pattern is the right one when a secret genuinely has to travel — and this design removes the secret from the journey instead. It would also cost the borrower an `age` or GPG setup and a second artefact to handle, in exchange for a round trip they still have to make.
+
+The one design that needs no message back at all is a single-use enrolment token in the image plus a registration endpoint at the hub, which the machine calls with its own fresh public key. That is worth building if borrowed cards become a habit rather than a one-off; it is infrastructure, not a config change.
 
 ## What a borrowed card is worth
 

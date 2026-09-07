@@ -1,6 +1,10 @@
-# Copy to iso.conf and fill in. THIS FILE IS NOT IN GIT, and that is the point:
-# it carries the address of a tunnel endpoint, a WireGuard key and an SSH public
-# key. The build script refuses to run without it rather than inventing defaults.
+# Copy to iso.conf and fill in. Not in git -- not because anything here is
+# secret (it is not: every value below is public material), but because the
+# address of a tunnel endpoint is nobody else's business. The build script
+# refuses to run without it rather than inventing defaults.
+#
+# NO PRIVATE KEY BELONGS IN HERE. The guest generates its own on first boot and
+# shows the public half on screen.
 
 [tunnel]
 # The hub the borrowed machine dials OUT to. It sits behind somebody else's

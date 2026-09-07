@@ -15,11 +15,15 @@ WHY THE PINNED BUILD. llama.cpp is compiled here at the version behind every
 llama-bench number in data/testbench/. A figure from another version compares
 versions, not cards, and the entire reason for borrowing the card is the card.
 
-The private WireGuard key is generated here and written onto the stick. That
-deviates from the project rule that a private key never leaves its host, and the
-deviation is deliberate: the alternative needs the guest to read its key off the
-screen and send it back before anything works. It is bounded instead -- the hub
-grants that key a single /32, and removing the peer revokes it.
+NO SECRET IS BUILT INTO THE IMAGE. The guest generates its own WireGuard key on
+first boot, exactly as every other host in this project does, and shows the
+public half on screen -- as text and as a QR code, so reading it back is a photo
+rather than twenty transcribed characters. Everything the image carries is
+public: a hub address, a hub public key, an SSH public key.
+
+That has a consequence worth having: the ISO itself is not a credential. It can
+be rebuilt, copied and handed to the next person with a card, and access is
+granted per machine by adding one peer -- and revoked by removing it.
 """
 
 import argparse
@@ -42,6 +46,7 @@ nvidia-utils
 vulkan-icd-loader
 vulkan-tools
 wireguard-tools
+qrencode
 openssh
 python
 curl
@@ -137,27 +142,92 @@ def datei(pfad: Path, inhalt: str, modus=0o644):
 def overlay_schreiben(c, arbeit, llama):
     a = arbeit / "airootfs"
 
-    # --- tunnel -------------------------------------------------------------
-    priv = subprocess.run(["wg", "genkey"], capture_output=True, text=True,
-                          check=True).stdout.strip()
-    pub = subprocess.run(["wg", "pubkey"], input=priv, capture_output=True,
-                         text=True, check=True).stdout.strip()
+    # --- tunnel ---------------------------------------------------------
+    # Only public material goes into the image. The key pair is made on the
+    # machine that will use it, which is the same rule every other host in this
+    # project follows -- and it means this ISO is not a credential.
     t = c["tunnel"]
-    datei(a / "etc/wireguard/wg0.conf", f"""# Built by iso/build.py. The guest dials out; nothing dials in.
+    datei(a / "opt/bench/tunnel.env", f"""HUB_ENDPOINT={t['hub_endpoint']}
+HUB_PUBLIC_KEY={t['hub_public_key']}
+HUB_IP={t.get('hub_ip', '10.10.0.1')}
+GUEST_IP={t['guest_ip']}
+""")
+    datei(a / "usr/local/bin/enrol-tunnel", r"""#!/bin/bash
+# Generates this machine's own key pair, builds the tunnel config around it and
+# shows the public half. Nothing secret was shipped with the image; the private
+# key is made here and never leaves.
+set -u
+. /opt/bench/tunnel.env
+umask 077
+mkdir -p /etc/wireguard && chmod 700 /etc/wireguard
+if [ ! -s /etc/wireguard/privatekey ]; then
+  wg genkey | tee /etc/wireguard/privatekey | wg pubkey > /etc/wireguard/publickey
+fi
+cat > /etc/wireguard/wg0.conf <<CONF
 [Interface]
-PrivateKey = {priv}
-Address = {t['guest_ip']}/32
+PrivateKey = $(cat /etc/wireguard/privatekey)
+Address = ${GUEST_IP}/32
 
 [Peer]
-PublicKey = {t['hub_public_key']}
-Endpoint = {t['hub_endpoint']}
+PublicKey = ${HUB_PUBLIC_KEY}
+Endpoint = ${HUB_ENDPOINT}
 # Only the hub. A borrowed machine has no business routing anywhere else.
-AllowedIPs = {t.get('hub_ip', '10.10.0.1')}/32
-# Keeps the hole in their NAT open; without it the tunnel dies when idle and
-# the machine goes quiet in the middle of the night.
+AllowedIPs = ${HUB_IP}/32
+# Keeps the hole in their NAT open; without it the tunnel dies when idle and the
+# machine goes quiet in the middle of the night.
 PersistentKeepalive = 25
-""", 0o600)
-    (a / "etc/wireguard").chmod(0o700)
+CONF
+chmod 600 /etc/wireguard/wg0.conf
+
+PUB=$(cat /etc/wireguard/publickey)
+# Written where a person can find it again after the screen has scrolled.
+{ echo; echo "  This machine's public key:"; echo "    $PUB"; echo;
+  echo "  Address in the overlay: ${GUEST_IP}"; echo; } > /etc/issue.d/10-benchnode.issue
+mkdir -p /opt/results
+printf '%s
+' "$PUB" > /opt/results/publickey
+
+clear
+echo
+echo "  ================================================================"
+echo "    Send this line to the person who gave you the stick."
+echo "    It is a PUBLIC key -- there is nothing secret about it."
+echo "  ================================================================"
+echo
+echo "    $PUB"
+echo
+qrencode -t ANSIUTF8 "$PUB" 2>/dev/null || echo "    (photograph the line above)"
+echo
+echo "  Nothing works until they have added it. That is normal, and it"
+echo "  costs nothing to leave this machine sitting here until they do."
+echo
+""", 0o755)
+    datei(a / "etc/systemd/system/enrol-tunnel.service", """[Unit]
+Description=Generate this machine's tunnel key and show it
+Before=wg-quick@wg0.service
+ConditionPathExists=!/etc/wireguard/wg0.conf
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/enrol-tunnel
+StandardOutput=tty
+TTYPath=/dev/tty1
+
+[Install]
+WantedBy=multi-user.target
+""")
+    # The peer does not exist at the hub yet when this first runs, so the tunnel
+    # cannot come up on the first try. Retrying forever is the correct behaviour
+    # here: the machine simply waits until somebody has added its key.
+    datei(a / "etc/systemd/system/wg-quick@wg0.service.d/10-retry.conf", """[Unit]
+After=enrol-tunnel.service
+Requires=enrol-tunnel.service
+
+[Service]
+Restart=on-failure
+RestartSec=30
+""")
 
     # --- access -------------------------------------------------------------
     datei(a / "root/.ssh/authorized_keys",
@@ -249,11 +319,12 @@ WantedBy=multi-user.target
     wants.mkdir(parents=True, exist_ok=True)
     for unit, ziel in (("sshd.service", "/usr/lib/systemd/system/sshd.service"),
                        ("fetch-models.service", "/etc/systemd/system/fetch-models.service"),
+                       ("enrol-tunnel.service", "/etc/systemd/system/enrol-tunnel.service"),
                        ("wg-quick@wg0.service", "/usr/lib/systemd/system/wg-quick@.service")):
         link = wants / unit
         if not link.is_symlink():
             link.symlink_to(ziel)
-    return pub
+
 
 
 def main():
@@ -269,7 +340,7 @@ def main():
 
     llama = llama_bauen(c, cache)
     arbeit = profil_vorbereiten(HIER / "work" / "profile")
-    pub = overlay_schreiben(c, arbeit, llama)
+    overlay_schreiben(c, arbeit, llama)
 
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
@@ -280,9 +351,11 @@ def main():
     print()
     print("ISO:", *sorted(out.glob("*.iso")))
     print()
-    print("BEFORE handing over the stick, add this peer to the hub:")
+    print("The image carries no secret. On first boot the machine generates its")
+    print("own key and shows the public half on screen, as text and as a QR code.")
     print()
-    print(f"  PublicKey  = {pub}")
+    print("Add it at the hub when it arrives:")
+    print()
     print(f"  AllowedIPs = {c['tunnel']['guest_ip']}/32")
     print()
     print("Removing that peer afterwards is what revokes the access.")
