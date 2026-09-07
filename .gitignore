@@ -1,3 +1,9 @@
 results/
 *.log
 scripts/coding/game/game/
+
+# ISO build: local config and build artefacts
+iso/iso.conf
+iso/work/
+iso/out/
+iso/cache/
