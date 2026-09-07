@@ -36,6 +36,18 @@ echo "  Type ERASE to continue. Anything else aborts."
 read -rp "  > " OK
 [ "$OK" = "ERASE" ] || { echo "  Aborted. Nothing was changed."; exit 1; }
 
+# The second question, and the reason the stick stays useful after we are gone:
+# a reinstall done by its owner alone has no use for our tunnel, and should not
+# sit there waiting for somebody to unlock a peer. Default is yes, because the
+# first installation is the one that does the measurements.
+echo
+echo "  Set up remote access for the measurements?"
+echo "  Answer n if you are reinstalling this machine for yourself -- then"
+echo "  nothing of ours is installed and the system is entirely your own."
+echo
+read -rp "  [J/n] " FERN
+case "${FERN:-J}" in n|N|nein|no) FERN=nein;; *) FERN=ja;; esac
+
 set -e
 echo "  [1/8] partitioning"
 wipefs -a "$DISK" >/dev/null
@@ -65,8 +77,18 @@ echo "  [5/8] payload"
 cp -a $PAYLOAD/opt/. "$ZIEL/opt/"
 cp -a $PAYLOAD/usr/. "$ZIEL/usr/"
 cp -a $PAYLOAD/etc/. "$ZIEL/etc/"
-install -Dm600 $PAYLOAD/authorized_keys "$ZIEL/root/.ssh/authorized_keys"
-chmod 700 "$ZIEL/root/.ssh"
+if [ "$FERN" = ja ]; then
+  install -Dm600 $PAYLOAD/authorized_keys "$ZIEL/root/.ssh/authorized_keys"
+  chmod 700 "$ZIEL/root/.ssh"
+else
+  # Same set the owner's own zugang-loeschen removes later. Not installing it
+  # in the first place is the cleaner version of the same decision.
+  rm -f  "$ZIEL/etc/systemd/system/enrol-tunnel.service"
+  rm -rf "$ZIEL/etc/systemd/system/wg-quick@wg0.service.d"
+  rm -f  "$ZIEL/usr/local/bin/enrol-tunnel" "$ZIEL/usr/local/bin/zugang-loeschen"
+  rm -f  "$ZIEL/opt/bench/tunnel.env"
+  echo "      remote access skipped -- this system is nobody's but yours"
+fi
 
 echo "  [6/8] llm-runtime and llm-gateway"
 # Bundled rather than fetched: the registry sits on an internal address this
@@ -87,7 +109,7 @@ V=$(python3 -c 'import sys;print("python%d.%d"%sys.version_info[:2])')
 python3 -m venv --clear /opt/llm-gateway/venv
 /opt/llm-gateway/venv/bin/pip install -q -r /opt/llm-gateway/venv-freeze.txt
 GW
-mkdir -p "$ZIEL/opt/llm-runtime-data"
+mkdir -p "$ZIEL/opt/llm-runtime-data" "$ZIEL/opt/llm-gateway/data"
 
 echo "  [7/8] bootloader and services"
 arch-chroot "$ZIEL" /bin/bash -s <<'CHROOT' >/dev/null
@@ -111,14 +133,19 @@ initrd  /initramfs-linux.img
 options root=UUID=$UUID rw
 E
 mkinitcpio -P
-systemctl enable sshd NetworkManager enrol-tunnel fetch-models wg-quick@wg0
+systemctl enable sshd NetworkManager fetch-models
+[ -f /etc/systemd/system/enrol-tunnel.service ] && systemctl enable enrol-tunnel wg-quick@wg0
 CHROOT
 
 echo "  [8/8] done"
 umount -R "$ZIEL"
 echo
 echo "  Installed. Remove the stick and reboot."
-echo "  On the next start the machine shows a key to send back."
+if [ "$FERN" = ja ]; then
+  echo "  On the next start the machine shows a key to send back."
+else
+  echo "  No remote access was installed. This system is entirely yours."
+fi
 echo
 echo "  llm-runtime and llm-gateway are installed but switched OFF, so they"
 echo "  cannot take the card while it is being measured. Afterwards:"

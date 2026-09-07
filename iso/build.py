@@ -450,6 +450,11 @@ Type=simple
 WorkingDirectory=/opt/llm-gateway
 Environment=LLM_GATEWAY_BACKEND=http://127.0.0.1:8080
 Environment=LLM_GATEWAY_MODELS_CONFIG=/etc/llm-gateway/models.yaml
+# These two must match what gwctl exports. The CLI falls back to CWD-relative
+# defaults when they are unset and then writes a DIFFERENT store, so a token
+# created by hand would never be seen by the service.
+Environment=LLM_GATEWAY_TOKEN_STORE_DB=/opt/llm-gateway/data/service_tokens.sqlite3
+Environment=LLM_GATEWAY_METERING_DB=/opt/llm-gateway/data/metering.sqlite3
 ExecStart=/opt/llm-gateway/venv/bin/uvicorn llm_gateway.app:app --host 0.0.0.0 --port 8090
 Restart=on-failure
 RestartSec=5
@@ -457,6 +462,25 @@ RestartSec=5
 [Install]
 WantedBy=multi-user.target
 """)
+    # The token CLI, with the same environment the unit sets. Without that the
+    # CLI writes its own store somewhere else and a token created by hand is
+    # invisible to the running gateway -- a trap the project hit once already.
+    datei(n / "opt/llm-gateway/gwctl", """#!/bin/sh
+# gwctl -- token management for llm-gateway.
+#
+# The CLI reads its SQLite paths from environment variables that otherwise only
+# the systemd unit sets. Called without them it falls back to CWD-relative
+# defaults and writes a DIFFERENT store, so the token would never be seen by
+# the service. This wrapper exports exactly what the unit exports.
+#
+#   /opt/llm-gateway/gwctl token create mein-laptop
+#   /opt/llm-gateway/gwctl token list
+export LLM_GATEWAY_TOKEN_STORE_DB=/opt/llm-gateway/data/service_tokens.sqlite3
+export LLM_GATEWAY_METERING_DB=/opt/llm-gateway/data/metering.sqlite3
+export LLM_GATEWAY_MODELS_CONFIG=/etc/llm-gateway/models.yaml
+exec /opt/llm-gateway/venv/bin/python /opt/llm-gateway/main.py "$@"
+""", 0o755)
+
     # One entry per downloaded model, so the runtime has something to serve the
     # moment its owner switches it on.
     eintraege = "".join(
