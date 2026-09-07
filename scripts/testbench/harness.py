@@ -601,6 +601,32 @@ class WattSampler:
 # between requests (a warm cache, a previous slot), so every measurement here
 # gets a FRESH PROCESS and exactly ONE request. A second request into the same
 # process measures the first one as well.
+def kernel_gpu_fault(seit: float) -> str | None:
+    """Did the kernel report the card failing during this window?
+
+    A measurement that produced nothing is normally a measurement whose answer
+    IS "it did not fit" -- and that is what the depth test records. But on
+    02.-05.09.2026 the card timed out a compute queue seventeen times, reset it,
+    and carried on; every failure in the following minutes was written down as
+    "most likely too little VRAM". One of them was Llama-3.2-3B on a 24 GB card,
+    which cannot be a memory limit and says plainly that the reason was guessed.
+
+    So the guess is now checked. Absence of a kernel message does not prove the
+    memory explanation, but its presence disproves it.
+    """
+    try:
+        aus = subprocess.run(
+            ["journalctl", "-k", "--no-pager", "-S", f"@{int(seit)}"],
+            capture_output=True, text=True, timeout=30).stdout
+    except Exception:
+        return None
+    for zeile in aus.splitlines():
+        for muster in ("ring", "timeout"), ("device lost from bus",), ("GPU reset",):
+            if all(m in zeile for m in muster):
+                return zeile.split("]", 1)[-1].strip()[:160]
+    return None
+
+
 def free_port(start: int = 8099, tries: int = 50) -> int:
     import socket
     for port in range(start, start + tries):

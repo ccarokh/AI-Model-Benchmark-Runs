@@ -2,7 +2,9 @@
 NAME = "context_depth"
 DESCRIPTION = "Throughput over context depth, f16 against a quantised KV cache"
 
-from harness import WattSampler, bench, card_is_idle
+import time
+
+from harness import WattSampler, bench, card_is_idle, kernel_gpu_fault
 
 # Up to the point where it breaks, not up to a round number. On a 12 GB card a
 # 9B at Q4 sits at 5.5 GB and reaches 7.6 GB at 65 536 -- so a sweep that stops
@@ -37,18 +39,26 @@ def run(ctx):
             # The sampler runs alongside, because the question this test asks
             # is how much memory the depth costs -- and that is only visible
             # while the run is happening.
+            t0 = time.time()
             with WattSampler(ctx.power) as sampler:
                 r = bench(build, model, "-p", "512", "-n", "128", "-d", str(depth),
                           "-fa", "on", "-ctk", cache, "-ctv", cache, "-r", "2", "-ngl", "99",
                           device=card or None)
             if not r:
-                # The most likely reason is exactly what is being measured. A
-                # depth that fails is the number somebody needs; a blank line is
-                # not, so this one is recorded rather than deferred.
+                # A depth that fails is usually the number somebody needs, so it is
+                # recorded rather than deferred. The REASON is no longer assumed: a
+                # card that times out a compute queue mid-run produces exactly the
+                # same empty result, and writing "too little VRAM" over that puts a
+                # wrong ceiling into the data. It happened seventeen times between
+                # 02. and 05.09.2026, once to a 3B model on a 24 GB card.
+                stoerung = kernel_gpu_fault(t0)
+                grund = (f"no measurement -- the card faulted during the run: {stoerung}"
+                         if stoerung else
+                         "no measurement -- most likely too little VRAM for the cache")
                 ctx.results.add(NAME, card, build.backend, build.version,
-                                f"{model.stem}:{cache}:d{depth}", "", "",
-                                "no measurement -- most likely too little VRAM for the cache")
-                ctx.say(f"  {cache} depth {depth}: NO MEASUREMENT (probably out of VRAM)")
+                                f"{model.stem}:{cache}:d{depth}", "", "", grund)
+                ctx.say(f"  {cache} depth {depth}: NO MEASUREMENT"
+                        + (" -- CARD FAULT" if stoerung else " (probably out of VRAM)"))
                 continue
             for phase, unit in (("pp", "t/s prefill"), ("tg", "t/s generation")):
                 ctx.results.add(NAME, card, build.backend, build.version,

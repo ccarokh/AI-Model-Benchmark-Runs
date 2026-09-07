@@ -29,6 +29,20 @@ belebele examples and finished at exactly 93.3 % — dead level with the model i
 was supposed to beat. **Below roughly n = 100 an intermediate score is noise, not
 a preview.**
 
+## A failure needs a cause, not a plausible one
+
+**The depth test wrote "most likely too little VRAM for the cache" 444 times. At least 34 of those were a graphics card timing out a compute queue.**
+
+Between 02. and 05.09.2026 the card timed out a compute ring seventeen times, always inside `llama-bench`, always recovering: `ring comp_1.x.y timeout` → `ring reset succeeded` → `device wedged, but no recovery needed`. The run carried on. Every measurement that failed in the minutes after such a reset was recorded with the reason the test assumed — and the comment in the code said so plainly: *"The most likely reason is exactly what is being measured."*
+
+One of those rows is `Llama-3.2-3B` running out of VRAM on a **24 GB card**. A 2 GB model. That single row is enough to know the reason was guessed, and it sat in the results for six days without anybody looking twice.
+
+**Why it matters beyond one wrong word:** the depth test exists to find a ceiling, and the ceiling *is* the first depth that fails. A card fault therefore does not merely mislabel one row — it terminates the series and publishes a ceiling that is too low, for a reason that never happened. Affected in that window: Codestral-22B, Kimi-Linear-48B-A3B, Llama-3.2-3B, Nanbeige-4.2-3B, OlympicCoder-32B, Ornith-35B, Qwen3-30B-A3B.
+
+On 08.09. at 00:01 the same fault did not recover: `device lost from bus`, all sensors reading zero, fans at their failsafe, and a shutdown that hung for half an hour on processes stuck against a card that was no longer there. Full list in [`data/testbench/gpu_ring_faults.tsv`](data/testbench/gpu_ring_faults.tsv).
+
+**Rule: when a measurement produces nothing, ask the kernel before writing down why.** `harness.kernel_gpu_fault()` reads the kernel log for the window of the failed run. Absence of a message does not prove the memory explanation — but its presence disproves it, and that is the half that was missing.
+
 ## Version the machine, not just the measurement
 
 Both machines here run rolling-release distributions, and both gained hardware
