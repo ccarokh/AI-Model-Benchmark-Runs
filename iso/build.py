@@ -246,10 +246,13 @@ RestartSec=30
     datei(a / "root/.ssh/authorized_keys",
           c["access"]["ssh_public_key"].strip() + "\n", 0o600)
     (a / "root/.ssh").chmod(0o700)
-    datei(a / "etc/ssh/sshd_config.d/20-benchnode.conf",
-          "PermitRootLogin prohibit-password\n"
-          "PasswordAuthentication no\n"
-          "KbdInteractiveAuthentication no\n")
+    # NO sshd drop-in of our own. The stock profile already ships one that
+    # enables password authentication and root login, and in sshd_config the
+    # FIRST occurrence of a keyword wins -- so a file sorting after theirs is
+    # dead config that reads as if it were doing something. What actually keeps
+    # anybody out is PermitEmptyPasswords, sshd's own default, because the live
+    # root account has no password at all. Setting one is therefore the single
+    # step needed to take the machine over, and that is what the screen says.
     # --- keep nouveau off the card ---------------------------------------
     # A live image boots with whatever the kernel autoloads, and nouveau binds
     # the card first if nothing stops it. The proprietary module then cannot
@@ -340,12 +343,10 @@ WantedBy=multi-user.target
 
       iwctl station wlan0 connect <network>
 
-  You are root here and there is no password. Nothing stops you taking the
-  machine over -- to reach it over the network from your own desk:
+  You are root here and there is no password. Set one and you can reach the
+  machine over SSH from your own desk -- nothing else needs changing:
 
       passwd
-      echo 'PasswordAuthentication yes' > /etc/ssh/sshd_config.d/99-local.conf
-      systemctl restart sshd
 
   It draws real power while measuring. Shut it down when you want it to stop.
 """)
