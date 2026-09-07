@@ -344,6 +344,10 @@ def main():
     p = argparse.ArgumentParser(description="build the benchmark live ISO")
     p.add_argument("--config", default=str(HIER / "iso.conf"))
     p.add_argument("--out", default=str(HIER / "out"))
+    # mkarchiso wants 15-20 GB and the checkout usually does not sit on the
+    # roomiest disk in the machine. Keep it separable rather than hard-coded.
+    p.add_argument("--work", default=str(HIER / "work"),
+                   help="scratch directory for the profile and mkarchiso")
     # mkarchiso needs root. Everything before it does not, and it is also the
     # part that takes an hour -- so the split is explicit rather than a failed
     # sudo prompt at the end of a long build.
@@ -357,12 +361,13 @@ def main():
     cache.mkdir(exist_ok=True)
 
     llama = llama_bauen(c, cache)
-    arbeit = profil_vorbereiten(HIER / "work" / "profile")
+    arbeit_wurzel = Path(args.work)
+    arbeit = profil_vorbereiten(arbeit_wurzel / "profile")
     overlay_schreiben(c, arbeit, llama)
 
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
-    befehl = ["sudo", "mkarchiso", "-v", "-w", str(HIER / "work" / "tmp"),
+    befehl = ["sudo", "mkarchiso", "-v", "-w", str(arbeit_wurzel / "tmp"),
               "-o", str(out), str(arbeit)]
     if args.no_iso:
         print()
