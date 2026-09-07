@@ -331,6 +331,11 @@ def main():
     p = argparse.ArgumentParser(description="build the benchmark live ISO")
     p.add_argument("--config", default=str(HIER / "iso.conf"))
     p.add_argument("--out", default=str(HIER / "out"))
+    # mkarchiso needs root. Everything before it does not, and it is also the
+    # part that takes an hour -- so the split is explicit rather than a failed
+    # sudo prompt at the end of a long build.
+    p.add_argument("--no-iso", action="store_true",
+                   help="prepare everything, print the mkarchiso command, stop")
     args = p.parse_args()
 
     voraussetzungen()
@@ -344,9 +349,17 @@ def main():
 
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
-    sag("running mkarchiso (needs root)")
-    lauf(["sudo", "mkarchiso", "-v", "-w", str(HIER / "work" / "tmp"),
-          "-o", str(out), str(arbeit)])
+    befehl = ["sudo", "mkarchiso", "-v", "-w", str(HIER / "work" / "tmp"),
+              "-o", str(out), str(arbeit)]
+    if args.no_iso:
+        print()
+        print("Prepared. The remaining step needs root:")
+        print()
+        print("  " + " ".join(befehl))
+        print()
+    else:
+        sag("running mkarchiso (needs root)")
+        lauf(befehl)
 
     print()
     print("ISO:", *sorted(out.glob("*.iso")))
