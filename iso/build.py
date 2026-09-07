@@ -337,6 +337,10 @@ WantedBy=multi-user.target
     * downloads the model files          journalctl -fu fetch-models
     * waits. It measures nothing until somebody asks it to.
 
+  On a cable it is already online. On Wi-Fi somebody has to say so once:
+
+      iwctl station wlan0 connect <network>
+
   It draws real power while measuring. Shut it down when you want it to stop.
 """)
 
