@@ -368,7 +368,53 @@ WantedBy=multi-user.target
       passwd
 
   It draws real power while measuring. Shut it down when you want it to stop.
+
+  This machine is yours. To cut the remote access for good -- the tunnel, its
+  keys and the SSH key, leaving your own LLM setup running:
+
+      zugang-loeschen
 """)
+
+    # --- the owner's own off switch ----------------------------------------
+    # The machine belongs to whoever lent the card, so cutting our access has to
+    # be something they can do alone, at any moment, without asking. It removes
+    # the tunnel, the keys, the service that would regenerate them, and our SSH
+    # key -- and deliberately leaves the LLM setup alone, because that is theirs.
+    datei(n / "usr/local/bin/zugang-loeschen", r"""#!/bin/bash
+# Entfernt den Fernzugang vollstaendig. Das lokale KI-System bleibt unberuehrt.
+set -u
+echo
+echo "  Das entfernt den Fernzugang zu dieser Maschine, endgueltig:"
+echo
+echo "    * den WireGuard-Tunnel und seine Schluessel"
+echo "    * den Dienst, der ihn beim naechsten Start neu anlegen wuerde"
+echo "    * den hinterlegten SSH-Schluessel"
+echo
+echo "  Nicht angetastet wird alles andere: llm-runtime, llm-gateway, die"
+echo "  Modelle und dein System. Die laufen weiter."
+echo
+echo "  Rueckgaengig geht das nicht -- ein neuer Zugang braeuchte einen"
+echo "  neuen Stick. Zum Bestaetigen JA tippen, alles andere bricht ab."
+echo
+read -rp "  > " OK
+[ "$OK" = "JA" ] || { echo "  Abgebrochen. Es wurde nichts geaendert."; exit 1; }
+
+systemctl disable --now wg-quick@wg0 enrol-tunnel 2>/dev/null
+rm -rf /etc/wireguard
+rm -f  /etc/systemd/system/enrol-tunnel.service
+rm -rf /etc/systemd/system/wg-quick@wg0.service.d
+rm -f  /usr/local/bin/enrol-tunnel
+rm -f  /opt/bench/tunnel.env
+rm -f  /etc/issue.d/10-benchnode.issue
+rm -f  /opt/results/publickey
+rm -f  /root/.ssh/authorized_keys
+systemctl daemon-reload 2>/dev/null
+
+echo
+echo "  Erledigt. Von aussen kommt hier niemand mehr rein."
+echo "  Deine lokale KI laeuft unveraendert weiter."
+echo
+""", 0o755)
 
     # --- the two services ---------------------------------------------------
     # Installed but NOT enabled. A runtime that starts on its own would take the
