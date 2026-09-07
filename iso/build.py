@@ -460,8 +460,15 @@ def main():
 
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
-    befehl = ["sudo", "mkarchiso", "-v", "-w", str(arbeit_wurzel / "tmp"),
-              "-o", str(out), str(arbeit)]
+    # mkarchiso records a marker file per completed step and skips whatever is
+    # already marked. A work directory left over from an earlier run therefore
+    # makes it a no-op that exits in seconds and produces nothing -- or worse,
+    # stitches an image out of the previous profile. It is root-owned, so the
+    # removal has to travel with the command rather than happen here.
+    tmp = arbeit_wurzel / "tmp"
+    befehl = ["sudo", "mkarchiso", "-v", "-w", str(tmp), "-o", str(out), str(arbeit)]
+    if tmp.exists():
+        befehl = ["sudo", "rm", "-rf", str(tmp), "&&"] + befehl
     if args.no_iso:
         print()
         print("Prepared. The remaining step needs root:")
