@@ -44,3 +44,19 @@ models =
 # measurement build behind every llama-bench number in data/testbench/.
 llama_cpp_ref = b10273
 llama_cpp_repo = https://github.com/ggml-org/llama.cpp
+
+[services]
+# llm-runtime and llm-gateway are bundled INTO the image rather than fetched
+# during installation: the registry lives on an internal address the borrowed
+# machine will never reach -- its tunnel goes to one hub and nowhere else.
+#
+# Both are installed but left DISABLED. A runtime that starts on its own would
+# take the card while measurements are running, which is exactly the
+# contamination that cost a night on the main host. Switch them on when the
+# numbers are in -- that is also the moment the machine becomes useful to the
+# person who lent it.
+registry = http://gitea.example.internal
+owner = LLM-Infra
+arch_repo = llm-infra
+runtime_version = 1.8.0-1
+gateway_version = 1.9.0
