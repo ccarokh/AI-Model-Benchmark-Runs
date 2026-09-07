@@ -41,7 +41,11 @@ RELENG = Path("/usr/share/archiso/configs/releng")
 # Vulkan, not CUDA. It is the one backend measured on all three machines here,
 # so it is the only one whose numbers can be held against the existing rows.
 PAKETE = """
-nvidia
+# nvidia-open, not nvidia: the old package name is gone from the repositories,
+# and for Turing and newer the open kernel modules are what NVIDIA ships. Not
+# the -dkms variant -- archiso builds on the stock `linux` package, so the
+# prebuilt module matches and nothing has to compile while the machine boots.
+nvidia-open
 nvidia-utils
 vulkan-icd-loader
 vulkan-tools
@@ -52,7 +56,12 @@ python
 curl
 rsync
 htop
-""".split()
+"""
+# Comments are stripped per LINE. Splitting on whitespace first and then dropping
+# tokens that begin with "#" leaves every other word of the comment standing as a
+# package name -- which pacman then dutifully fails to find.
+PAKETE = [z.strip() for z in PAKETE.splitlines()
+          if z.strip() and not z.lstrip().startswith("#")]
 
 
 def sag(*a):
