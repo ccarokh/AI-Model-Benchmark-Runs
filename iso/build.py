@@ -120,7 +120,11 @@ def llama_bauen(c, cache):
 def profil_vorbereiten(arbeit):
     if arbeit.exists():
         shutil.rmtree(arbeit)
-    shutil.copytree(RELENG, arbeit)
+    # symlinks=True is not cosmetic: the stock profile carries links that point
+    # at things which only exist inside the built image (resolv.conf, the
+    # cloud-init and vmtoolsd units). Following them means copying targets that
+    # are not there, and copytree fails with a dozen of them at once.
+    shutil.copytree(RELENG, arbeit, symlinks=True)
     pl = arbeit / "packages.x86_64"
     vorhanden = set(pl.read_text().split())
     pl.write_text(pl.read_text().rstrip("\n") + "\n" +
