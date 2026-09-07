@@ -251,6 +251,19 @@ RestartSec=30
           "PasswordAuthentication no\n"
           "KbdInteractiveAuthentication no\n")
 
+    # --- keep nouveau off the card ---------------------------------------
+    # A live image boots with whatever the kernel autoloads, and nouveau binds
+    # the card first if nothing stops it. The proprietary module then cannot
+    # take over, and the failure looks like "Vulkan sees no device" rather than
+    # like a driver conflict.
+    datei(a / "etc/modprobe.d/10-benchnode-nvidia.conf",
+          "blacklist nouveau\n"
+          "blacklist nvidiafb\n"
+          "options nvidia_drm modeset=1\n")
+    # mkinitcpio would otherwise pull nouveau in with the autodetect hook.
+    datei(a / "etc/mkinitcpio.conf.d/benchnode.conf",
+          'MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)\n')
+
     # --- the suite ----------------------------------------------------------
     shutil.copytree(REPO / "scripts" / "testbench", a / "opt/testbench",
                     ignore=shutil.ignore_patterns("__pycache__", "results",
