@@ -50,7 +50,6 @@ nvidia-utils
 vulkan-icd-loader
 vulkan-tools
 wireguard-tools
-nftables
 qrencode
 openssh
 python
@@ -251,37 +250,6 @@ RestartSec=30
           "PermitRootLogin prohibit-password\n"
           "PasswordAuthentication no\n"
           "KbdInteractiveAuthentication no\n")
-    # SSH belongs on the tunnel and nowhere else. The live root account has no
-    # password at all -- harmless over the network because sshd takes keys only,
-    # but there is no reason for a borrowed machine to show port 22 to the
-    # household it is standing in.
-    #
-    # A rule rather than ListenAddress: the tunnel address does not exist yet
-    # when sshd starts, and binding to an absent address makes it fail instead
-    # of wait.
-    datei(a / "etc/nftables-benchnode.conf", """table inet benchnode {
-  chain incoming {
-    type filter hook input priority 0; policy accept;
-    iifname "lo" accept
-    iifname "wg0" accept
-    tcp dport 22 drop
-  }
-}
-""")
-    datei(a / "etc/systemd/system/benchnode-firewall.service", """[Unit]
-Description=Restrict SSH to the tunnel
-Before=sshd.service
-DefaultDependencies=no
-
-[Service]
-Type=oneshot
-RemainAfterExit=yes
-ExecStart=/usr/bin/nft -f /etc/nftables-benchnode.conf
-
-[Install]
-WantedBy=multi-user.target
-""")
-
     # --- keep nouveau off the card ---------------------------------------
     # A live image boots with whatever the kernel autoloads, and nouveau binds
     # the card first if nothing stops it. The proprietary module then cannot
@@ -372,6 +340,13 @@ WantedBy=multi-user.target
 
       iwctl station wlan0 connect <network>
 
+  You are root here and there is no password. Nothing stops you taking the
+  machine over -- to reach it over the network from your own desk:
+
+      passwd
+      echo 'PasswordAuthentication yes' > /etc/ssh/sshd_config.d/99-local.conf
+      systemctl restart sshd
+
   It draws real power while measuring. Shut it down when you want it to stop.
 """)
 
@@ -381,7 +356,6 @@ WantedBy=multi-user.target
     for unit, ziel in (("sshd.service", "/usr/lib/systemd/system/sshd.service"),
                        ("fetch-models.service", "/etc/systemd/system/fetch-models.service"),
                        ("enrol-tunnel.service", "/etc/systemd/system/enrol-tunnel.service"),
-                       ("benchnode-firewall.service", "/etc/systemd/system/benchnode-firewall.service"),
                        ("wg-quick@wg0.service", "/usr/lib/systemd/system/wg-quick@.service")):
         link = wants / unit
         if not link.is_symlink():
