@@ -109,7 +109,7 @@ Two are worth a slot on their own terms rather than for the chart: **Ling 3.0 Ti
 
 | Model | Total / active | Q4_K_M |
 |---|---|---:|
-| Qwen3.8-Flash-Next | 177B | **119.6 GB** |
+| Qwen3.8-Flash-Next | 125B / 6B active | **67.6 GB** (smallest quant that exists; Q4 is 103.7 GB) |
 | Step 3.5 Flash | 196B / 11B | ~110 GB |
 | MiniMax-M2.7 | 229B / 10B | ~126 GB |
 | Inkling Small | 276B / 12B | ~150 GB |
