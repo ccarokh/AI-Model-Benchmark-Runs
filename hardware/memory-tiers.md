@@ -34,19 +34,21 @@ That dial is what makes this measurable at all. Until now the machine offered on
 
 ## The questions, in the order they should be asked
 
+**0. What is the slow tier actually worth?** Every prediction below divides by this number and it has never been measured here. The host is an i9-9900K, so DDR4 in two channels — 41.6 GB/s on the data sheet at DDR4-2666, and data sheets are not measurements. `dmidecode` returns nothing on this machine, so even the configured clock is unknown. **Measure it before predicting anything from it**, the same way the card's bandwidth was established rather than assumed.
+
 **1. Does it load at all.** The published figure is 45.8 GB that must stay in fast memory. This machine has 24 GB on one card, 8 GB on the second and 15 GB of host memory. If this fails, questions 2 to 6 are void.
 
 **2. What does a gigabyte in slow memory cost?** Sweep `--n-cpu-moe` and record generation rate against the share of weights below the card. The answer is a number this repository does not have and could not previously obtain, and it is not specific to one model: it prices every future decision of the form *"it almost fits"*.
 
 **3. Is the n-gram table really free to demote?** One variable: `ple_ngram_embd` on the card against in host memory, everything else identical. It is a deterministic lookup consulted once per token, so the claim is that it costs nothing. Claims of that shape are exactly what this repository exists to check.
 
-**4. Does the bandwidth law survive a mixed tier?** [Generation scales almost exactly with memory bandwidth](../foreign/geerlingguy-ai-benchmarks.md#generation-scales-with-memory-bandwidth-almost-exactly) — measured so far only by comparing whole cards. A tier split runs one process across 960 GB/s and roughly 50–90 GB/s at once.
+**4. Does the bandwidth law survive a mixed tier?** [Generation scales almost exactly with memory bandwidth](../foreign/geerlingguy-ai-benchmarks.md#generation-scales-with-memory-bandwidth-almost-exactly) — measured so far only by comparing whole cards. A tier split runs one process across 960 GB/s and DDR4 in two channels — 41.6 GB/s on paper, unmeasured in practice, and realistically closer to 30 than to 40.
 
-**Prediction: the rate follows the weighted mean of the two bandwidths, weighted by how much of the per-token read comes from each.** If it does, the law is stronger than the evidence so far justified. If it does not, this is where its boundary is, and that is the more interesting outcome.
+**Prediction: the rate follows the weighted mean of the two bandwidths, weighted by how much of the per-token read comes from each.** With DDR4 rather than DDR5 the ratio is roughly 1:27, not 1:12 — so the penalty for demoting a layer is steep, and the curve from question 2 should fall fast and early rather than gently. If it does, the law is stronger than the evidence so far justified. If it does not, this is where its boundary is, and that is the more interesting outcome.
 
 **5. Prefill against generation.** Prefill is compute-bound, generation bandwidth-bound. **Prediction: the split costs generation several times what it costs prefill.** If both degrade equally the mechanism is not what we think it is, whatever the correlation in question 4 says.
 
-**6. A third tier.** The model store now sits on an NVMe drive rather than the older disk. The n-gram table in host memory against `mmap` from NVMe is a third step on the same ladder — ~7 GB/s against ~50–90 GB/s against 960.
+**6. A third tier.** The model store now sits on an NVMe drive rather than the older disk. The n-gram table in host memory against `mmap` from NVMe is a third step on the same ladder — ~7 GB/s against DDR4 against 960.
 
 ## What this changes if it works
 
