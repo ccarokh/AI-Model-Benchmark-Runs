@@ -1,164 +1,125 @@
 #!/bin/bash
-# Night window. During the day the card belongs to the operator; outside the
-# window nothing runs without an explicit instruction.
+# Night window -- runs on the CONTROLLER, measures on the TARGET.
 #
-# The window and LLM_RUNTIME_BATCH_WINDOW have to agree. They did not once, and
-# on the night of 21.08. that cost a measurement: the drift check measured
-# against a contended card, both builds came out at 3.3 instead of 103 tokens/s
-# -- and the check would have waved the version change through, because both
-# sides were equally wrong.
+# WHY THAT WAY ROUND. The old version lived on the measuring machine and ran
+# every queue line there with `bash -c`. So anything the queue mentioned landed
+# on the measured host whether it needed the card or not -- and on 07.09.2026 a
+# script that only talks to a foreign HTTP endpoint sat on that machine while
+# the window was measuring. The rule against extra load on the measuring host
+# exists precisely so that question never has to be argued; an architecture
+# where the rule can be broken by accident is the wrong architecture.
 #
-# This replaces the previous practice of starting measurement chains by hand
-# whenever it happened to suit -- and having them then get in each other's and
-# in the day job's way.
+# `bench` already works this way and says so in its own config: only the
+# measurement and its power sampler belong on the measured machine; argument
+# parsing, the queue and the results stay on the controller.
 #
-# THREE HARD RULES:
+# EVERY QUEUE LINE SAYS WHERE IT RUNS. A line beginning with `@ziel` is executed
+# on the measuring host over ssh. Everything else runs here. There is no default
+# that quietly puts work on the card's machine -- that default is what went
+# wrong.
+#
+# THE LOG LIVES HERE. When the target rebooted mid-window on 08.09. its log went
+# with it. The controller keeps its own record of what it asked for.
+#
+# THREE HARD RULES, unchanged from the version that earned them:
 #   0. No measurement without a granted GPU lease. llm-runtime provides one
-#      (/_manager/lease); while it is held the service refuses interactive
-#      requests instead of taking the memory away from us. What was missing on
-#      the night of 21.08. was that anyone requested it at all. A measurement
-#      that does not check its own preconditions silently produces agreement.
-#   1. The window is checked before EVERY step, not only at the start. A step
-#      beginning at 10:55 and taking three hours would otherwise be exactly the
-#      conflict the window is meant to prevent.
-#   2. At the closing hour everything is torn down, mid-run if necessary --
-#      including the llama-server we started ourselves, via its remembered PID.
+#      (/_manager/lease); it is preemptible, and the tenant only learns that at
+#      its next heartbeat -- so the heartbeat checks the answer instead of
+#      discarding it.
+#   1. The window is checked before EVERY step, not only at the start.
+#   2. At the closing hour everything is torn down, mid-run if necessary.
 set -u
-E=/root/eval
-D=/sys/class/drm/card1/device
+ZIEL=${ZIEL:-root@192.168.40.192}
+ZIEL_HOST=${ZIEL#*@}
+E=${E:-/root/nacht}
 L=$E/nachtfenster.log
-RUNTIME=${RUNTIME:-http://127.0.0.1:8080}
+D=/sys/class/drm/card1/device
+RUNTIME=${RUNTIME:-http://$ZIEL_HOST:8080}
 PACHT_SCHLUESSEL=${PACHT_SCHLUESSEL:-/etc/bench/lease.token}
-PACHT_ID=""; HERZ=""
-# Cross-process handshake between the heartbeat (a forked subshell) and the
-# step loop: the loop writes the running step's PID here, the heartbeat kills
-# it there and drops the marker when the lease is provably gone (variables set
-# after the fork are invisible to the subshell, so this goes through files).
-SCHRITT_PID_DATEI="$E/.schritt.pid"
-PACHT_VERLOREN_DATEI="$E/.pacht_verloren"
-rm -f "$SCHRITT_PID_DATEI" "$PACHT_VERLOREN_DATEI"
+PACHT_ID=""; HERZ=""; WACHHUND=""
 WARTESCHLANGE=${WARTESCHLANGE:-$E/warteschlange.txt}
-START_STD=${START_STD:-0}
-ENDE_STD=${ENDE_STD:-8}
-SPID=""
+START_STD=${START_STD:-23}
+ENDE_STD=${ENDE_STD:-11}
 
+mkdir -p "$E"
 sag(){ echo "[$(date '+%d.%m. %H:%M:%S')] $*" | tee -a $L; }
+# Everything that touches the card goes through here, so there is exactly one
+# place where remote execution happens and it is visible in the log.
+# -n is not optional: without it ssh reads stdin, and stdin here is the queue
+# file the loop is reading from. The first remote step then swallows the rest of
+# the queue and the window ends reporting one step where there were several.
+auf_ziel(){ ssh -n -o BatchMode=yes -o ConnectTimeout=10 "$ZIEL" "$@"; }
 
-# If the window starts later than it ends, it runs across midnight.
-im_fenster(){ local h=$(date +%-H)
-  if [ "$START_STD" -gt "$ENDE_STD" ]; then [ "$h" -ge "$START_STD" ] || [ "$h" -lt "$ENDE_STD" ]
-  else [ "$h" -ge "$START_STD" ] && [ "$h" -lt "$ENDE_STD" ]; fi; }
+im_fenster(){
+  h=$(date +%-H)
+  if [ "$START_STD" -lt "$ENDE_STD" ]; then
+    [ "$h" -ge "$START_STD" ] && [ "$h" -lt "$ENDE_STD" ]
+  else
+    [ "$h" -ge "$START_STD" ] || [ "$h" -lt "$ENDE_STD" ]
+  fi
+}
 
-# --- GPU lease ---------------------------------------------------------------
 pacht_nehmen(){
-  [ -r "$PACHT_SCHLUESSEL" ] || { sag "Pacht-Schluessel fehlt: $PACHT_SCHLUESSEL"; return 1; }
-  local t a
-  t=$(cat "$PACHT_SCHLUESSEL")
-  a=$(curl -s -m 10 -X POST "$RUNTIME/_manager/lease" \
+  t=$(cat "$PACHT_SCHLUESSEL" 2>/dev/null) || { sag "kein Pacht-Token"; return 1; }
+  a=$(curl -s -m 15 -X POST "$RUNTIME/_manager/lease" \
         -H "x-lease-token: $t" -H "Content-Type: application/json" \
-        -d "{\"holder\":\"nachtfenster\"}" 2>/dev/null)
+        -d '{"holder":"nachtfenster"}' 2>/dev/null)
   PACHT_ID=$(printf '%s' "$a" | sed -n 's/.*"lease_id":"\([^"]*\)".*/\1/p')
   [ -n "$PACHT_ID" ] || { sag "Pacht verweigert: $(printf '%s' "$a" | cut -c1-160)"; return 1; }
-  # Exported, so a queue step can inherit it. llm-runtime grants exactly one
-  # lease; a step that asks for its own gets refused and dies before it
-  # measures. On 23.08. at 04:58 that took out both validation steps while the
-  # long series ran on unaffected -- two rc=1 lines in a log full of successes.
   export PACHT_ID
   sag "Pacht $PACHT_ID gehalten"
-  # Heartbeat well below the lease TTL (LLM_RUNTIME_LEASE_TTL=300).
-  # No `|| true` here: a swallowed heartbeat is exactly how the night of
-  # 06.09. measured on a shared card for over an hour. A 404 means the lease is
-  # provably gone (expired/returned/revoked) -- do NOT keep beating a dead id
-  # while a step runs. Abort the running step at once (its PID is in the file),
-  # drop the marker so the loop knows the measurement is void, and let this
-  # heartbeat die; `pacht_sichern` re-acquires and starts a fresh one before the
-  # next step. A non-404 error (timeout/5xx/unreachable) may be a blip -- log it
-  # and leave it to the between-step check, rather than end the night on a hiccup.
+  # The heartbeat CHECKS its answer. The old one ended in `|| true`, so when the
+  # service revoked the lease -- fourteen seconds after granting it, on 07.09. --
+  # nothing noticed. The service says outright that the tenant learns at its
+  # next heartbeat; discarding that answer discards the only notification there is.
   ( while :; do sleep 120
-      code=$(curl -s -m 10 -o /dev/null -w '%{http_code}' -X POST \
-        "$RUNTIME/_manager/lease/$PACHT_ID/heartbeat" -H "x-lease-token: $t" 2>/dev/null)
-      case "$code" in
-        200|204) : ;;
-        404)
-          echo "[$(date '+%d.%m. %H:%M:%S')] HERZSCHLAG: Pacht $PACHT_ID weg (404) -- laufenden Schritt abbrechen, Messung verworfen" >> $L
-          : > "$PACHT_VERLOREN_DATEI"
-          p=$(cat "$SCHRITT_PID_DATEI" 2>/dev/null)
-          [ -n "$p" ] && kill -TERM "$p" 2>/dev/null
-          exit 0 ;;
-        *)
-          echo "[$(date '+%d.%m. %H:%M:%S')] HERZSCHLAG: unerwarteter Status '$code' -- Pacht wird beim naechsten Schritt geprueft" >> $L ;;
-      esac
+      code=$(curl -s -o /dev/null -w '%{http_code}' -m 15 -X POST \
+              "$RUNTIME/_manager/lease/$PACHT_ID/heartbeat" -H "x-lease-token: $t" 2>/dev/null)
+      if [ "$code" != 200 ]; then
+        echo "[$(date '+%d.%m. %H:%M:%S')] PACHT VERLOREN (HTTP $code) -- Messung wird abgebrochen" >> $L
+        rm -f "$E/.pacht_gilt"
+        kill -TERM $$ 2>/dev/null
+        exit 1
+      fi
     done ) & HERZ=$!
+  touch "$E/.pacht_gilt"
   return 0
 }
 
-pacht_gilt(){
-  [ -n "$PACHT_ID" ] || return 1
-  curl -s -m 10 "$RUNTIME/_manager/status" -H "x-lease-token: $(cat "$PACHT_SCHLUESSEL")" \
-    2>/dev/null | grep -q "$PACHT_ID"
-}
-
-# Hold the lease, do not merely check it. Returns 1 only when the window closes
-# before it can be had again -- that is the one case where stopping is right.
-pacht_sichern(){
-  pacht_gilt && return 0
-  sag "  Pacht verloren -- wird neu geholt, bis sie wieder gilt oder das Fenster zugeht"
-  local versuche=0
-  while im_fenster; do
-    versuche=$((versuche+1))
-    # Kill the old heartbeat first: otherwise, from the second round on, two
-    # loops beat against a lease id that no longer exists.
-    [ -n "$HERZ" ] && { kill "$HERZ" 2>/dev/null; HERZ=""; }
-    PACHT_ID=""
-    if pacht_nehmen; then
-      sag "  Pacht nach $versuche Versuch(en) wieder da"
-      return 0
-    fi
-    # Not the same line every minute: once at the start, then every ten. A log
-    # that says the same thing for an hour does not get read.
-    [ $((versuche % 10)) -eq 1 ] && sag "  ... Pacht weiterhin nicht zu bekommen (Versuch $versuche)"
-    sleep 60
-  done
-  return 1
-}
-
 pacht_zurueck(){
-  [ -n "$HERZ" ] && kill "$HERZ" 2>/dev/null
-  [ -n "$PACHT_ID" ] || return 0
-  curl -s -m 10 -o /dev/null -X DELETE "$RUNTIME/_manager/lease/$PACHT_ID" \
-    -H "x-lease-token: $(cat "$PACHT_SCHLUESSEL")" 2>/dev/null
+  [ -n "$HERZ" ] && kill $HERZ 2>/dev/null
+  [ -z "$PACHT_ID" ] && return
+  curl -s -m 15 -o /dev/null -X DELETE "$RUNTIME/_manager/lease/$PACHT_ID" \
+    -H "x-lease-token: $(cat "$PACHT_SCHLUESSEL" 2>/dev/null)" 2>/dev/null
   sag "Pacht $PACHT_ID zurueckgegeben"
   PACHT_ID=""
 }
 
 aufraeumen(){
-  rm -f "$SCHRITT_PID_DATEI" "$PACHT_VERLOREN_DATEI"
   pacht_zurueck
-  # Only the server we started ourselves. A pattern match would hit the
-  # production runtime as well.
-  [ -n "$SPID" ] && { kill $SPID 2>/dev/null; sleep 6; kill -9 $SPID 2>/dev/null; }
-  # Reset clocks in case a throttling step was interrupted.
-  echo r > $D/pp_od_clk_voltage 2>/dev/null
-  echo c > $D/pp_od_clk_voltage 2>/dev/null
-  echo auto > $D/power_dpm_force_performance_level 2>/dev/null
-  HW=$(echo $D/hwmon/hwmon*/|cut -d" " -f1); echo 291000000 > $HW/power1_cap 2>/dev/null
+  [ -n "$WACHHUND" ] && kill $WACHHUND 2>/dev/null
+  # Reset clocks on the TARGET in case a throttling step was interrupted.
+  auf_ziel "echo r > $D/pp_od_clk_voltage 2>/dev/null;
+            echo c > $D/pp_od_clk_voltage 2>/dev/null;
+            echo auto > $D/power_dpm_force_performance_level 2>/dev/null;
+            HW=\$(echo $D/hwmon/hwmon*/|cut -d' ' -f1); echo 291000000 > \$HW/power1_cap 2>/dev/null" 2>/dev/null
+  rm -f "$E/.pacht_gilt"
 }
 trap aufraeumen EXIT INT TERM
 
 im_fenster || { sag "ausserhalb ${START_STD}:00-${ENDE_STD}:00 -- nichts gestartet"; exit 0; }
 [ -s "$WARTESCHLANGE" ] || { sag "Warteschlange leer"; exit 0; }
+auf_ziel true 2>/dev/null || { sag "Messhost $ZIEL nicht erreichbar -- Fenster endet hier"; exit 1; }
 pacht_nehmen || { sag "ohne Pacht wird nicht gemessen -- Fenster endet hier"; exit 0; }
 
-sag "=== Fenster auf ($(date +%H:%M), bis ${ENDE_STD}:00) ==="
+sag "=== Fenster auf ($(date +%H:%M), bis ${ENDE_STD}:00), Ziel $ZIEL ==="
 
-# Watchdog: clears the field at 11:00, even if a step is still running.
 ( while :; do
     h=$(date +%-H)
-    if [ "$h" -ge "$ENDE_STD" ] && [ "$h" -lt "$START_STD" ]; then
+    if ! { { [ "$START_STD" -lt "$ENDE_STD" ] && [ "$h" -ge "$START_STD" ] && [ "$h" -lt "$ENDE_STD" ]; } ||
+           { [ "$START_STD" -ge "$ENDE_STD" ] && { [ "$h" -ge "$START_STD" ] || [ "$h" -lt "$ENDE_STD" ]; }; }; }; then
       echo "[$(date '+%H:%M:%S')] WACHHUND: Fenster zu, breche ab" >> $L
-      pkill -P $$ 2>/dev/null
-      kill -TERM $$ 2>/dev/null
-      exit 0
+      pkill -P $$ 2>/dev/null; kill -TERM $$ 2>/dev/null; exit 0
     fi
     sleep 60
   done ) & WACHHUND=$!
@@ -166,59 +127,34 @@ sag "=== Fenster auf ($(date +%H:%M), bis ${ENDE_STD}:00) ==="
 erledigt=0
 while read -r zeile; do
   case "$zeile" in ""|\#*) continue ;; esac
-  if ! im_fenster; then
-    sag "Fenster zu -- Rest der Warteschlange bleibt liegen"
-    break
+  im_fenster || { sag "Fenster zu -- Rest der Warteschlange bleibt liegen"; break; }
+  [ -f "$E/.pacht_gilt" ] || { sag "Pacht weg -- der Rest bleibt liegen"; break; }
+
+  # Where does this line run? Explicit, never inferred.
+  case "$zeile" in
+    @ziel\ *) wo=ziel; befehl=${zeile#@ziel } ;;
+    *)        wo=hier; befehl=$zeile ;;
+  esac
+
+  if [ $wo = ziel ]; then
+    # Card free? With a lease held, llm-runtime is the authority -- it grants
+    # only when the card is free enough and refuses interactive requests after.
+    frei=nein
+    [ -n "$PACHT_ID" ] && frei=ja
+    for i in $(seq 1 30); do
+      [ $frei = ja ] && break
+      z=$(auf_ziel "echo \$(( \$(cat $D/mem_info_vram_used)/1048576 )) \$(pgrep -x llama-server|wc -l)" 2>/dev/null)
+      set -- $z
+      [ "${1:-9999}" -lt 500 ] && [ "${2:-1}" -eq 0 ] && { frei=ja; break; }
+      sleep 20
+    done
+    [ $frei = ja ] || { sag "  Karte belegt -- uebersprungen: $befehl"; continue; }
   fi
-  # Card free? Wait briefly, then skip WITH a message. A silent skip cannot be
-  # told apart from success.
-  # With a lease the memory guard drops away: llm-runtime is then the
-  # authority. It grants the lease only when the card is free enough (threshold
-  # 1024 MiB) and refuses interactive requests afterwards.
-  #
-  # A second, stricter threshold beside it locked out ALL four steps on the
-  # night of 22.08.: it demanded under 500 MiB while this machine idles at
-  # around 700 -- a permanently loaded detection model. The condition could
-  # never become true. The lease was taken, held, and returned unused.
-  frei=nein
-  [ -n "$PACHT_ID" ] && frei=ja
-  for i in $(seq 1 30); do
-    [ $frei = ja ] && break
-    v=$(( $(cat $D/mem_info_vram_used)/1048576 )); s=$(pgrep -x llama-server|wc -l)
-    [ "$v" -lt 500 ] && [ "$s" -eq 0 ] && { frei=ja; break; }
-    sleep 20
-  done
 
-  [ $frei = ja ] || { sag "  Karte belegt -- uebersprungen: $zeile"; continue; }
-  # Before EVERY step: is the lease still valid? A lost lease means someone
-  # else has the card -- measuring on would produce numbers that look like
-  # results and are not.
-  #
-  # But a lost lease is no reason to end the night. On the night of 24.08.
-  # llm-runtime was restarted at 23:19, and a restart drops the lease because it
-  # lives in memory. At 00:53 this check noticed and closed the window: four of
-  # seven steps were lost to a restart that had happened ninety minutes earlier
-  # and had nothing to do with the measurement. The lease is now re-acquired for
-  # as long as the window is open.
-  pacht_sichern || { sag "  Fenster zu und keine Pacht -- der Rest bleibt liegen"; break; }
-
-  sag "--- $zeile ---"
-  rm -f "$PACHT_VERLOREN_DATEI"
+  sag "--- [$wo] $befehl ---"
   t0=$(date +%s)
-  # Run the step in the background so the heartbeat can abort it the moment the
-  # lease is gone -- a foreground step is unreachable until it returns, which is
-  # how an hour of shared-card measurement slipped through before.
-  bash -c "$zeile" >> $L 2>&1 & SCHRITT_PID=$!
-  echo "$SCHRITT_PID" > "$SCHRITT_PID_DATEI"
-  wait "$SCHRITT_PID"; rc=$?
-  rm -f "$SCHRITT_PID_DATEI"
-  if [ -f "$PACHT_VERLOREN_DATEI" ]; then
-    rm -f "$PACHT_VERLOREN_DATEI"
-    sag "--- ABGEBROCHEN nach $(( ($(date +%s) - t0) / 60 )) min: Pacht mitten im Schritt verloren -- Messung verworfen, NICHT gezaehlt: $zeile ---"
-    # Not counted as done. The next iteration's pacht_sichern re-acquires the
-    # lease (or ends the night if the window is closed / it cannot be had).
-    continue
-  fi
+  if [ $wo = ziel ]; then auf_ziel "$befehl" >> $L 2>&1; else bash -c "$befehl" >> $L 2>&1; fi
+  rc=$?
   sag "--- rc=$rc nach $(( ($(date +%s) - t0) / 60 )) min ---"
   erledigt=$((erledigt+1))
 done < "$WARTESCHLANGE"
