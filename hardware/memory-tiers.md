@@ -38,6 +38,8 @@ That dial is what makes this measurable at all. Until now the machine offered on
 
 **1. Does it load at all.** The published figure is 45.8 GB that must stay in fast memory. This machine has 24 GB on one card, 8 GB on the second and 15 GB of host memory. If this fails, questions 2 to 6 are void.
 
+⏳ **Pending: host memory goes from 16 GB to 32 GB** (DDR4-3000 CL16, two modules replacing what is there rather than joining it — four populated slots on this platform typically cannot hold the rated clock). That moves fast memory from 39 GB to 56 GB and turns question 1 from a coin toss into a formality. It also raises the slow tier from 42.7 to 48.0 GB/s on paper — **only if XMP is enabled**, since the CPU's own specification stops at 2666 and the modules will quietly run there otherwise. Both numbers are still data sheets: question 0 stands.
+
 **2. What does a gigabyte in slow memory cost?** Sweep `--n-cpu-moe` and record generation rate against the share of weights below the card. The answer is a number this repository does not have and could not previously obtain, and it is not specific to one model: it prices every future decision of the form *"it almost fits"*.
 
 **3. Is the n-gram table really free to demote?** One variable: `ple_ngram_embd` on the card against in host memory, everything else identical. It is a deterministic lookup consulted once per token, so the claim is that it costs nothing. Claims of that shape are exactly what this repository exists to check.
