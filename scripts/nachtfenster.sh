@@ -65,7 +65,13 @@ pacht_nehmen(){
         -H "x-lease-token: $t" -H "Content-Type: application/json" \
         -d '{"holder":"nachtfenster"}' 2>/dev/null)
   PACHT_ID=$(printf '%s' "$a" | sed -n 's/.*"lease_id":"\([^"]*\)".*/\1/p')
-  [ -n "$PACHT_ID" ] || { sag "Pacht verweigert: $(printf '%s' "$a" | cut -c1-160)"; return 1; }
+  if [ -z "$PACHT_ID" ]; then
+    # Only the first refusal is logged; the waiting loop calls this once a minute.
+    [ "${PACHT_STILL:-}" = ja ] || sag "Pacht verweigert: $(printf '%s' "$a" | cut -c1-160)"
+    PACHT_STILL=ja
+    return 1
+  fi
+  PACHT_STILL=""
   export PACHT_ID
   sag "Pacht $PACHT_ID gehalten"
   # The heartbeat CHECKS its answer. The old one ended in `|| true`, so when the
@@ -110,7 +116,25 @@ trap aufraeumen EXIT INT TERM
 im_fenster || { sag "ausserhalb ${START_STD}:00-${ENDE_STD}:00 -- nichts gestartet"; exit 0; }
 [ -s "$WARTESCHLANGE" ] || { sag "Warteschlange leer"; exit 0; }
 auf_ziel true 2>/dev/null || { sag "Messhost $ZIEL nicht erreichbar -- Fenster endet hier"; exit 1; }
-pacht_nehmen || { sag "ohne Pacht wird nicht gemessen -- Fenster endet hier"; exit 0; }
+# Wait for the lease instead of giving up on it. On 08.09. this window asked at
+# 23:00:16, was told the card was leased with 284 seconds left, and cancelled
+# twelve hours of measurement over five minutes. Another batch job holds the
+# card sometimes -- that is the lease working, not a failure.
+#
+# The other holder here is a cron entry on this same machine at the same minute
+# (abend_polyglot). Two schedulers on one card is a thing to fix separately;
+# this loop makes the collision cost nothing either way.
+warte_auf_pacht(){
+  for versuch in $(seq 1 240); do          # bis zu 4 Stunden, im Fenster
+    im_fenster || { sag "Fenster zu, waehrend auf die Pacht gewartet wurde"; return 1; }
+    pacht_nehmen && return 0
+    [ $versuch = 1 ] && sag "  Karte ist gepachtet -- warte, statt das Fenster abzusagen"
+    sleep 60
+  done
+  sag "vier Stunden keine Pacht bekommen -- Fenster endet hier"
+  return 1
+}
+warte_auf_pacht || exit 0
 
 sag "=== Fenster auf ($(date +%H:%M), bis ${ENDE_STD}:00), Ziel $ZIEL ==="
 
