@@ -96,7 +96,7 @@ if [ -n "$g" ]; then
   for b in $BUILDS; do
     v=$(cat $b/.built-version 2>/dev/null || echo unbekannt)
     export LD_LIBRARY_PATH=$b/lib
-    for split in "none:0" "layer:-" "row:-"; do
+    for split in "none:0" "layer:-" "tensor:-"; do
       art=${split%%:*}; karte=${split##*:}
       cut -f1,3,5 "$OUT" | grep -qx "$HEUTE	$v	mgpu-$art" && continue
       if [ "$karte" = 0 ]; then flags="-sm none -mg 0"; else flags="-sm $art"; fi
