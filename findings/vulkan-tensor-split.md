@@ -201,10 +201,16 @@ UUID, so a host thread bridges the timeline semaphores.
   on this machine where the second card makes generation *faster* than layer split.
 - **Prefill recovers 2.5×** (828 → 2108) and lands above layer split. The 2.8 GB/s
   staging path is gone; what remains is F16 over the same link, DMA'd once.
-- **Same tokens.** Greedy 48-token completions from the PR (ring, 3/1, 1/1, forced
-  proxy) are byte-identical to each other and to the fallback tensor split; both differ
-  from the single card in two words, as any change of reduction order does. One sample,
-  not a perplexity run.
+- **Same tokens — for a dense model.** Greedy 48-token completions from the PR (ring,
+  3/1, 1/1, forced proxy) are byte-identical to each other and to the fallback tensor
+  split; both differ from the single card in two words, as any change of reduction
+  order does. One sample, not a perplexity run, and **dense only**: the PR thread
+  reports gibberish on MoE models (Qwen3.5-35B-A3B, -122B-A10B) with this AllReduce,
+  unresolved. Not tested here yet.
+- **Not tested here either:** `llama-server` multi-turn and prompts beyond 4 K. Both
+  showed a decode collapse on RADV pairs in the PR thread (second turn 2–3 t/s, 88 K
+  prompt 9 t/s) that the PR's last commit works around by shrinking the shared host
+  buffer; 0cc4m calls it a RADV issue to be reported upstream. Our XTX is RADV.
 - **The remaining cost.** 1/0 with the PR is 70.4 t/s: 14.2 ms per token against 8.9,
   i.e. *inferred* ~83 µs per AllReduce where the fallback paid ~250. Per token that is
   still 5.3 ms of pure synchronisation for 64 × 16 KB. The proxy thread hop (poll a
