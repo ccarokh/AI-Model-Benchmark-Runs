@@ -52,7 +52,7 @@ done
 
 for eintrag in $KANDIDATEN; do
   arch=${eintrag%%:*}; name=${eintrag##*:}
-  g=$(ls $M/$name/*.gguf 2>/dev/null | sort | head -1)
+  g=$(ls $M/$name/*.gguf 2>/dev/null | grep -v mmproj | sort | head -1)
   [ -z "$g" ] && continue
   for b in $BUILDS; do
     v=$(cat $b/.built-version 2>/dev/null || echo unbekannt)
@@ -94,7 +94,7 @@ done
 # split. The last one is expected to fail or crawl; the day it does not is the
 # day something changed.
 MGPU_MODELL=${MGPU_MODELL:-qwen3.5-9b}
-g=$(ls $M/$MGPU_MODELL/*.gguf 2>/dev/null | sort | head -1)
+g=$(ls $M/$MGPU_MODELL/*.gguf 2>/dev/null | grep -v mmproj | sort | head -1)
 if [ -n "$g" ]; then
   for b in $BUILDS; do
     v=$(cat $b/.built-version 2>/dev/null || echo unbekannt)
