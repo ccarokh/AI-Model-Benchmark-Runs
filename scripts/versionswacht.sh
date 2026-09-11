@@ -28,11 +28,14 @@ HEUTE=$(date +%Y-%m-%d)
 
 # Smallest model per architecture. Deliberately not the biggest: this runs every
 # night and has to stay short.
+# One model per architecture -- plus qwen3.8-27b by name: it carries a standing
+# verdict (coding: 19 min per task) that a faster build would have to overturn.
 KANDIDATEN=${KANDIDATEN:-"
 qwen2:qwen2.5-coder-14b
 qwen3:qwen3
 qwen3moe:qwen3-30b-a3b
 qwen35:qwen3.5-9b
+qwen35:qwen3.8-27b
 qwen35moe:ornith-35b
 qwen3next:qwen3-coder-next
 qwen4exp:qwen3.8-flash-next

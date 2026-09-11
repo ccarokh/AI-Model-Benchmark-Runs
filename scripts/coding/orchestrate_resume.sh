@@ -16,6 +16,10 @@ done
 [ "$ok" -ne 1 ] && { echo "SERVER-FEHLER"; kw_server_beenden; kw_pacht_zurueckgeben; exit 1; }
 timeout "$TMO" /root/coding-eval/run-bench-resume.sh "$DIR" $PORT diff 2 4 "$NT"
 rc=$?
+# timeout only kills the wrapper. The container would live on, retry against
+# the next window's server with hours of backoff and run the same directory
+# twice -- two such orphans were found on 2026-09-11.
+docker stop abend-polyglot >/dev/null 2>&1
 kw_wache_beenden; kw_server_beenden; kw_pacht_zurueckgeben
 kw_lauf_sauber || echo "[$(date +%H:%M)] ACHTUNG -- fremder Server lief mit, Messwerte verunreinigt"
 exit $rc

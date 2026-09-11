@@ -13,7 +13,7 @@ cd /root/coding-eval/aider
 DIR="$1"; PORT="$2"; EF="${3:-diff}"; TRIES="${4:-2}"; THREADS="${5:-4}"; NT="${6:-all}"
 [ -d "tmp.benchmarks/$DIR" ] || { echo "Verzeichnis tmp.benchmarks/$DIR fehlt"; exit 1; }
 NTARG=""; [ "$NT" != "all" ] && NTARG="--num-tests $NT"
-docker run --rm \
+docker run --rm --name abend-polyglot \
   --cpus=3 --memory=12g --memory-swap=12g --pids-limit=1024 \
   --add-host=host.docker.internal:host-gateway \
   -v "$PWD":/aider -v "$PWD/tmp.benchmarks/.":/benchmarks \
