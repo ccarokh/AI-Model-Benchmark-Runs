@@ -1,0 +1,7 @@
+ggml_vulkan: Found 2 Vulkan devices:
+ggml_vulkan: 0 = AMD Radeon RX 7900 XTX (RADV NAVI31) (radv) | uma: 0 | fp16: dot2 | bf16: 0 | fp4: 0 | warp size: 64 | shared memory: 65536 | int dot: 1 | matrix cores: KHR_coopmat
+ggml_vulkan: 1 = NVIDIA GeForce RTX 2070 (NVIDIA) | uma: 0 | fp16: 1 | bf16: 1 | fp4: 0 | warp size: 32 | shared memory: 49152 | int dot: 1 | matrix cores: NV_coopmat2
+[meta-ar] graphs=1 ar=64 (64.0/graph) bytes/ar=16777216 | per graph us: total=640915 sub=38183 ar=602726 | per ar us: sync=3319.5 copy=6054.7 add=41.1 zero=0.0 | copies native=0 fallback=128
+[meta-ar] graphs=1 ar=64 (64.0/graph) bytes/ar=16777216 | per graph us: total=609187 sub=5722 ar=603458 | per ar us: sync=3391.6 copy=6000.9 add=34.2 zero=0.0 | copies native=0 fallback=128
+[meta-ar] graphs=1 ar=64 (64.0/graph) bytes/ar=16777216 | per graph us: total=608793 sub=5204 ar=603583 | per ar us: sync=3395.9 copy=5998.8 add=34.1 zero=0.0 | copies native=0 fallback=128
+[meta-ar] graphs=1 ar=64 (64.0/graph) bytes/ar=16777216 | per graph us: total=608296 sub=5180 ar=603110 | per ar us: sync=3395.3 copy=5991.8 add=34.3 zero=0.0 | copies native=0 fallback=128

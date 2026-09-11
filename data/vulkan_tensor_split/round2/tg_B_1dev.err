@@ -1,0 +1,16 @@
+ggml_vulkan: Found 2 Vulkan devices:
+ggml_vulkan: 0 = AMD Radeon RX 7900 XTX (RADV NAVI31) (radv) | uma: 0 | fp16: dot2 | bf16: 0 | fp4: 0 | warp size: 64 | shared memory: 65536 | int dot: 1 | matrix cores: KHR_coopmat
+ggml_vulkan: 1 = NVIDIA GeForce RTX 2070 (NVIDIA) | uma: 0 | fp16: 1 | bf16: 1 | fp4: 0 | warp size: 32 | shared memory: 49152 | int dot: 1 | matrix cores: NV_coopmat2
+[meta-ar] graphs=32 ar=0 (0.0/graph) bytes/ar=0 | per graph us: total=8942 sub=8939 ar=0 | per ar us: sync=0.0 copy=0.0 add=0.0 zero=0.0 | copies native=0 fallback=0
+[meta-ar] graphs=32 ar=0 (0.0/graph) bytes/ar=0 | per graph us: total=8316 sub=8313 ar=0 | per ar us: sync=0.0 copy=0.0 add=0.0 zero=0.0 | copies native=0 fallback=0
+[meta-ar] graphs=32 ar=0 (0.0/graph) bytes/ar=0 | per graph us: total=8340 sub=8338 ar=0 | per ar us: sync=0.0 copy=0.0 add=0.0 zero=0.0 | copies native=0 fallback=0
+[meta-ar] graphs=32 ar=0 (0.0/graph) bytes/ar=0 | per graph us: total=8343 sub=8340 ar=0 | per ar us: sync=0.0 copy=0.0 add=0.0 zero=0.0 | copies native=0 fallback=0
+[meta-ar] graphs=32 ar=0 (0.0/graph) bytes/ar=0 | per graph us: total=8329 sub=8327 ar=0 | per ar us: sync=0.0 copy=0.0 add=0.0 zero=0.0 | copies native=0 fallback=0
+[meta-ar] graphs=32 ar=0 (0.0/graph) bytes/ar=0 | per graph us: total=8359 sub=8357 ar=0 | per ar us: sync=0.0 copy=0.0 add=0.0 zero=0.0 | copies native=0 fallback=0
+[meta-ar] graphs=32 ar=0 (0.0/graph) bytes/ar=0 | per graph us: total=8355 sub=8353 ar=0 | per ar us: sync=0.0 copy=0.0 add=0.0 zero=0.0 | copies native=0 fallback=0
+[meta-ar] graphs=32 ar=0 (0.0/graph) bytes/ar=0 | per graph us: total=8359 sub=8356 ar=0 | per ar us: sync=0.0 copy=0.0 add=0.0 zero=0.0 | copies native=0 fallback=0
+[meta-ar] graphs=32 ar=0 (0.0/graph) bytes/ar=0 | per graph us: total=8343 sub=8340 ar=0 | per ar us: sync=0.0 copy=0.0 add=0.0 zero=0.0 | copies native=0 fallback=0
+[meta-ar] graphs=32 ar=0 (0.0/graph) bytes/ar=0 | per graph us: total=8365 sub=8363 ar=0 | per ar us: sync=0.0 copy=0.0 add=0.0 zero=0.0 | copies native=0 fallback=0
+[meta-ar] graphs=32 ar=0 (0.0/graph) bytes/ar=0 | per graph us: total=8348 sub=8346 ar=0 | per ar us: sync=0.0 copy=0.0 add=0.0 zero=0.0 | copies native=0 fallback=0
+[meta-ar] graphs=32 ar=0 (0.0/graph) bytes/ar=0 | per graph us: total=8388 sub=8386 ar=0 | per ar us: sync=0.0 copy=0.0 add=0.0 zero=0.0 | copies native=0 fallback=0
+[meta-ar] graphs=1 ar=0 (0.0/graph) bytes/ar=0 | per graph us: total=8423 sub=8421 ar=0 | per ar us: sync=0.0 copy=0.0 add=0.0 zero=0.0 | copies native=0 fallback=0

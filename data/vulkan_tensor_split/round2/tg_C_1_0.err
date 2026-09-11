@@ -1,0 +1,16 @@
+ggml_vulkan: Found 2 Vulkan devices:
+ggml_vulkan: 0 = AMD Radeon RX 7900 XTX (RADV NAVI31) (radv) | uma: 0 | fp16: dot2 | bf16: 0 | fp4: 0 | warp size: 64 | shared memory: 65536 | int dot: 1 | matrix cores: KHR_coopmat
+ggml_vulkan: 1 = NVIDIA GeForce RTX 2070 (NVIDIA) | uma: 0 | fp16: 1 | bf16: 1 | fp4: 0 | warp size: 32 | shared memory: 49152 | int dot: 1 | matrix cores: NV_coopmat2
+[meta-ar] graphs=32 ar=2048 (64.0/graph) bytes/ar=32768 | per graph us: total=23842 sub=3565 ar=20273 | per ar us: sync=206.0 copy=76.0 add=27.7 zero=5.9 | copies native=0 fallback=4096
+[meta-ar] graphs=32 ar=2048 (64.0/graph) bytes/ar=32768 | per graph us: total=22919 sub=3170 ar=19745 | per ar us: sync=202.3 copy=72.9 add=26.6 zero=5.5 | copies native=0 fallback=4096
+[meta-ar] graphs=32 ar=2048 (64.0/graph) bytes/ar=32768 | per graph us: total=23119 sub=3203 ar=19912 | per ar us: sync=200.8 copy=77.2 add=26.4 zero=5.5 | copies native=0 fallback=4096
+[meta-ar] graphs=32 ar=2048 (64.0/graph) bytes/ar=32768 | per graph us: total=24690 sub=3562 ar=21123 | per ar us: sync=200.2 copy=95.2 add=27.1 zero=6.3 | copies native=0 fallback=4096
+[meta-ar] graphs=32 ar=2048 (64.0/graph) bytes/ar=32768 | per graph us: total=24224 sub=3254 ar=20965 | per ar us: sync=200.4 copy=93.6 add=21.8 zero=10.5 | copies native=0 fallback=4096
+[meta-ar] graphs=32 ar=2048 (64.0/graph) bytes/ar=32768 | per graph us: total=23877 sub=3229 ar=20644 | per ar us: sync=198.8 copy=90.3 add=21.8 zero=10.4 | copies native=0 fallback=4096
+[meta-ar] graphs=32 ar=2048 (64.0/graph) bytes/ar=32768 | per graph us: total=23768 sub=3147 ar=20617 | per ar us: sync=199.5 copy=89.8 add=21.4 zero=10.3 | copies native=0 fallback=4096
+[meta-ar] graphs=32 ar=2048 (64.0/graph) bytes/ar=32768 | per graph us: total=24052 sub=3171 ar=20876 | per ar us: sync=201.0 copy=92.1 add=22.1 zero=9.8 | copies native=0 fallback=4096
+[meta-ar] graphs=32 ar=2048 (64.0/graph) bytes/ar=32768 | per graph us: total=23957 sub=3154 ar=20799 | per ar us: sync=201.5 copy=90.7 add=26.3 zero=5.3 | copies native=0 fallback=4096
+[meta-ar] graphs=32 ar=2048 (64.0/graph) bytes/ar=32768 | per graph us: total=24118 sub=3172 ar=20941 | per ar us: sync=202.3 copy=92.0 add=26.4 zero=5.3 | copies native=0 fallback=4096
+[meta-ar] graphs=32 ar=2048 (64.0/graph) bytes/ar=32768 | per graph us: total=24032 sub=3170 ar=20858 | per ar us: sync=201.8 copy=91.3 add=26.3 zero=5.3 | copies native=0 fallback=4096
+[meta-ar] graphs=32 ar=2048 (64.0/graph) bytes/ar=32768 | per graph us: total=23820 sub=3145 ar=20670 | per ar us: sync=201.0 copy=89.8 add=25.8 zero=5.3 | copies native=0 fallback=4096
+[meta-ar] graphs=1 ar=64 (64.0/graph) bytes/ar=32768 | per graph us: total=24726 sub=3122 ar=21601 | per ar us: sync=199.3 copy=90.6 add=21.3 zero=25.1 | copies native=0 fallback=128

@@ -1,0 +1,145 @@
+diff --git a/ggml/src/ggml-backend-meta.cpp b/ggml/src/ggml-backend-meta.cpp
+index 3ec40fb1a..cec2969da 100644
+--- a/ggml/src/ggml-backend-meta.cpp
++++ b/ggml/src/ggml-backend-meta.cpp
+@@ -18,6 +18,44 @@
+ #include <tuple>
+ #include <utility>
+ #include <vector>
++#include <chrono>
++#include <cstdio>
++#include <cstdlib>
++
++// --- GGML_META_AR_TIMING: host-side timing of the generic AllReduce fallback (measurement only) ---
++struct ggml_meta_ar_stats {
++    bool     enabled   = getenv("GGML_META_AR_TIMING") != nullptr;
++    int      every     = getenv("GGML_META_AR_TIMING") ? atoi(getenv("GGML_META_AR_TIMING")) : 0;
++    uint64_t n_graphs  = 0;   // graph_compute calls
++    uint64_t n_ar      = 0;   // allreduce_fallback calls
++    uint64_t n_bytes   = 0;   // bytes copied cross-device
++    double   t_graph   = 0;   // whole graph_compute
++    double   t_sub     = 0;   // graph_compute_async submits of the main subgraphs
++    double   t_ar      = 0;   // whole allreduce_fallback
++    double   t_sync    = 0;   // ggml_backend_synchronize (src+dst) inside the copy fallback
++    double   t_sync4[4] = {0,0,0,0}; // [push*2 + (0=src,1=dst)] for the 2-device butterfly
++    double   t_copy_d2h = 0;  // inside ggml_backend_tensor_copy: not separable here, kept for layout
++    int      push_idx  = 0;
++    double   t_copy    = 0;   // blocking ggml_backend_tensor_copy
++    double   t_add     = 0;   // graph_compute_async of the ADD graphs
++    double   t_zero    = 0;   // zeroing graphs
++    uint64_t n_native  = 0;   // cpy_tensor_async accepted
++    uint64_t n_fallbk  = 0;   // cpy_tensor_async refused -> sync + blocking copy
++    static double now() { return std::chrono::duration<double, std::micro>(std::chrono::steady_clock::now().time_since_epoch()).count(); }
++    void print() const {
++        if (!enabled || n_graphs == 0) return;
++        fprintf(stderr, "[meta-ar] graphs=%llu ar=%llu (%.1f/graph) bytes/ar=%.0f | per graph us: total=%.0f sub=%.0f ar=%.0f | per ar us: sync=%.1f [p0src=%.1f p0dst=%.1f p1src=%.1f p1dst=%.1f] copy=%.1f add=%.1f zero=%.1f | copies native=%llu fallback=%llu\n",
++            (unsigned long long) n_graphs, (unsigned long long) n_ar, n_ar/(double)n_graphs, n_ar ? n_bytes/(double)n_ar : 0.0,
++            t_graph/n_graphs, t_sub/n_graphs, t_ar/n_graphs,
++            n_ar ? t_sync/n_ar : 0.0,
++            n_ar ? t_sync4[0]/n_ar : 0.0, n_ar ? t_sync4[1]/n_ar : 0.0, n_ar ? t_sync4[2]/n_ar : 0.0, n_ar ? t_sync4[3]/n_ar : 0.0,
++            n_ar ? t_copy/n_ar : 0.0, n_ar ? t_add/n_ar : 0.0, n_ar ? t_zero/n_ar : 0.0,
++            (unsigned long long) n_native, (unsigned long long) n_fallbk);
++    }
++    void reset() { n_graphs = n_ar = n_bytes = n_native = n_fallbk = 0; t_graph = t_sub = t_ar = t_sync = t_copy = t_add = t_zero = 0; t_sync4[0] = t_sync4[1] = t_sync4[2] = t_sync4[3] = 0; }
++    ~ggml_meta_ar_stats() { print(); }
++};
++static ggml_meta_ar_stats g_meta_ar;
+ 
+ struct ggml_backend_meta_device;
+ struct ggml_backend_meta_buffer_type;
+@@ -2336,7 +2374,9 @@ static enum ggml_status ggml_backend_meta_graph_compute(ggml_backend_t backend,
+             step_cgraphs[j] = get_cgraph_aux();
+             step_cgraphs[j]->nodes[0] = node_zero;
+             step_cgraphs[j]->n_nodes = 1;
++            const double tz0 = ggml_meta_ar_stats::now();
+             const ggml_status status = ggml_backend_graph_compute_async(bcj.backend, step_cgraphs[j]);
++            g_meta_ar.t_zero += ggml_meta_ar_stats::now() - tz0;
+             if (status != GGML_STATUS_SUCCESS) {
+                 return status;
+             }
+@@ -2356,7 +2396,32 @@ static enum ggml_status ggml_backend_meta_graph_compute(ggml_backend_t backend,
+             ggml_tensor * node_tmp = get_node_aux(node_dst);
+             set_tmp_data(node_tmp, j_dst, i_buf);
+ 
+-            ggml_backend_tensor_copy_async(bcj_src.backend, bcj_dst.backend, node_src, node_tmp);
++            {
++                // same logic as ggml_backend_tensor_copy_async, split up for timing
++                bool done = false;
++                if (bcj_dst.backend->iface.cpy_tensor_async != NULL) {
++                    done = bcj_dst.backend->iface.cpy_tensor_async(bcj_src.backend, bcj_dst.backend, node_src, node_tmp);
++                }
++                if (done) {
++                    g_meta_ar.n_native++;
++                } else {
++                    g_meta_ar.n_fallbk++;
++                    const double t0 = ggml_meta_ar_stats::now();
++                    ggml_backend_synchronize(bcj_src.backend);
++                    const double t0b = ggml_meta_ar_stats::now();
++                    ggml_backend_synchronize(bcj_dst.backend);
++                    const double t1 = ggml_meta_ar_stats::now();
++                    ggml_backend_tensor_copy(node_src, node_tmp);
++                    const double t2 = ggml_meta_ar_stats::now();
++                    g_meta_ar.t_sync += t1 - t0;
++                    const int slot = (g_meta_ar.push_idx & 1) * 2;
++                    g_meta_ar.t_sync4[slot]     += t0b - t0;
++                    g_meta_ar.t_sync4[slot + 1] += t1 - t0b;
++                    g_meta_ar.t_copy += t2 - t1;
++                }
++                g_meta_ar.n_bytes += ggml_nbytes(node_src);
++                g_meta_ar.push_idx++;
++            }
+ 
+             ggml_tensor * node_red = get_node_aux(node_dst);
+             node_red->view_src = node_dst->view_src == nullptr ? node_dst : node_dst->view_src;
+@@ -2408,7 +2473,9 @@ static enum ggml_status ggml_backend_meta_graph_compute(ggml_backend_t backend,
+                     continue;
+                 }
+                 auto & bcj = backend_ctx->backend_configs[j];
++                const double ta0 = ggml_meta_ar_stats::now();
+                 const ggml_status status = ggml_backend_graph_compute_async(bcj.backend, step_cgraphs[j]);
++                g_meta_ar.t_add += ggml_meta_ar_stats::now() - ta0;
+                 if (status != GGML_STATUS_SUCCESS) {
+                     return status;
+                 }
+@@ -2431,7 +2498,9 @@ static enum ggml_status ggml_backend_meta_graph_compute(ggml_backend_t backend,
+     };
+ 
+ 
++    const double tg0 = ggml_meta_ar_stats::now();
+     for (size_t i = 0; i < backend_ctx->n_subgraphs; i++) {
++        const double ts0 = ggml_meta_ar_stats::now();
+         for (size_t j = 0; j < n_backends; j++) {
+             auto & bcj = backend_ctx->backend_configs[j];
+             const ggml_status status = ggml_backend_graph_compute_async(bcj.backend, bcj.cgraphs[i].cgraph_main);
+@@ -2439,6 +2508,7 @@ static enum ggml_status ggml_backend_meta_graph_compute(ggml_backend_t backend,
+                 return status;
+             }
+         }
++        g_meta_ar.t_sub += ggml_meta_ar_stats::now() - ts0;
+ 
+         if (n_backends > 1 && i < backend_ctx->n_subgraphs - 1) {
+             bool backend_allreduce_success = false;
+@@ -2454,13 +2524,23 @@ static enum ggml_status ggml_backend_meta_graph_compute(ggml_backend_t backend,
+             }
+ 
+             if (!backend_allreduce_success) {
++                const double tar0 = ggml_meta_ar_stats::now();
++                g_meta_ar.push_idx = 0;
+                 const ggml_status status = allreduce_fallback(i);
++                g_meta_ar.t_ar += ggml_meta_ar_stats::now() - tar0;
++                g_meta_ar.n_ar++;
+                 if (status != GGML_STATUS_SUCCESS) {
+                     return status;
+                 }
+             }
+         }
+     }
++    g_meta_ar.t_graph += ggml_meta_ar_stats::now() - tg0;
++    g_meta_ar.n_graphs++;
++    if (g_meta_ar.enabled && g_meta_ar.every > 0 && g_meta_ar.n_graphs % g_meta_ar.every == 0) {
++        g_meta_ar.print();
++        g_meta_ar.reset();
++    }
+     return GGML_STATUS_SUCCESS;
+ }
+ 
