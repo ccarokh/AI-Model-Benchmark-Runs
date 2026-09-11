@@ -2,8 +2,5 @@ results/
 *.log
 scripts/coding/game/game/
 
-# ISO build: local config and build artefacts
-iso/iso.conf
-iso/work/
-iso/out/
-iso/cache/
+# installer ISO for a borrowed measurement node: personal infrastructure, kept out of this repository
+iso/
