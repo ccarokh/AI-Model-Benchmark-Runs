@@ -1,6 +1,6 @@
 # Where the time goes in Vulkan tensor split
 
-**It is latency, not bandwidth, and it is not the slow card.** With `-sm tensor` on
+**It is latency, not bandwidth, and it is not the slow card — and the draft AllReduce in PR #25051 removes two thirds of it on this pair.** With `-sm tensor` on
 Vulkan every layer boundary runs a generic AllReduce in `ggml-backend-meta.cpp` that
 drains both GPUs to the host, copies 16 KB through a staging buffer with a fenced
 submit, and re-submits — **64 times per token** for a 32-layer model. Each round costs
@@ -167,8 +167,54 @@ reduction, F16 on the wire, timeline-semaphore ordering with a CPU-proxy thread 
 devices do not share a driver. Reported on same-vendor pairs: Qwen3.5-9B tg 44 → 61 t/s
 (CUDA/NCCL: 73). Nobody has measured its proxy path on a mixed-vendor pair — which is
 this machine. It is blocked on the crash-fix part of the same PR (maintainer objection),
-not explicitly on the AllReduce. Whether the next step is that PR rebased or a smaller
-change to the fallback is decided in the contribution repository, not here.
+not explicitly on the AllReduce. Its Vulkan part, rebased here, is measured in the next
+section.
+
+## The draft AllReduce, measured on the mixed-vendor pair
+
+The Vulkan part of PR #25051 — `ggml-vulkan.cpp` only, without the multi-buffer
+workaround in `ggml-backend*` — applied on the same `df03399b8` (one API fix: the
+queue objects became `unique_ptr`s since the PR was written; patch in
+[`data/vulkan_tensor_split/pr25051-vulkan-only-on-df03399b8.patch`](../data/vulkan_tensor_split/pr25051-vulkan-only-on-df03399b8.patch)).
+The log confirms the path nobody had measured: *"cross-device OPAQUE_FD timeline import
+unsupported; using portable CPU-proxy sync"* — RADV and NVIDIA do not share a driver
+UUID, so a host thread bridges the timeline semaphores.
+
+| tg128 t/s | XTX alone | layer 3/1 | tensor, fallback | **tensor, PR** | PR of XTX |
+|---|---:|---:|---:|---:|---:|
+| Qwen3.5-9B, 3/1 | 111.9 | 69.9 | 43.2 | **71.5** | 64 % |
+| Qwen3.5-9B, 1/1 | | | 41.6 | 59.5 | 53 % |
+| Qwen3.5-9B, 1/0 | | 110.0 | 38.3 | 70.4 | 63 % |
+| Qwen3.5-9B, 3/1, `GGML_VK_COMM_TREE=1` | | | | 73.7 | 66 % |
+| Qwen3.5-9B, 3/1, depth 4096 | | | | 71.5 | |
+| Qwen3.6-27B, 3/1 | 39.0 | 24.7 | 19.2 | **30.0** | 77 % |
+
+| pp512 t/s | XTX alone | layer 3/1 | tensor, fallback | **tensor, PR** |
+|---|---:|---:|---:|---:|
+| Qwen3.5-9B, 3/1 | 2868 | 2063 | 828 | **2108** |
+| Qwen3.5-9B, 1/1 | | | 855 | 1548 |
+| Qwen3.5-9B, 3/1, depth 4096 | | | | 1846 |
+| Qwen3.6-27B, 3/1 | — | — | — | 612 |
+
+- **Generation: +66 % at 9B, +56 % at 27B over the fallback.** At 9B tensor split now
+  equals layer split; at 27B it beats it (30.0 against 24.7) — the first configuration
+  on this machine where the second card makes generation *faster* than layer split.
+- **Prefill recovers 2.5×** (828 → 2108) and lands above layer split. The 2.8 GB/s
+  staging path is gone; what remains is F16 over the same link, DMA'd once.
+- **Same tokens.** Greedy 48-token completions from the PR (ring, 3/1, 1/1, forced
+  proxy) are byte-identical to each other and to the fallback tensor split; both differ
+  from the single card in two words, as any change of reduction order does. One sample,
+  not a perplexity run.
+- **The remaining cost.** 1/0 with the PR is 70.4 t/s: 14.2 ms per token against 8.9,
+  i.e. *inferred* ~83 µs per AllReduce where the fallback paid ~250. Per token that is
+  still 5.3 ms of pure synchronisation for 64 × 16 KB. The proxy thread hop (poll a
+  semaphore on device A, signal on device B, twice per ring step) is the obvious
+  candidate; the native path on a same-driver pair would show how much of the 83 µs it
+  is. CUDA's in-kernel flag spin pays none of it.
+- **The crash is untouched.** `llama-completion` with the model's default context
+  aborts in `ggml_backend_meta_buffer_init_tensor` ("multi buffers are not supported by
+  the meta backend") — #22197, exactly the part of the PR left out here. `-c 2048` and
+  `llama-bench` are unaffected.
 
 ## Method notes
 

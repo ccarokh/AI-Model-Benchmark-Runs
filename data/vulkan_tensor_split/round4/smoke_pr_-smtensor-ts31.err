@@ -1,0 +1,7 @@
+0.00.148.299 I llama_completion: llama backend init
+0.00.148.304 I llama_completion: load the model and apply lora adapter, if any
+0.00.149.506 W common_fit_params: failed to fit params to free device memory: llama_params_fit is not implemented for SPLIT_MODE_TENSOR, abort
+0.02.303.849 I cmn          init: llama threadpool init, n_threads = 8
+/opt/src/llama.cpp/ggml/src/ggml-backend-meta.cpp:1205: multi buffers are not supported by the meta backend
+warning: The current terminal doesn't support styling.  Styled output might not appear as expected.
+timeout: the monitored command dumped core

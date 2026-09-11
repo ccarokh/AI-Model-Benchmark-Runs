@@ -1,0 +1,31 @@
+[New LWP 57888]
+[New LWP 57886]
+[New LWP 57883]
+[New LWP 57882]
+[New LWP 57881]
+[New LWP 57879]
+[New LWP 57878]
+[New LWP 57877]
+[New LWP 57875]
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/usr/lib/libthread_db.so.1".
+0x00007fcaf04a07f2 in ?? () from /usr/lib/libc.so.6
+#0  0x00007fcaf04a07f2 in ?? () from /usr/lib/libc.so.6
+#1  0x00007fcaf049481c in ?? () from /usr/lib/libc.so.6
+#2  0x00007fcaf0494864 in ?? () from /usr/lib/libc.so.6
+#3  0x00007fcaf0504fcf in wait4 () from /usr/lib/libc.so.6
+#4  0x00007fcaf353c93b in ggml_print_backtrace () from /opt/llama-cpp-master/lib/libggml-base.so.0
+#5  0x00007fcaf353cace in ggml_abort () from /opt/llama-cpp-master/lib/libggml-base.so.0
+#6  0x00007fcaf3571b89 in ggml_backend_meta_buffer_init_tensor_impl(ggml_backend_meta_simple_tensor_container&, ggml_tensor*) [clone .isra.0] () from /opt/llama-cpp-master/lib/libggml-base.so.0
+#7  0x00007fcaf3572d9a in ggml_backend_meta_buffer_init_tensor(ggml_backend_buffer*, ggml_tensor*) () from /opt/llama-cpp-master/lib/libggml-base.so.0
+#8  0x00007fcaf3553f53 in ggml_gallocr_alloc_graph () from /opt/llama-cpp-master/lib/libggml-base.so.0
+#9  0x00007fcaf355ad51 in ggml_backend_sched_alloc_graph () from /opt/llama-cpp-master/lib/libggml-base.so.0
+#10 0x00007fcaf3700ea0 in llama_context::process_ubatch(llama_ubatch const&, llm_graph_type, llama_memory_context_i*, ggml_status&) () from /opt/llama-cpp-master/lib/libllama.so.0
+#11 0x00007fcaf37061dd in llama_context::decode(llama_batch const&) () from /opt/llama-cpp-master/lib/libllama.so.0
+#12 0x00007fcaf3707dee in llama_decode () from /opt/llama-cpp-master/lib/libllama.so.0
+#13 0x00007fcaf3c62681 in common_init_from_params(common_params&, bool) () from /opt/llama-cpp-master/lib/libllama-common.so.0
+#14 0x00007fcaf40c94b7 in llama_completion(int, char**) () from /opt/llama-cpp-master/lib/libllama-completion-impl.so
+#15 0x00007fcaf0427781 in ?? () from /usr/lib/libc.so.6
+#16 0x00007fcaf04278b9 in __libc_start_main () from /usr/lib/libc.so.6
+#17 0x000055b652e8a075 in _start ()
+[Inferior 1 (process 57873) detached]

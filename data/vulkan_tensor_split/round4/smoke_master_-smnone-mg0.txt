@@ -1,0 +1,5 @@
+The three most important properties of a good benchmark are:
+
+1. **Representativeness** – the benchmark must reflect the real-world workload or problem it is intended to model.
+2. **Repeatability** – the benchmark must produce consistent results when run under the same conditions
+
