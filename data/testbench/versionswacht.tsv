@@ -1,0 +1,37 @@
+datum	build	version	arch	model	pp	tg	hash
+2026-09-10	/opt/llama-cpp	v0.2.0	qwen3	qwen3	2883.63	131.77	706186d46b89c211
+2026-09-10	/opt/llama-cpp-nb	b10273	qwen3	qwen3	2925.26	131.89	4a1c1d1bc1c97f16
+2026-09-10	/opt/llama-cpp-master	df03399b8	qwen3	qwen3	3043.22	134.11	8862af7d45f2b409
+2026-09-10	/opt/llama-cpp	v0.2.0	qwen3moe	qwen3-30b-a3b	2315.64	193.88	c06c0deb66198e87
+2026-09-10	/opt/llama-cpp-nb	b10273	qwen3moe	qwen3-30b-a3b	2294.27	192.42	0c448b43d5f0104d
+2026-09-10	/opt/llama-cpp-master	df03399b8	qwen3moe	qwen3-30b-a3b	2277.21	194.79	471b0b1d246947dc
+2026-09-10	/opt/llama-cpp	v0.2.0	qwen35	qwen3.5-9b	2202.21	105.76	0b927c615206fbca
+2026-09-10	/opt/llama-cpp-nb	b10273	qwen35	qwen3.5-9b	2774.26	109.10	97fbf422578789ae
+2026-09-10	/opt/llama-cpp-master	df03399b8	qwen35	qwen3.5-9b	2891.97	111.69	0744ca0b753f899d
+2026-09-10	/opt/llama-cpp	v0.2.0	qwen35moe	ornith-35b	1928.72	136.99	bb9472ef2b6aac67
+2026-09-10	/opt/llama-cpp-nb	b10273	qwen35moe	ornith-35b	1932.06	137.48	cc61cb1a52f17323
+2026-09-10	/opt/llama-cpp-master	df03399b8	qwen35moe	ornith-35b	1994.27	141.69	f8eaa0d64a6c6e2d
+2026-09-10	/opt/llama-cpp	v0.2.0	qwen3next	qwen3-coder-next			KEINE_MESSUNG
+2026-09-10	/opt/llama-cpp-nb	b10273	qwen3next	qwen3-coder-next			KEINE_MESSUNG
+2026-09-10	/opt/llama-cpp-master	df03399b8	qwen3next	qwen3-coder-next			KEINE_MESSUNG
+2026-09-10	/opt/llama-cpp-master	df03399b8	qwen4exp	qwen3.8-flash-next			KEINE_MESSUNG
+2026-09-10	/opt/llama-cpp	v0.2.0	gemma4	gemma-4-12b-it	1793.24	78.29	d181edbd8ffa5e95
+2026-09-10	/opt/llama-cpp-nb	b10273	gemma4	gemma-4-12b-it	1800.27	78.50	3e515719684df47c
+2026-09-10	/opt/llama-cpp-master	df03399b8	gemma4	gemma-4-12b-it	1888.60	81.35	c5f577953f299deb
+2026-09-10	/opt/llama-cpp	v0.2.0	granite	granite-4.2-30b	663.48	37.70	3dd140a939227679
+2026-09-10	/opt/llama-cpp-nb	b10273	granite	granite-4.2-30b	696.65	37.61	740df490d1b5aef9
+2026-09-10	/opt/llama-cpp-master	df03399b8	granite	granite-4.2-30b	704.20	38.26	92b494a391450638
+2026-09-10	/opt/llama-cpp	v0.2.0	bailingmoe3	ling-3.0-tiny	7157.21	211.26	8dbaec86f2d05259
+2026-09-10	/opt/llama-cpp-master	df03399b8	bailingmoe3	ling-3.0-tiny	7486.15	210.57	bd1c1358b8731527
+2026-09-10	/opt/llama-cpp	v0.2.0	nemotron_h_moe	nemotron-3.5-lightning-30b-a3b	1977.57	165.90	d64a812250208fff
+2026-09-10	/opt/llama-cpp-nb	b10273	nemotron_h_moe	nemotron-3.5-lightning-30b-a3b	1925.60	165.61	0073f90438c7805b
+2026-09-10	/opt/llama-cpp-master	df03399b8	nemotron_h_moe	nemotron-3.5-lightning-30b-a3b	2024.42	166.48	0f19a90ac2ac57d1
+2026-09-10	/opt/llama-cpp	v0.2.0	mgpu	mgpu-none	2783.03	107.36	-
+2026-09-10	/opt/llama-cpp	v0.2.0	mgpu	mgpu-layer	2055.58	69.60	-
+2026-09-10	/opt/llama-cpp	v0.2.0	mgpu	mgpu-row			-
+2026-09-10	/opt/llama-cpp-nb	b10273	mgpu	mgpu-none	2760.56	108.84	-
+2026-09-10	/opt/llama-cpp-nb	b10273	mgpu	mgpu-layer	2045.60	70.26	-
+2026-09-10	/opt/llama-cpp-nb	b10273	mgpu	mgpu-row			-
+2026-09-10	/opt/llama-cpp-master	df03399b8	mgpu	mgpu-none	2879.01	111.37	-
+2026-09-10	/opt/llama-cpp-master	df03399b8	mgpu	mgpu-layer	1966.23	70.48	-
+2026-09-10	/opt/llama-cpp-master	df03399b8	mgpu	mgpu-row			-

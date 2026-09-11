@@ -37,6 +37,7 @@ next to ours, with the column headers saying who measured what.
 
 | Source | Document | What it gave us |
 |---|---|---|
+| [Hetzner Inference API](https://inference.hetzner.com/) | [hetzner-inference.md](hetzner-inference.md) | The same two models we run locally, served in FP8: **FP8 does not beat Q4_K_M** — both land within noise of our thinking-off figures at n=150 and hold at n=900. No logprobs, temperature 0 not honoured, 10 requests a minute |
 | [Artificial Analysis](https://artificialanalysis.ai/) | [artificial-analysis.md](artificial-analysis.md) | One model measured on both sides: a consumer card reaches 87–89 % of a hosted endpoint. And the cost comparison **reverses** depending on the input/output mix |
 
 ## Considered, not run

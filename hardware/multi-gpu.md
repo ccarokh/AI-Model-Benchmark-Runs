@@ -4,6 +4,19 @@
 speed and buys capacity. Tensor split is unusable. The only thing that matters when
 buying a second card is its memory bandwidth.**
 
+> **Update 11.09.2026 — tensor split now loads, and is still not worth using.** On
+> upstream master (`050dde50c`) `-sm tensor` runs instead of failing: **38.4 t/s
+> against 111.6 on one card — 34 %**, worse than layer split's 63 %. The Vulkan
+> backend has no AllReduce of its own and falls through to the generic path in
+> `ggml-backend-meta.cpp`; upstream tracks it in
+> [#22648](https://github.com/ggml-org/llama.cpp/issues/22648) with a diagnosis and
+> no owner. `-sm row` is deprecated and fails to load — the earlier "unusable" was
+> measured with that flag. The nightly [version watch](../scripts/versionswacht.sh)
+> now records all three placements; the day `mgpu-tensor` moves is the day
+> something changed. And the [memory-tier curve](memory-tiers.md) puts a number
+> on what the second card is worth as overflow: a layer on the RTX 2070 costs
+> ~2–3× a layer on the 7900 XTX; a layer in host memory costs ~10×.
+
 The question was concrete: would adding a slower 16 GB card to a 24 GB card be worth
 the money, to run models that do not fit in 24 GB?
 

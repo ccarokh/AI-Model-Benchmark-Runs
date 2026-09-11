@@ -1,6 +1,6 @@
 # Memory tiers: what a gigabyte costs when it is not on the card
 
-**Nothing here is measured yet.** This is the design, written before the numbers exist so the predictions can turn out wrong in public.
+**Measured 10.09.2026 — and both predictions were wrong.** The design below is left as written; the results follow it, so the wrongness stays visible.
 
 ## The wrong sort
 
@@ -59,3 +59,40 @@ Not one model. **The sort.** Every entry on the [open list](../README.md#open) t
 ## What would make it a failure worth publishing
 
 If question 1 fails, the honest result is a ceiling stated in the right units: not "24 GB" but "45.8 GB of fast memory is more than 24 + 8 + 15 provides". That is a better sentence than the one in the README today, and it costs one download to earn.
+
+
+---
+
+## Results, 10.09.2026
+
+Three MoE models already on the machine, `--n-cpu-moe` from 0 to 48, pinned build b10273, `-p 512 -n 128 -r 2`, card pinned. Full table in [`data/testbench/tierkurve.tsv`](../data/testbench/tierkurve.tsv).
+
+| `qwen3-30b-a3b` | layers on CPU | prefill t/s | generation t/s |
+|---|---:|---:|---:|
+| all on the card | 0 | 2 246 | **191.8** |
+| | **4 of 48** | 858 | **94.5** |
+| | 8 | 544 | 60.6 |
+| | 16 | 268 | 42.5 |
+| all on CPU | 48 | 104 | 19.7 |
+
+**Four of 48 layers in host memory, and generation halves.** `gpt-oss-20b` and `qwen3.6-35b-a3b` trace the same curve. The control point holds: `gpt-oss-20b` has 24 layers and the curve goes flat from `--n-cpu-moe 24` on, because everything is already on the CPU.
+
+### Prediction 4 was wrong: the cost adds, it does not average
+
+The plan predicted the rate would follow the bandwidth-weighted mean of the two tiers. Moving 8 % of the weights from 960 GB/s to ~51 GB/s should then have left ~92 % of the rate. **Measured: 49 %.**
+
+The reason is order, not bandwidth. Every token passes through every layer *in sequence*. A layer in host memory costs about **ten times** a layer on the card — 1.06 ms against 0.11 ms on this model — and those costs add up along the chain. A serial model of the same numbers predicts 111 t/s at four layers against 94.5 measured; close, and far closer than 92 %. The bandwidth law is still true per layer. It is not what a token experiences.
+
+### Prediction 5 was wrong, and in the other direction
+
+The plan predicted the split would cost generation several times what it costs prefill, because generation is bandwidth-bound and prefill is not. **Prefill lost more:** 21× against 10× at full offload.
+
+Prefill is compute-bound, and the CPU is not merely slower at reading than the card — it is far slower at computing. A tier that is 19× slower on paper by bandwidth is 10× slower where bandwidth rules and 21× slower where compute does.
+
+### What it settles
+
+**More host memory lets a model load. It does not let it run.** Every layer that does not fit on the card costs an order of magnitude, and that cost sits in the chain of every token. The reframing that started this page — sort models by what has to be fast, not by total size — survives; the conclusion drawn from it, that the slow part can be slow, does not. **The active path is the whole chain**, and one slow link slows everything behind it.
+
+The purchase question this was meant to inform is therefore answered before any purchase: host memory at 51 GB/s is not a tier a model can live in. It is where a model goes to be loadable, at ten times the cost. A platform with four or eight memory channels would move that to roughly three times — better, and still not a place to run from.
+
+The second card is a different matter. It is measured in [multi-gpu.md](multi-gpu.md), and it is the only overflow on this machine that costs less than an order of magnitude.
