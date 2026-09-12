@@ -73,7 +73,7 @@ for eintrag in $KANDIDATEN; do
     strings $b/lib/libllama.so 2>/dev/null | grep -Fxq "$arch" || continue
     cut -f1,3,5 "$OUT" | grep -qx "$HEUTE	$v	$name" && continue
     export LD_LIBRARY_PATH=$b/lib
-    j=$(timeout 900 $b/bin/llama-bench -m "$g" -p 512 -n 128 -r 2 -ngl 99 \
+    j=$(timeout -k 10 900 $b/bin/llama-bench -m "$g" -p 512 -n 128 -r 2 -ngl 99 \
           -sm none -mg 0 -o json 2>/dev/null)
     if [ -z "$j" ]; then
       printf "%s\t%s\t%s\t%s\t%s\t\t\tKEINE_MESSUNG\n" "$HEUTE" "$b" "$v" "$arch" "$name" >> "$OUT"
@@ -86,9 +86,11 @@ for e in d: w['pp' if e['n_prompt'] else 'tg']=e['avg_ts']
 print('%.2f %.2f' % (w.get('pp',0), w.get('tg',0)))")"
     # Behaviour, not just speed. Fixed seed, greedy, one fresh process.
     # Exactly the invocation the drift check has used successfully for weeks.
+    # `-k 10`: llama-cli survived TERM for nine hours in a futex wait after the
+    # runtime had been OOM-killed under it, holding 7.8 GB of VRAM. KILL follows.
     # The decisive part is `< /dev/null`: without a stdin stream llama-cli waits
     # for input instead of exiting, and -no-cnv alone does not change that.
-    h=$(timeout 300 $b/bin/llama-cli -m "$g" -ngl 99 -sm none -mg 0 \
+    h=$(timeout -k 10 300 $b/bin/llama-cli -m "$g" -ngl 99 -sm none -mg 0 \
           --seed 1234 --temp 0 -n 96 --ctx-size 4096 \
           -p "List the first ten prime numbers." < /dev/null 2>/dev/null \
         | sha256sum | cut -c1-16)
@@ -115,7 +117,7 @@ if [ -n "$g" ]; then
       art=${split%%:*}; karte=${split##*:}
       cut -f1,3,5 "$OUT" | grep -qx "$HEUTE	$v	mgpu-$art" && continue
       if [ "$karte" = 0 ]; then flags="-sm none -mg 0"; else flags="-sm $art"; fi
-      j=$(timeout 900 $b/bin/llama-bench -m "$g" -p 512 -n 128 -r 2 -ngl 99 $flags -o json 2>/dev/null)
+      j=$(timeout -k 10 900 $b/bin/llama-bench -m "$g" -p 512 -n 128 -r 2 -ngl 99 $flags -o json 2>/dev/null)
       if [ -z "$j" ]; then
         printf "%s\t%s\t%s\t%s\t%s\t\t\tKEINE_MESSUNG\n" "$HEUTE" "$b" "$v" "mgpu" "mgpu-$art" >> "$OUT"
         echo "  mgpu $art auf $v: KEINE MESSUNG"; continue

@@ -54,7 +54,7 @@ sag(){ echo "[$(date '+%d.%m. %H:%M:%S')] $*" | tee -a $L; }
 # -n is not optional: without it ssh reads stdin, and stdin here is the queue
 # file the loop is reading from. The first remote step then swallows the rest of
 # the queue and the window ends reporting one step where there were several.
-auf_ziel(){ ssh -n -o BatchMode=yes -o ConnectTimeout=10 "$ZIEL" "$@"; }
+auf_ziel(){ ssh -n -o BatchMode=yes -o ConnectTimeout=10 -o ServerAliveInterval=30 -o ServerAliveCountMax=4 "$ZIEL" "$@"; }
 
 im_fenster(){
   h=$(date +%-H)
@@ -90,6 +90,10 @@ pacht_nehmen(){
       if [ "$code" != 200 ]; then
         echo "[$(date '+%d.%m. %H:%M:%S')] PACHT VERLOREN (HTTP $code) -- Messung wird abgebrochen" >> $L
         rm -f "$E/.pacht_gilt"
+        # bash runs a trap only after the foreground command returns. On 12.09.
+        # that command was an ssh whose far end had been OOM-killed, and the
+        # window sat on it for nine hours. So end the child first, then ourselves.
+        pkill -TERM -P $$ 2>/dev/null
         kill -TERM $$ 2>/dev/null
         exit 1
       fi
