@@ -24,6 +24,7 @@ flock -n 9 || { echo "  laeuft bereits -- abgebrochen"; exit 0; }
 OUT=${OUT:-/root/eval/versionswacht.tsv}
 M=/opt/llm-infra/models
 HEUTE=$(date +%Y-%m-%d)
+VRAM_BYTES=$(cat /sys/class/drm/card1/device/mem_info_vram_total 2>/dev/null || echo 0)
 [ -s "$OUT" ] || printf "datum\tbuild\tversion\tarch\tmodel\tpp\ttg\thash\n" > "$OUT"
 
 # Smallest model per architecture. Deliberately not the biggest: this runs every
@@ -54,6 +55,17 @@ for eintrag in $KANDIDATEN; do
   arch=${eintrag%%:*}; name=${eintrag##*:}
   g=$(ls $M/$name/*.gguf 2>/dev/null | grep -v mmproj | sort | head -1)
   [ -z "$g" ] && continue
+  # A file larger than the card is not a candidate. llama-bench with -ngl 99
+  # tries to pin the whole thing on the way in, and on this box (16 GB RAM)
+  # that ended with the OOM killer taking down the production runtime -- twice
+  # in one night -- and every lease with it. Refuse before loading, not after.
+  groesse=$(stat -c %s "$g")
+  if [ "$groesse" -gt "$VRAM_BYTES" ]; then
+    echo "  $name: $(( groesse / 1073741824 )) GB gegen $(( VRAM_BYTES / 1073741824 )) GB VRAM -- zu gross, uebersprungen"
+    cut -f1,4,5 "$OUT" | grep -qx "$HEUTE	$arch	$name" || \
+      printf "%s\t-\t-\t%s\t%s\t\t\tZU_GROSS\n" "$HEUTE" "$arch" "$name" >> "$OUT"
+    continue
+  fi
   for b in $BUILDS; do
     v=$(cat $b/.built-version 2>/dev/null || echo unbekannt)
     # Skip builds that do not know this architecture -- an unsupported model is

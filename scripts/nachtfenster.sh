@@ -18,6 +18,12 @@
 # that quietly puts work on the card's machine -- that default is what went
 # wrong.
 #
+# A line beginning with `@eigene-pacht` runs here too, but manages the card by
+# itself: the window returns its lease first and does not take it back. That is
+# how the evening polyglot chain joins the queue instead of racing it at 23:00
+# -- two nights in a row it found the card taken and gave up. Such a line ends
+# the window's own work, so it belongs last.
+#
 # THE LOG LIVES HERE. When the target rebooted mid-window on 08.09. its log went
 # with it. The controller keeps its own record of what it asked for.
 #
@@ -156,8 +162,12 @@ while read -r zeile; do
 
   # Where does this line run? Explicit, never inferred.
   case "$zeile" in
-    @ziel\ *) wo=ziel; befehl=${zeile#@ziel } ;;
-    *)        wo=hier; befehl=$zeile ;;
+    @ziel\ *)         wo=ziel; befehl=${zeile#@ziel } ;;
+    @eigene-pacht\ *) wo=hier; befehl=${zeile#@eigene-pacht }
+                      sag "gebe die Pacht zurueck -- der naechste Schritt nimmt sich selbst eine"
+                      [ -n "$HERZ" ] && { kill $HERZ 2>/dev/null; HERZ=""; }
+                      pacht_zurueck; rm -f "$E/.pacht_gilt" ;;
+    *)                wo=hier; befehl=$zeile ;;
   esac
 
   if [ $wo = ziel ]; then
