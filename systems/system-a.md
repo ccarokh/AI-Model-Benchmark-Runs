@@ -13,7 +13,7 @@
 | **Microcode (running)** | 0xf8 |
 | **Microcode replaced at boot, from** | 0x000000f0 |
 | **OS** | Arch Linux |
-| **Kernel** | 7.1.5-arch1-2 |
+| **Kernel** | 7.2.2-arch1-1 (v1.7; 7.1.5-arch1-2 until 2026-09-13) |
 | **Python** | Python 3.14.6 |
 | **Root filesystem** | /dev/nvme1n1p2 |
 | **Root device** | CT1000P1SSD8 931.5G nvme |
@@ -25,7 +25,7 @@
 
 | GPU | VRAM | Driver | Power limit |
 |---|---|---|---|
-| NVIDIA GeForce RTX 2070 | 8192 MiB | 610.43.03 | 225.00 W |
+| NVIDIA GeForce RTX 2070 | 8192 MiB | 610.57.04 (v1.7; 610.43.03 before) | 225.00 W |
 |  Advanced Micro Devices, Inc. [AMD/ATI] Navi 31 [Radeon RX 7900 XT/7900 XTX/7900 GRE/7900M] (rev c8) | 24560 MiB | *not determined* | *not determined* |
 
 **PCIe**
@@ -112,6 +112,7 @@ produced them.
 | **A v1.4** | 2026-08-05 → 08-06 | **+ llama.cpp b10273** in `/opt/llama-cpp-nb`, for architectures the production build predates | `/opt/llama-cpp` still b10098 and still the production runtime |
 | **A v1.5** | 2026-08-07 → 08-22 | **+ stable-diffusion.cpp** `master-813-bfbef5b` in `/opt/sd-cpp`, Vulkan | both llama.cpp prefixes untouched |
 | **A v1.6** | from 2026-08-23 | **production llama.cpp replaced: b10098 → v0.2.0** (`bb4caa7`) | `/opt/llama-cpp-nb` still b10273; candidate build in `/opt/llama-cpp-v0.2.0` |
+| **A v1.7** | from 2026-09-13 10:24 | **system update + reboot**: kernel 7.1.5 → **7.2.2-arch1-1**, Mesa/RADV 26.1.5 → **26.2.2**, NVIDIA 610.43.03 → **610.57.04**, Vulkan loader 1.4.350 → 1.4.357 | llama.cpp prefixes unchanged (v0.2.0, b10273); `/opt/llama-cpp-master` lost on 12.09. to a failed build, rebuilt by the drift check |
 
 The kernel step from v1.0 to v1.1 is the only stack change inside the series, and its
 effect was **measured rather than assumed**: 78.47 against 78.18 on the same
@@ -119,6 +120,8 @@ workload. No effect.
 
 Mesa **26.1.5** held constant across all five versions, and llama.cpp **b10098**
 across the first four.
+
+**v1.7 is the first driver change in the series, and it was measured before anything else ran on it.** The packages were upgraded on 12.09. at 15:07 without a reboot, which left the machine in a mixed state for nineteen hours: the new RADV 26.2.2 already served every new process on the 7900 XTX, while the NVIDIA kernel module (610.43) no longer matched its userspace (610.57) and the RTX 2070 was **invisible to Vulkan** — the night of 12./13.09. therefore measured the XTX on the new Mesa and every multi-GPU row on a single card. Those six rows carry the cause in their hash column instead of a value. After the reboot on 13.09. 10:24, with both cards back, the same `llama-bench` rows as on 10.09. (Qwen3.5-9B, tg128): single card **106.1 against 107.4** t/s, layer split **69.4 against 69.6**, tensor split 40.4 — within the ±1–2 % noise of this series. **No effect from the driver step**, on either build. Every measurement from here on runs on the v1.7 stack; anything compared against a pre-13.09. figure compares across it.
 
 **The v1.4 build was measured against the one it sits beside rather than assumed
 equivalent:** Llama-3.2-3B gives 250.65 t/s on b10273 against 251.33 on b10098, 0.27 %

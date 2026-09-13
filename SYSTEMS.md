@@ -19,9 +19,9 @@ arbitrary.
 | | System A | System B | System C |
 |---|---|---|---|
 | **OS** | Arch Linux | Garuda Linux (Arch-based) | Arch Linux, installed for this purpose |
-| **Kernel** | 7.1.5-arch1-2 | 7.1.5-zen1-2-zen | 7.1.9-arch1-2 |
-| **AMD stack** | Mesa/RADV **26.1.5-arch1.1**, `vulkan-radeon 1:26.1.5-1`, Vulkan API 1.4.354 — carries all inference | — | — |
-| **NVIDIA stack** | `nvidia-utils` 610.43.03 for the RTX 2070 — **no CUDA toolkit installed**; CUDA compute works anyway, with cuBLAS/cuDNN as pip wheels inside a venv ([measured](use-cases/transcription.md#part-3--faster-whisper-on-the-second-card)) | `nvidia-open-dkms` 610.43.03 + CUDA 13.3.1 | `nvidia-open` 610.57.04-8 + `nvidia-utils` 610.57.04-1, Vulkan API 1.4.341 — **Vulkan, not CUDA**, so the comparison against System A varies the card and nothing else |
+| **Kernel** | 7.2.2-arch1-1 (since 2026-09-13, v1.7; 7.1.5-arch1-2 before) | 7.1.5-zen1-2-zen | 7.1.9-arch1-2 |
+| **AMD stack** | Mesa/RADV **26.2.2** (`vulkan-radeon 1:26.2.2-1`, since 2026-09-13; 26.1.5 before — [no measurable effect](systems/system-a.md#history)), Vulkan API 1.4.354 — carries all inference | — | — |
+| **NVIDIA stack** | `nvidia-open`/`nvidia-utils` 610.57.04 for the RTX 2070 (since 2026-09-13; 610.43.03 before) — **no CUDA toolkit installed**; CUDA compute works anyway, with cuBLAS/cuDNN as pip wheels inside a venv ([measured](use-cases/transcription.md#part-3--faster-whisper-on-the-second-card)) | `nvidia-open-dkms` 610.43.03 + CUDA 13.3.1 | `nvidia-open` 610.57.04-8 + `nvidia-utils` 610.57.04-1, Vulkan API 1.4.341 — **Vulkan, not CUDA**, so the comparison against System A varies the card and nothing else |
 | **Compute** | ROCm 7.2.4 (`rocm-hip-runtime`), in a separate prefix | CUDA 13.3.1 | none installed — a CUDA build is planned as a *second*, separate measurement |
 | **Inference** | llama.cpp **v0.2.0** (`bb4caa7`) in `/opt/llama-cpp` (production, since 23.08.; **b10098** before that), **b10273** in `/opt/llama-cpp-nb` — which is what every measurement here uses; stable-diffusion.cpp `master-813-bfbef5b` in `/opt/sd-cpp` | llama.cpp **build 9614** | llama.cpp built from source in `/opt/mess/llama.cpp`, Vulkan |
 | **Python** | 3.14.6 | 3.14.6 | 3.14.7 |
