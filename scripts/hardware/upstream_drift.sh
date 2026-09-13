@@ -74,13 +74,24 @@ git checkout --quiet "$NEU_V" 2>>$L || { sag "checkout fehlgeschlagen"; exit 1; 
 case "$NEU" in
   "$PROD"|"$ALT"|/|""|/opt|/usr) sag "ABBRUCH: $NEU ist kein zulaessiges Kandidatenpraefix"; exit 1 ;;
 esac
+# The previous candidate stays in place until the new one has BUILT. On 12.09.
+# master did not compile (Vulkan shader arrays missing) and the rm before the
+# build had already taken the working candidate with it -- the only build here
+# that knew the newest architectures, gone for a commit that never linked.
+# A failed incremental build gets one retry from a clean build directory:
+# stale generated shader headers are the usual reason the first attempt fails.
+konfigurieren_und_bauen(){
+  cmake -B build-latest -DCMAKE_INSTALL_PREFIX=$NEU -DGGML_VULKAN=ON \
+        -DLLAMA_CURL=OFF -DLLAMA_BUILD_TESTS=OFF -DLLAMA_BUILD_EXAMPLES=OFF \
+        -DLLAMA_BUILD_TOOLS=ON -DLLAMA_BUILD_SERVER=ON -DCMAKE_BUILD_TYPE=Release >>$L 2>&1 \
+    && cmake --build build-latest -j"${JOBS:-12}" >>$L 2>&1
+}
+if ! konfigurieren_und_bauen; then
+  sag "Bau fehlgeschlagen -- zweiter Versuch aus sauberem Bauverzeichnis"
+  rm -rf build-latest
+  konfigurieren_und_bauen || { sag "Bau fehlgeschlagen -- alter Kandidat bleibt stehen"; exit 1; }
+fi
 rm -rf "$NEU"
-cmake -B build-latest -DCMAKE_INSTALL_PREFIX=$NEU -DGGML_VULKAN=ON \
-      -DLLAMA_CURL=OFF -DLLAMA_BUILD_TESTS=OFF -DLLAMA_BUILD_EXAMPLES=OFF \
-      -DLLAMA_BUILD_TOOLS=ON -DLLAMA_BUILD_SERVER=ON -DCMAKE_BUILD_TYPE=Release >>$L 2>&1 \
-      || { sag "cmake fehlgeschlagen"; exit 1; }
-cmake --build build-latest -j"${JOBS:-12}" >>$L 2>&1 \
-      || { sag "Bau fehlgeschlagen"; exit 1; }
 cmake --install build-latest >>$L 2>&1 \
       || { sag "Installation fehlgeschlagen -- kein Praefix, keine Messung"; exit 1; }
 
