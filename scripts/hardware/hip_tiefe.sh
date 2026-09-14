@@ -29,15 +29,25 @@ sag(){ echo "[$(date '+%d.%m. %H:%M:%S')] $*"; }
 [ -s "$OUT" ] || printf "datum\tbackend\tprefix\tversion\ttest\tdepth\tt_s\tsd\n" > "$OUT"
 
 v=$(cat $MASTER/.built-version 2>/dev/null) || { sag "kein Master-Praefix -- Drift-Schritt fehlt"; exit 1; }
+# NUR_VULKAN=1: skip the HIP build and the HIP row -- a daytime check of the
+# Vulkan side alone (used on 14.09. to test the new Mesa at depth).
+if [ "${NUR_VULKAN:-}" = 1 ]; then
+  messen_vulkan_nur=1
+else
 sag "=== HIP-Bau auf $v (CPU) ==="
 if [ "$(cat $HIP/.built-version 2>/dev/null)" = "$v" ] && [ -x $HIP/bin/llama-bench ]; then
   sag "  HIP-Praefix steht schon auf $v"
 else
   cd $SRC && git checkout --quiet "$v" || { sag "checkout $v fehlgeschlagen"; exit 1; }
+  # CMake's HIP language detection wants the ROCm root spelled out; without it
+  # the first attempt on 14.09. died in 11 s with "Failed to find HIP root
+  # directory" although hipcc and clang were right there.
+  export ROCM_PATH=/opt/rocm HIP_PATH=/opt/rocm HIPCXX=/opt/rocm/lib/llvm/bin/clang++
   bauen(){
     cmake -B build-rocm -DGGML_HIP=ON -DAMDGPU_TARGETS=gfx1100 -DGPU_TARGETS=gfx1100 \
           -DCMAKE_C_COMPILER=/opt/rocm/lib/llvm/bin/clang -DCMAKE_CXX_COMPILER=/opt/rocm/lib/llvm/bin/clang++ \
-          -DCMAKE_HIP_COMPILER=/opt/rocm/lib/llvm/bin/clang++ -DCMAKE_PREFIX_PATH=/opt/rocm \
+          -DCMAKE_HIP_COMPILER=/opt/rocm/lib/llvm/bin/clang++ -DCMAKE_HIP_COMPILER_ROCM_ROOT=/opt/rocm \
+          -DCMAKE_HIP_PLATFORM=amd -DCMAKE_PREFIX_PATH=/opt/rocm \
           -DCMAKE_INSTALL_PREFIX=$HIP -DLLAMA_CURL=OFF -DLLAMA_BUILD_TESTS=OFF -DLLAMA_BUILD_EXAMPLES=OFF \
           -DLLAMA_BUILD_TOOLS=ON -DLLAMA_BUILD_SERVER=ON -DCMAKE_BUILD_TYPE=Release > /root/eval/hip_bau.log 2>&1 \
     && cmake --build build-rocm -j"${JOBS:-12}" >> /root/eval/hip_bau.log 2>&1
@@ -53,6 +63,7 @@ fi
 n=$(LD_LIBRARY_PATH=$HIP/lib ldd $HIP/bin/llama-bench | grep -E "libllama|libggml" | grep -c "$HIP/lib")
 sag "  HIP-Bibliotheken aus dem eigenen Praefix: $n"
 LD_LIBRARY_PATH=$HIP/lib $HIP/bin/llama-bench --list-devices 2>&1 | grep -iE "ROCm|HIP|Vulkan" | head -3 | sed 's/^/  /'
+fi
 
 messen(){  # $1 backend-label $2 prefix $3 version $4.. extra device flags
   local be="$1" pfad="$2" ver="$3"; shift 3
@@ -73,5 +84,5 @@ with open(out,"a") as f:
 }
 messen vulkan $PROD   "$(cat $PROD/.built-version)" -sm none -mg 0
 messen vulkan $MASTER "$v" -sm none -mg 0
-messen hip    $HIP    "$v"
+[ "${NUR_VULKAN:-}" = 1 ] || messen hip    $HIP    "$v"
 echo FERTIG_HIP_TIEFE
