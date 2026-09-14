@@ -21,13 +21,16 @@ export LD_LIBRARY_PATH=$BUILD/lib
 [ -s "$OUT" ] || printf "model\tbuild\tncmoe\tpp_t_per_s\ttg_t_per_s\tvram_mib\tseconds\n" > "$OUT"
 
 # 0 is the reference: everything on the card.
-STUFEN="0 4 8 12 16 24 32 48"
+STUFEN=${STUFEN:-"0 4 8 12 16 24 32 48"}
+MODELLE=${MODELLE:-"qwen3-30b-a3b gpt-oss-20b qwen3.6-35b-a3b"}
 
-for name in qwen3-30b-a3b gpt-oss-20b qwen3.6-35b-a3b; do
+for name in $MODELLE; do
   g=$(ls $M/$name/*.gguf 2>/dev/null | head -1)
   [ -z "$g" ] && { echo "$name: keine Datei"; continue; }
   for n in $STUFEN; do
-    cut -f1,3 "$OUT" | grep -qx "$name	$n" && { echo "  $name ncmoe=$n: liegt vor"; continue; }
+    # A point is model x build x step: the same curve on another build is a new
+    # measurement, not a repeat (14.09.: master against b10273 for #28618).
+    cut -f1,2,3 "$OUT" | grep -qx "$name	$(cat $BUILD/.built-version)	$n" && { echo "  $name ncmoe=$n auf $(cat $BUILD/.built-version): liegt vor"; continue; }
     t0=$(date +%s)
     j=$(timeout 1800 $BUILD/bin/llama-bench -m "$g" -p 512 -n 128 -r 2 -ngl 99 \
           -sm none -mg 0 -ncmoe $n -o json 2>/dev/null)
