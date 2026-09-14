@@ -355,6 +355,8 @@ reflexively.
 three other measurements three nights running before that was accepted. The remaining
 tasks now advance in idle windows.
 
+**Caveat on the partial result, found 2026-09-14:** aider's API timeout is 600 s per request, and its retry backoff doubles up to 4096 s. With four slots sharing one 27B at 32k context, 40 requests timed out in a single night and **43 of the 159 finished tasks carry at least one timeout** in their chat history — a task that fails because the runtime answered in 700 s is an infrastructure failure, not a model failure, and the pass counts so far do not separate the two. The timeout is 1800 s from the next window on; the evaluation of the finished run has to treat tasks with timeouts separately. The generation rate itself is unchanged: Qwen3.8-27B on the same day gives 34 t/s at d32768 and 528 t/s prefill, both on par with August.
+
 **The cause is the architecture, not the reasoning.** The thinking switch was verified
 rather than assumed: `enable_thinking: false` returns 3 completion tokens and an empty
 reasoning field where `true` returns 50 and 120 characters. Running the benchmark with it
