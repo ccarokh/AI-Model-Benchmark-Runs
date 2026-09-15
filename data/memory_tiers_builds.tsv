@@ -1,0 +1,7 @@
+model	build	ncmoe	pp_t_per_s	tg_t_per_s	vram_mib	seconds
+qwen3.6-35b-a3b	b10273	0	1951.27	131.86	34	21
+qwen3.6-35b-a3b	b10273	16	47.86	39.29	34	79
+qwen3.6-35b-a3b	b10273	32	27.32	20.36	34	115
+qwen3.6-35b-a3b	7cf1c54a9	0	2067.63	132.74	34	24
+qwen3.6-35b-a3b	7cf1c54a9	16	48.24	38.78	34	79
+qwen3.6-35b-a3b	7cf1c54a9	32	36.76	28.35	34	99

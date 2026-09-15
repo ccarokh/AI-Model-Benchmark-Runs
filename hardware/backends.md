@@ -150,6 +150,22 @@ unexplained; the L2 cache is the next suspect and this hardware cannot isolate i
 `GGML_CUDA_FORCE_MMQ` and `GGML_CUDA_FORCE_CUBLAS` change nothing on any model — the two
 switches do not separate anything on this card, which is itself the result.
 
+## At context depth, after the head-size-256 fix (15.09.2026)
+
+The comparison above was taken at depth 0. Upstream PR #28102 (pwilkin, merged 11.09.: flash-attention tuning for AMD WMMA in the CUDA/HIP backend, and a fix that let head-size-256 kernels be selected at all) reported prefill at d40000 going from 426 to 639 t/s under ROCm on a card with WMMA — which RDNA3 has. That is the workload of the coding slot: Qwen3.8-27B (head_dim 256), 32k context, every round re-reads the whole prompt. So the question was measured again, at depth, on the same commit for both backends.
+
+Master `7cf1c54a9` (14.09.), HIP built the same night beside the Vulkan prefix, Qwen3.8-27B Q4_K_M, `pp512`/`tg128`, q8_0 KV cache, `-fa on`, `-r 3`, one session, card pinned. Data: [`data/hip_vs_vulkan_depth.tsv`](../data/hip_vs_vulkan_depth.tsv), script [`scripts/hardware/hip_tiefe.sh`](../scripts/hardware/hip_tiefe.sh).
+
+| depth | Vulkan pp512 | HIP pp512 | HIP vs Vulkan | Vulkan tg128 | HIP tg128 | HIP vs Vulkan |
+|---:|---:|---:|---:|---:|---:|---:|
+| 0 | 754 | 815 | +8 % | 38.0 | 35.2 | −7 % |
+| 8 192 | 683 | 778 | +14 % | 36.9 | 33.3 | −10 % |
+| 32 768 | 528 | 654 | **+24 %** | 34.3 | 28.0 | **−18 %** |
+
+**The fix is real and it does not change the answer.** HIP's prefill advantage grows with depth, from +8 % to +24 % — and its generation deficit grows just as fast, from −7 % to −18 %. For a coding round of roughly 30 000 prompt tokens and 1 500 answer tokens at d32768 that is 57 + 44 = 101 s on Vulkan against 46 + 54 = 100 s on HIP. A wash on the one workload where ROCm was supposed to pull ahead, and the visible half — the answer arriving — is the half HIP loses. Vulkan stays, for the coding slot too.
+
+Production v0.2.0 on Vulkan, measured in the same session: 736 / 670 / 518 prefill and 37.8 / 36.9 / 33.8 generation — master is 2–3 % ahead across the board, nothing more.
+
 ## Installation note
 
 ROCm 7.2.4 installed as `rocm-hip-runtime hipblas rocm-llvm rocm-cmake` — 31

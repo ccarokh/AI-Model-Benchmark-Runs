@@ -96,3 +96,16 @@ Prefill is compute-bound, and the CPU is not merely slower at reading than the c
 The purchase question this was meant to inform is therefore answered before any purchase: host memory at 51 GB/s is not a tier a model can live in. It is where a model goes to be loadable, at ten times the cost. A platform with four or eight memory channels would move that to roughly three times — better, and still not a place to run from.
 
 The second card is a different matter. It is measured in [multi-gpu.md](multi-gpu.md), and it is the only overflow on this machine that costs less than an order of magnitude.
+
+### Does a newer build move the curve? (15.09.2026, one run, to be repeated)
+
+Upstream merged a Vulkan change on 10.09. (#28618, jeffbolznv: when the card is idle, inputs from the CPU are written directly instead of copied by the GPU and waited for) that targets exactly the CPU→GPU crossings a host-resident layer creates. Three points of the `qwen3.6-35b-a3b` curve were measured again on the build the original curve used (b10273) and on master `7cf1c54a9` (14.09.), back to back in one session. Data: [`data/memory_tiers_builds.tsv`](../data/memory_tiers_builds.tsv).
+
+| layers on CPU | b10273 prefill / generation | master prefill / generation | generation Δ |
+|---:|---:|---:|---:|
+| 0 | 1 951 / 131.9 | 2 068 / 132.7 | +1 % |
+| 16 | 47.9 / 39.3 | 48.2 / 38.8 | −1 % |
+| 32 | 27.3 / 20.4 | 36.8 / 28.4 | **+39 %** |
+
+The 32-layer point moved by more than a third while the 16-layer point did not move at all. That shape does not fit a per-crossing saving of ~50 µs — it would show at 16 as well — so either something else in the CPU path changed between the builds, or the point is noise (CPU-bound runs on a serving host vary with what else the CPU is doing; `-r 2`, single night). **Measured once; not a result until the second night agrees.** Either way the order of magnitude stands: 28 t/s at 32 layers is still a fifth of the card.
+
