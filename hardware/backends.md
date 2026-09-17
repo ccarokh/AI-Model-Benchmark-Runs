@@ -164,6 +164,8 @@ Master `7cf1c54a9` (14.09.), HIP built the same night beside the Vulkan prefix, 
 
 **The fix is real and it does not change the answer.** HIP's prefill advantage grows with depth, from +8 % to +24 % — and its generation deficit grows just as fast, from −7 % to −18 %. For a coding round of roughly 30 000 prompt tokens and 1 500 answer tokens at d32768 that is 57 + 44 = 101 s on Vulkan against 46 + 54 = 100 s on HIP. A wash on the one workload where ROCm was supposed to pull ahead, and the visible half — the answer arriving — is the half HIP loses. Vulkan stays, for the coding slot too.
 
+Repeated two nights later on master `fb27a525d` (16.09.): HIP 816 / 790 / 641 prefill and 35.3 / 33.5 / 28.1 generation, Vulkan 762 / 697 / 537 and 38.0 / 36.9 / 34.1 — every cell within 2 % of the first night. The pair is stable.
+
 Production v0.2.0 on Vulkan, measured in the same session: 736 / 670 / 518 prefill and 37.8 / 36.9 / 33.8 generation — master is 2–3 % ahead across the board, nothing more.
 
 ## Installation note

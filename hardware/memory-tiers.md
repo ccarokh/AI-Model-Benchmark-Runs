@@ -109,3 +109,13 @@ Upstream merged a Vulkan change on 10.09. (#28618, jeffbolznv: when the card is 
 
 The 32-layer point moved by more than a third while the 16-layer point did not move at all. That shape does not fit a per-crossing saving of ~50 µs — it would show at 16 as well — so either something else in the CPU path changed between the builds, or the point is noise (CPU-bound runs on a serving host vary with what else the CPU is doing; `-r 2`, single night). **Measured once; not a result until the second night agrees.** Either way the order of magnitude stands: 28 t/s at 32 layers is still a fifth of the card.
 
+**The second and third night did not agree — with the first build, not with master.** Repeated on 15./16.09. and 16./17.09. ([`data/memory_tiers_builds_repeat.tsv`](../data/memory_tiers_builds_repeat.tsv)), generation t/s:
+
+| layers on CPU | b10273, night 1 | b10273, night 2 | master, nights 1 / 2 / 3 |
+|---:|---:|---:|---:|
+| 0 | 131.9 | 130.9 | 132.7 / 132.9 / 132.5 |
+| 16 | 39.3 | **21.8** | 38.8 / 38.9 / 36.5 |
+| 32 | 20.4 | 24.1 | 28.4 / 27.6 / 27.7 |
+
+Master's three nights sit within 6 % of each other; the older build's two nights differ by 45 % at 16 layers. So the "+39 % at 32 layers" of the first night was not a build effect but the older build having a bad night — and **on this host the CPU-tier points are not reproducible to better than ±40 % between nights.** The likely reason is the machine itself: 15 GB of RAM, a 20 GB model of which 7–14 GB has to live in host memory when 16–32 expert layers are offloaded, and a page cache that is fought over by whatever else the host did that evening. A build comparison at the CPU tier cannot be made until the host has enough RAM to hold the offloaded part without contention — which is the [RAM question](../systems/system-a.md) again, from a different side. What the three master nights do say: at 32 layers master is consistently 27–28 t/s where b10273 was 20–24 — probably real, not provable here.
+
