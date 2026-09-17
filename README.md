@@ -52,7 +52,7 @@ Ran, and did not work. Never-attempted models are under [open](#open) instead.
 | Nemotron-3-Nano-30B-A3B | chat, aborted 9/150 | forced reasoning `/no_think` could not suppress, no KV cache reuse across requests, and very slow offloaded decode — ~39 s per example |
 | OlympicCoder-32B | coding, aborted 2/225 | ~38 min per task; 6 days extrapolated |
 | Gemma-4-26B-A4B / 12B | coding | 11.6 and >29 min per task; answers up to 26 085 tokens — [one harness only](use-cases/coding.md#three-findings-that-outlive-the-model-list) |
-| Qwen3.8-27B | coding, **partial — 61 and 38 of 225** | **18.5 and 19.0 min per task against 1.5 for a 35B MoE** — dense, not reasoning: the thinking switch demonstrably works and changed nothing. ⚠️ **This rules out interactive and agentic use, where someone waits. It says nothing about batch use** — hand it a task, collect the result in the morning — which is untested. Remaining tasks run in idle evening windows |
+| Qwen3.8-27B | coding, 225 / 225 | **pass@2 68.9 % (74.2 % on the 182 tasks without an API timeout) — the same as Qwen3.6-27B, pass@1 clearly lower; no upgrade.** Median 12.3 min per task at a 32k slot: a dense 27B on this card costs that, 2.4× the 35B MoE at the same slot, not the 12× first reported from the wrong pair of runs. Batch use measured: 59 tasks in one night unattended |
 
 ## Size ceiling
 

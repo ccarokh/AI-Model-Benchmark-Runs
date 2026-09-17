@@ -342,25 +342,22 @@ reflexively.
 - [`scripts/coding/night_chain.sh`](../scripts/coding/night_chain.sh) — chains runs
   unattended with a deadline and a disk guard
 
-## Qwen3.8-27B: measured, and the run had to be split across evenings
+## Qwen3.8-27B: finished 2026-09-16 — as good as Qwen3.6-27B, not better, and not twelve times slower
 
 | | Result |
 |---|---|
 | SWE-bench `repomap`, pytest | **6 / 19** |
 | SWE-bench `repomap`, pylint | **3 / 10** (one instance unwinnable for every model) |
-| aider-polyglot | **partial — 61 and 38 of 225** |
+| aider-polyglot, thinking off, 32k slot | **pass@1 25.8 %, pass@2 68.9 %** (225 / 225); malformed 2; median 12.3 min per task |
+| the same, only the 182 tasks without an API timeout | pass@1 28.6 %, **pass@2 74.2 %** |
 
-**The polyglot run is unfinished on purpose.** At 18.5 and 19.0 minutes per task against
-1.5 for a 35B MoE, the full set is roughly 70 hours on the only GPU here — and it skipped
-three other measurements three nights running before that was accepted. The remaining
-tasks now advance in idle windows.
+**Against the dense sibling at the same slot:** Qwen3.6-27B-slot32k scored 38.2 / 74.2. Qwen3.8-27B without thinking lands at the same pass@2 on the clean subset and clearly below on pass@1 — the first attempt is worse, the second catches up. **No upgrade for the coding slot**, and the second-best pass@2 in the table behind Qwen3.6-27B's two runs (74.2, 72.9). Data row in [`data/coding_polyglot.tsv`](../data/coding_polyglot.tsv); the thinking-on run (61 of 225) was abandoned and stays marked partial.
 
-**Caveat on the partial result, found 2026-09-14:** aider's API timeout is 600 s per request, and its retry backoff doubles up to 4096 s. With four slots sharing one 27B at 32k context, 40 requests timed out in a single night and **43 of the 159 finished tasks carry at least one timeout** in their chat history — a task that fails because the runtime answered in 700 s is an infrastructure failure, not a model failure, and the pass counts so far do not separate the two. The timeout is 1800 s from the next window on; the evaluation of the finished run has to treat tasks with timeouts separately. The generation rate itself is unchanged: Qwen3.8-27B on the same day gives 34 t/s at d32768 and 528 t/s prefill, both on par with August.
+**What the run actually cost, measured over all 225:** median 12.3 min per task, 9 min on the tasks without timeouts. The earlier "18.5 min against 1.5 for a 35B MoE" compared a 32k-slot run with the MoE's 8k-slot run — the wrong pair. At the same 32k slot the MoE (`qwen3.6-35b-a3b-slot32k`) took 5.2 min per task: the dense 27B costs **2.4×, not 12×**, and Qwen3.6-27B at the same slot cost 13.3 min — a dense 27B on this card at 32k simply costs that, 3.6 or 3.8. Where the time goes is the answer, not the prompt: **11 600 completion tokens per task on average** against 9 200 prompt tokens. This model writes a lot even with thinking off, and 11 600 tokens at 34 t/s is 340 s of generation before four slots share the card.
 
-**The cause is the architecture, not the reasoning.** The thinking switch was verified
-rather than assumed: `enable_thinking: false` returns 3 completion tokens and an empty
-reasoning field where `true` returns 50 and 120 characters. Running the benchmark with it
-off changed the time per task from 18.5 to 19.0 minutes — nothing.
+**The run had to be split across evenings, and the splitting itself contaminated it.** The first 159 tasks ran in nightly windows with aider's default 600 s API timeout and a retry backoff doubling to 4096 s; 43 of them carry at least one timeout, and 23 of those failed. Whether they failed on the model or on the clock cannot be told apart afterwards, which is why both numbers stand above. From 15.09. the timeout is 1800 s; the last 59 tasks then ran in one night at 6.4 min each without a single timeout. Second lesson: aider's `--num-tests 30` picks 30 from the *whole* list and skips the finished ones inside that pick — the reason every window before that finished 4 to 17 tasks was the selection, not the speed.
+
+**The thinking switch was verified rather than assumed:** `enable_thinking: false` returns 3 completion tokens and an empty reasoning field where `true` returns 50 and 120 characters. The two partial runs (thinking on / off) were within 3 % of each other in time per task.
 
 | | Prefill | Generation |
 |---|---:|---:|
@@ -368,10 +365,4 @@ off changed the time per task from 18.5 to 19.0 minutes — nothing.
 | Qwen3.6-35B-A3B, MoE | 2 631.3 t/s | 138.5 t/s |
 | Ratio | **3.2×** | **3.5×** |
 
-An aider task is several rounds, each with the full file context and repo map. **3.2×
-slower reading and 3.5× slower writing, compounded over rounds and two attempts, is where
-the factor of twelve comes from.**
-
-⚠️ **This rules out interactive and agentic use, where a person or a loop waits on each
-turn. It says nothing about batch use** — hand over a task list, collect results in the
-morning — where 225 tasks over a weekend is unremarkable. That case is untested.
+⚠️ **For interactive and agentic use, where a person or a loop waits on each turn, 12 minutes a task is the wrong class.** Batch use — a task list in the evening, results in the morning — is now measured rather than untested: 59 tasks in 6 h 20 min, unattended, on the card that serves everything else by day.
