@@ -13,9 +13,13 @@
 # Called from cron, e.g. 20:00. Runs until the window ends or until finished.
 set -uo pipefail
 LOG=/root/bench/abend_polyglot.log
-LAUF=2026-08-17-22-45-39--qwen3.8-27b-nothink-slot32k-diff
+# LAUF names the run directory. A name that does not exist yet is created by
+# aider's benchmark.py from the exercise tree and runs from the start -- that is
+# how the stage-1 run on the pinned master build starts (18.09.). The server
+# build comes from KW_SERVER_BIN / KW_SERVER_LIBS, passed through to kartenwacht.
+LAUF=${LAUF:-2026-08-17-22-45-39--qwen3.8-27b-nothink-slot32k-diff}
 BASIS=/root/coding-eval/aider/tmp.benchmarks
-Q38=/opt/llm-infra/models/qwen3.8-27b/Qwen3.8-27B-Q4_K_M.gguf
+Q38=${Q38:-/opt/llm-infra/models/qwen3.8-27b/Qwen3.8-27B-Q4_K_M.gguf}
 ENDE_STD=${ENDE_STD:-7}        # bis 07:00 des Folgetags
 PRO_SITZUNG=${PRO_SITZUNG:-30} # Aufgaben je Fenster
 
