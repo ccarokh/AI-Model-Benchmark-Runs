@@ -11,7 +11,10 @@
 set -e
 cd /root/coding-eval/aider
 DIR="$1"; PORT="$2"; EF="${3:-diff}"; TRIES="${4:-2}"; THREADS="${5:-4}"; NT="${6:-all}"
-[ -d "tmp.benchmarks/$DIR" ] || { echo "Verzeichnis tmp.benchmarks/$DIR fehlt"; exit 1; }
+# A missing directory is not an error: aider's benchmark.py creates it from the
+# exercise tree and runs every task -- that is how a fresh run starts here
+# (the guard that stood here cost the first stage-1 night, 19.09.).
+[ -d "tmp.benchmarks/$DIR" ] || echo "Verzeichnis tmp.benchmarks/$DIR gibt es noch nicht -- aider legt es an, voller Lauf"
 NTARG=""; [ "$NT" != "all" ] && NTARG="--num-tests $NT"
 docker run --rm --name abend-polyglot \
   --cpus=3 --memory=12g --memory-swap=12g --pids-limit=1024 \
