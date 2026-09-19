@@ -1,0 +1,5 @@
+date	build	text	quant	ppl	kld_mean	kld_p99	top1_agree_pct	seconds
+2026-09-19	972d2313b	llama.cpp-source-213KB (memorised, PPL 1.32)	BF16	1.3181	0	0	100	5821
+2026-09-19	972d2313b	llama.cpp-source-213KB (memorised, PPL 1.32)	Q8_0	1.3182	0.000499	0.008019	99.532	143
+2026-09-19	972d2313b	llama.cpp-source-213KB (memorised, PPL 1.32)	UD-Q6_K	1.3180	0.001328	0.024142	99.390	144
+2026-09-19	972d2313b	llama.cpp-source-213KB (memorised, PPL 1.32)	Q4_K_M	1.3242	0.008096	0.158313	98.661	135

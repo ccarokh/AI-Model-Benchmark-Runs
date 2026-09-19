@@ -16,7 +16,13 @@ set -uo pipefail
 D=/opt/llm-infra/models/qwen3.8-27b-eval      # eval scratch, deleted afterwards
 B=${B:-/opt/llama-cpp-stufe1}                  # pinned master snapshot (GDN fix in)
 Q4=/opt/llm-infra/models/qwen3.8-27b/Qwen3.8-27B-Q4_K_M.gguf
-TXT=/root/eval/kld_code.txt
+# TEXT: the first night used ~200 KB of llama.cpp's own source. BF16 scored a
+# perplexity of 1.32 on it -- the model has that text memorised, and a KLD on a
+# memorised text says little about code it has not seen. The second pass uses
+# 320 KB of private, never-published Rust and Python from the controller
+# (not in this repository); the reference file name follows the text.
+TXT=${TXT:-/root/eval/kld_code_privat.txt}
+BASE=${BASE:-/root/eval/kld_bf16_privat.base}
 OUT=/root/eval/kld_qwen38.tsv
 HF=https://huggingface.co/unsloth/Qwen3.8-27B-GGUF/resolve/main
 sag(){ echo "[$(date '+%d.%m. %H:%M:%S')] $*"; }
@@ -36,35 +42,32 @@ messen)
     [ -s "$f" ] || { sag "fehlt: $f -- Phase laden zuerst"; exit 1; }
   done
   [ -x $B/bin/llama-perplexity ] || { sag "kein $B/bin/llama-perplexity"; exit 1; }
-  if [ ! -s $TXT ]; then
-    # ~300 KB C and Python from the source tree; fixed files, fixed order.
-    { head -c 200000 /opt/src/llama.cpp/ggml/src/ggml.c; head -c 100000 /opt/src/llama.cpp/convert_hf_to_gguf.py; } > $TXT
-  fi
-  [ -s "$OUT" ] || printf "datum\tbuild\tquant\tppl\tkld_mean\tkld_p99\ttop1_agree\tseconds\n" > "$OUT"
+  [ -s $TXT ] || { sag "kein Text $TXT"; exit 1; }
+  [ -s "$OUT" ] || printf "datum\tbuild\ttext\tquant\tppl\tkld_mean\tkld_p99\ttop1_agree\tseconds\n" > "$OUT"
   export LD_LIBRARY_PATH=$B/lib
   v=$(cat $B/.built-version)
   sag "=== Referenz BF16 (streamt von NVMe, dauert) ==="
   t0=$(date +%s)
   timeout -k 30 10800 $B/bin/llama-perplexity -m $D/BF16/Qwen3.8-27B-BF16-00001-of-00002.gguf -f $TXT -c 2048 -b 512 -ngl 20 \
-      --kl-divergence-base /root/eval/kld_bf16.base > /root/eval/kld_bf16.log 2>&1
+      --kl-divergence-base $BASE > /root/eval/kld_bf16.log 2>&1
   rc=$?; s=$(( $(date +%s) - t0 ))
   ppl=$(grep -oE "Final estimate: PPL = [0-9.]+" /root/eval/kld_bf16.log | grep -oE "[0-9.]+$")
-  printf "%s\t%s\tBF16\t%s\t0\t0\t100\t%s\n" "$(date +%F)" "$v" "${ppl:-?}" "$s" >> "$OUT"
+  printf "%s\t%s\t%s\tBF16\t%s\t0\t0\t100\t%s\n" "$(date +%F)" "$v" "$(basename $TXT)" "${ppl:-?}" "$s" >> "$OUT"
   sag "  BF16: rc=$rc ppl=${ppl:-?} (${s}s)"
-  [ -s /root/eval/kld_bf16.base ] || { sag "keine Referenzdatei -- Abbruch"; exit 1; }
+  [ -s $BASE ] || { sag "keine Referenzdatei -- Abbruch"; exit 1; }
   for q in "Q8_0:$D/Qwen3.8-27B-Q8_0.gguf" "UD-Q6_K:$D/Qwen3.8-27B-UD-Q6_K.gguf" "Q4_K_M:$Q4"; do
     name=${q%%:*}; g=${q#*:}
     sag "=== $name ==="
     t0=$(date +%s)
     timeout -k 30 7200 $B/bin/llama-perplexity -m "$g" -f $TXT -c 2048 -b 512 -ngl 99 \
-        --kl-divergence-base /root/eval/kld_bf16.base --kl-divergence > /root/eval/kld_$name.log 2>&1
+        --kl-divergence-base $BASE --kl-divergence > /root/eval/kld_$name.log 2>&1
     s=$(( $(date +%s) - t0 ))
     # llama-perplexity prints a summary block: Mean KLD, 99.0% KLD, Same top p
-    ppl=$(grep -oE "Mean PPL\(Q\)[^0-9]*[0-9.]+" /root/eval/kld_$name.log | grep -oE "[0-9.]+$" | tail -1)
-    kld=$(grep -oE "Mean KLD:? *[0-9.]+" /root/eval/kld_$name.log | grep -oE "[0-9.]+$" | tail -1)
+    ppl=$(grep -oE "Mean PPL\(Q\) *: *[0-9.]+" /root/eval/kld_$name.log | grep -oE "[0-9.]+$" | tail -1)
+    kld=$(grep -oE "Mean +KLD: +[0-9.]+" /root/eval/kld_$name.log | grep -oE "[0-9.]+$" | tail -1)
     k99=$(grep -oE "99\.0% *KLD:? *[0-9.]+" /root/eval/kld_$name.log | grep -oE "[0-9.]+$" | tail -1)
     top=$(grep -oE "Same top p:? *[0-9.]+" /root/eval/kld_$name.log | grep -oE "[0-9.]+$" | tail -1)
-    printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" "$(date +%F)" "$v" "$name" "${ppl:-?}" "${kld:-?}" "${k99:-?}" "${top:-?}" "$s" >> "$OUT"
+    printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" "$(date +%F)" "$v" "$(basename $TXT)" "$name" "${ppl:-?}" "${kld:-?}" "${k99:-?}" "${top:-?}" "$s" >> "$OUT"
     sag "  $name: ppl=${ppl:-?} kld=${kld:-?} p99=${k99:-?} top1=${top:-?} (${s}s)"
   done
   echo FERTIG_KLD
