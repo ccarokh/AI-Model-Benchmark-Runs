@@ -73,6 +73,15 @@ messen)
     s=$(( $(date +%s) - t0 ))
     ppl=$(grep -oE "Mean PPL\(Q\) *: *[0-9.]+" /root/eval/kld_bonsai_$q.log | grep -oE "[0-9.]+$" | tail -1)
     kld=$(grep -oE "Mean +KLD: +[0-9.]+" /root/eval/kld_bonsai_$q.log | grep -oE "[0-9.]+$" | tail -1)
+    # The reference file holds 22 of 40 chunks (the BF16 pass hit its timeout on
+    # 20.09.), so llama-perplexity stops at chunk 22 with "failed reading
+    # log-probs" and prints no summary. The running per-chunk line at 22 is the
+    # same cumulative number the summary would show -- take it from there.
+    if [ -z "$kld" ]; then
+      set -- $(grep -aE "^ +22 " /root/eval/kld_bonsai_$q.log | tail -1)
+      ppl=${2:-}; kld=${8:-}; top=${14:-}
+      [ -n "$kld" ] && sag "  (Zusammenfassung fehlt, Werte aus Chunk 22 -- Referenz deckt nur 22 von 40)"
+    fi
     k99=$(grep -oE "99\.0% +KLD: +[0-9.]+" /root/eval/kld_bonsai_$q.log | grep -oE "[0-9.]+$" | tail -1)
     top=$(grep -oE "Same top p: +[0-9.]+" /root/eval/kld_bonsai_$q.log | grep -oE "[0-9.]+$" | tail -1)
     if [ -z "$kld" ]; then
