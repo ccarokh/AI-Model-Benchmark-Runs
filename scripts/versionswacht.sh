@@ -59,7 +59,10 @@ for eintrag in $KANDIDATEN; do
   # tries to pin the whole thing on the way in, and on this box (16 GB RAM)
   # that ended with the OOM killer taking down the production runtime -- twice
   # in one night -- and every lease with it. Refuse before loading, not after.
-  groesse=$(stat -c %s "$g")
+  # SUM the shards. A sharded model's first file is a 10 MB index; measuring
+  # that one let a 72.5 GB model through the guard, and the OOM killer took
+  # llama-bench at 114 GB of address space (23.09.).
+  groesse=$(stat -c %s $M/$name/*.gguf 2>/dev/null | grep -v '^0$' | paste -sd+ | bc)
   if [ "$groesse" -gt "$VRAM_BYTES" ]; then
     echo "  $name: $(( groesse / 1073741824 )) GB gegen $(( VRAM_BYTES / 1073741824 )) GB VRAM -- zu gross, uebersprungen"
     cut -f1,4,5 "$OUT" | grep -qx "$HEUTE	$arch	$name" || \
@@ -70,15 +73,23 @@ for eintrag in $KANDIDATEN; do
     v=$(cat $b/.built-version 2>/dev/null || echo unbekannt)
     # Skip builds that do not know this architecture -- an unsupported model is
     # not a regression, and recording it as one buries the real ones.
-    strings $b/lib/libllama.so 2>/dev/null | grep -Fxq "$arch" || continue
+    LD_LIBRARY_PATH=$b/lib strings $b/lib/libllama.so 2>/dev/null | grep -Fxq "$arch" || continue
     cut -f1,3,5 "$OUT" | grep -qx "$HEUTE	$v	$name" && continue
     export LD_LIBRARY_PATH=$b/lib
+    # KEEP THE ERROR. "KEINE_MESSUNG" with the reason thrown away hid
+    # "unknown model architecture: qwen4exp" for two weeks -- the binary was
+    # resolving libllama from the PRODUCTION prefix through the ld.so cache,
+    # because the architecture probe above ran without LD_LIBRARY_PATH set.
+    fehler=$(mktemp)
     j=$(timeout -k 10 900 $b/bin/llama-bench -m "$g" -p 512 -n 128 -r 2 -ngl 99 \
-          -sm none -mg 0 -o json 2>/dev/null)
+          -sm none -mg 0 -o json 2>"$fehler")
     if [ -z "$j" ]; then
-      printf "%s\t%s\t%s\t%s\t%s\t\t\tKEINE_MESSUNG\n" "$HEUTE" "$b" "$v" "$arch" "$name" >> "$OUT"
-      echo "  $name auf $v: KEINE MESSUNG"; continue
+      grund=$(grep -aiE "error|failed|unknown|unsupported" "$fehler" | head -1 | cut -c1-120 | tr '\t' ' ')
+      rm -f "$fehler"
+      printf "%s\t%s\t%s\t%s\t%s\t\t\tKEINE_MESSUNG: %s\n" "$HEUTE" "$b" "$v" "$arch" "$name" "${grund:-ohne Meldung}" >> "$OUT"
+      echo "  $name auf $v: KEINE MESSUNG -- ${grund:-ohne Meldung}"; continue
     fi
+    rm -f "$fehler"
     read -r pp tg <<< "$(printf '%s' "$j" | python3 -c "
 import json,sys
 d=json.load(sys.stdin); w={}
