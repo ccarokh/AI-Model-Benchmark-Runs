@@ -7,3 +7,4 @@ date	build	text	quant	ppl	kld_mean	kld_p99	top1_agree_pct	seconds
 2026-09-20	972d2313b	private Rust+Python 320KB, unseen (BF16 PPL 3.10), 22 of 40 chunks = 45k tokens (BF16 reference hit the 3 h timeout)	UD-Q6_K	3.1000	0.00224	-	98.143	103
 2026-09-20	972d2313b	private Rust+Python 320KB, unseen (BF16 PPL 3.10), 22 of 40 chunks = 45k tokens (BF16 reference hit the 3 h timeout)	Q4_K_M	3.1137	0.00919	-	96.410	94
 2026-09-24	prismml-bdc23b5	private Rust+Python, 22 of 40 chunks = 45k tokens (same reference as the Q series)	Bonsai-2-27B-PTQ1_0 (ternary 1.72 bit, 5.95 GB)	3.7299	0.24369	-	83.253	89
+2026-09-24	prismml-bdc23b5	private Rust+Python, 22 of 40 chunks = 45k tokens (same reference as the Q series)	Bonsai-2-27B-PQ2_0 (ternary 2.13 bit, 7.21 GB)	3.7276	0.24291	-	-	-
