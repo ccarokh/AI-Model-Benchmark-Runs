@@ -63,8 +63,16 @@ for eintrag in $KANDIDATEN; do
   # that one let a 72.5 GB model through the guard, and the OOM killer took
   # llama-bench at 114 GB of address space (23.09.).
   groesse=$(stat -c %s $M/$name/*.gguf 2>/dev/null | grep -v '^0$' | paste -sd+ | bc)
-  if [ "$groesse" -gt "$VRAM_BYTES" ]; then
-    echo "  $name: $(( groesse / 1073741824 )) GB gegen $(( VRAM_BYTES / 1073741824 )) GB VRAM -- zu gross, uebersprungen"
+  # A model bigger than the card is not automatically out: with experts in host
+  # memory (-ncmoe) it still runs, just from RAM instead of VRAM. The ceiling is
+  # therefore VRAM + RAM, minus a margin for the runtime and the page cache.
+  # Flash-Next (72.5 GB) is the case this exists for: it fits neither, but at
+  # 64 GB of RAM it is loadable, and that is the number we want each night.
+  DECKEL=$(( VRAM_BYTES + $(free -b | awk '/^Mem:/{print $2}') - 6*1024*1024*1024 ))
+  FLAGS=""
+  [ "$groesse" -gt "$VRAM_BYTES" ] && FLAGS="-ncmoe 99"
+  if [ "$groesse" -gt "$DECKEL" ]; then
+    echo "  $name: $(( groesse / 1073741824 )) GB gegen $(( DECKEL / 1073741824 )) GB VRAM+RAM -- zu gross, uebersprungen"
     cut -f1,4,5 "$OUT" | grep -qx "$HEUTE	$arch	$name" || \
       printf "%s\t-\t-\t%s\t%s\t\t\tZU_GROSS\n" "$HEUTE" "$arch" "$name" >> "$OUT"
     continue
@@ -81,8 +89,11 @@ for eintrag in $KANDIDATEN; do
     # resolving libllama from the PRODUCTION prefix through the ld.so cache,
     # because the architecture probe above ran without LD_LIBRARY_PATH set.
     fehler=$(mktemp)
-    j=$(timeout -k 10 900 $b/bin/llama-bench -m "$g" -p 512 -n 128 -r 2 -ngl 99 \
-          -sm none -mg 0 -o json 2>"$fehler")
+    # Models that need host memory get fewer repeats and a longer rope: 2.3 t/s
+    # from NVMe was the old measurement, and even from RAM this is minutes.
+    [ -n "$FLAGS" ] && wdh=1 && frist=3600 || { wdh=2; frist=900; }
+    j=$(timeout -k 10 $frist $b/bin/llama-bench -m "$g" -p 512 -n 128 -r $wdh -ngl 99 \
+          -sm none -mg 0 $FLAGS -o json 2>"$fehler")
     if [ -z "$j" ]; then
       grund=$(grep -aiE "error|failed|unknown|unsupported" "$fehler" | head -1 | cut -c1-120 | tr '\t' ' ')
       rm -f "$fehler"
@@ -101,7 +112,7 @@ print('%.2f %.2f' % (w.get('pp',0), w.get('tg',0)))")"
     # runtime had been OOM-killed under it, holding 7.8 GB of VRAM. KILL follows.
     # The decisive part is `< /dev/null`: without a stdin stream llama-cli waits
     # for input instead of exiting, and -no-cnv alone does not change that.
-    h=$(timeout -k 10 300 $b/bin/llama-cli -m "$g" -ngl 99 -sm none -mg 0 \
+    h=$(timeout -k 10 $(( frist / 2 )) $b/bin/llama-cli -m "$g" -ngl 99 -sm none -mg 0 $FLAGS \
           --seed 1234 --temp 0 -n 96 --ctx-size 4096 \
           -p "List the first ten prime numbers." < /dev/null 2>/dev/null \
         | sha256sum | cut -c1-16)
