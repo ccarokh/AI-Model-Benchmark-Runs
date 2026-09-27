@@ -119,3 +119,16 @@ The 32-layer point moved by more than a third while the 16-layer point did not m
 
 Master's three nights sit within 6 % of each other; the older build's two nights differ by 45 % at 16 layers. So the "+39 % at 32 layers" of the first night was not a build effect but the older build having a bad night — and **on this host the CPU-tier points are not reproducible to better than ±40 % between nights.** The likely reason is the machine itself: 15 GB of RAM, a 20 GB model of which 7–14 GB has to live in host memory when 16–32 expert layers are offloaded, and a page cache that is fought over by whatever else the host did that evening. A build comparison at the CPU tier cannot be made until the host has enough RAM to hold the offloaded part without contention — which is the [RAM question](../systems/system-a.md) again, from a different side. What the three master nights do say: at 32 layers master is consistently 27–28 t/s where b10273 was 20–24 — probably real, not provable here.
 
+## With 64 GB of host memory (2026-09-27)
+
+System A [v1.8](../systems/system-a.md#history): the same card, host memory raised from 16 to 64 GB DDR4-3200. Two models that never fit anywhere before are now in the nightly version watch, measured with `-ncmoe 99` — every expert in host memory, attention and shared weights on the card. Data: [`data/testbench/versionswacht.tsv`](../data/testbench/versionswacht.tsv).
+
+| Model | File | Build | Prefill pp512 | **Generation tg128** |
+|---|---:|---|---:|---:|
+| Qwen3.8-Flash-Next UD-IQ1_S | 72.5 GB | master `95887577a` | 14.7 | **12.9** |
+| Qwen3-Coder-Next Q4_K_M | 48.4 GB | v0.2.0 / b10273 / master | 64.7 / 66.2 / 65.7 | **18.7 / 19.1 / 18.9** |
+
+Before the upgrade Flash-Next could only be started by streaming from NVMe: **2.3 t/s** generation, 0.5 t/s prefill. From host memory it is **5.6× faster** and lands where the bandwidth estimate put it (~13 t/s: 6B active parameters at ~1.5 bit per weight, read from 51 GB/s). Qwen3-Coder-Next had been refused by the size guard outright.
+
+**This refines the section above rather than contradicting it.** Host memory is still an order of magnitude below the card — 12.9 t/s is batch speed, not chat speed. But the question it answers has changed: it is no longer *can this model run here*, it is *is this model worth 13 t/s*. For an overnight task list, a 177B model at that rate is a working option; for anything a person waits on, it is not.
+

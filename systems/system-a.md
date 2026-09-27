@@ -113,6 +113,7 @@ produced them.
 | **A v1.5** | 2026-08-07 → 08-22 | **+ stable-diffusion.cpp** `master-813-bfbef5b` in `/opt/sd-cpp`, Vulkan | both llama.cpp prefixes untouched |
 | **A v1.6** | from 2026-08-23 | **production llama.cpp replaced: b10098 → v0.2.0** (`bb4caa7`) | `/opt/llama-cpp-nb` still b10273; candidate build in `/opt/llama-cpp-v0.2.0` |
 | **A v1.7** | from 2026-09-13 10:24 | **system update + reboot**: kernel 7.1.5 → **7.2.2-arch1-1**, Mesa/RADV 26.1.5 → **26.2.2**, NVIDIA 610.43.03 → **610.57.04**, Vulkan loader 1.4.350 → 1.4.357 | llama.cpp prefixes unchanged (v0.2.0, b10273); `/opt/llama-cpp-master` lost on 12.09. to a failed build, rebuilt by the drift check |
+| **A v1.8** | from 2026-09-27 | **RAM 16 → 64 GB** (2×32 GB Crucial CT32G4DFD832A, DDR4-3200 CL22 JEDEC, ChannelA-DIMM1 + ChannelB-DIMM1; replaces 2×8 GB Ballistix CL16) | software unchanged; Resizable BAR on (BAR 0 = 32 GB) |
 
 The kernel step from v1.0 to v1.1 is the only stack change inside the series, and its
 effect was **measured rather than assumed**: 78.47 against 78.18 on the same
@@ -143,6 +144,10 @@ resolves every `libllama`/`libggml` to `/opt/llama-cpp/lib`, so the new binary r
 the old libraries otherwise — all eight of them, silently. Here it failed loudly
 (`unknown model architecture: 'nanbeige'`); with an architecture both builds know, it
 would not have.
+
+**v1.8 changes what can run, not how fast the card runs.** Every GPU-resident figure on the first clean night is inside the band of the six nights before the swap — production-like generation (Qwen3.5-9B, `pp4096@d8192`, `tg256`) 101.1 against 100.8–101.7, the single-card and split rows of the version watch unchanged. What 64 GB adds is room for models whose experts do not fit on the card: Qwen3.8-Flash-Next (72.5 GB) and Qwen3-Coder-Next (48 GB) now load with their experts in host memory — see [memory tiers](../hardware/memory-tiers.md#with-64-gb-of-host-memory-2026-09-27).
+
+**After any change at the board — memory, cards, BIOS update, CMOS clear — read back the BAR size, the PCIe link of each card and the memory speed before the next measurement counts.**
 
 ## Bench setup and prefixes
 
