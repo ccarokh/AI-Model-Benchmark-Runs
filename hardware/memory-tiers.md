@@ -132,3 +132,15 @@ Before the upgrade Flash-Next could only be started by streaming from NVMe: **2.
 
 **This refines the section above rather than contradicting it.** Host memory is still an order of magnitude below the card — 12.9 t/s is batch speed, not chat speed. But the question it answers has changed: it is no longer *can this model run here*, it is *is this model worth 13 t/s*. For an overnight task list, a 177B model at that rate is a working option; for anything a person waits on, it is not.
 
+### What it changes day to day: the model swap
+
+The production runtime loads models on demand and evicts others. The wait a user sees on the first request after a swap is the time from starting `llama-server` to `/health` answering — measured once with the page cache dropped (the file comes from NVMe) and once straight after (the file is in RAM). Production build v0.2.0, own server on its own port, card leased. Data: [`data/model_swap_time.tsv`](../data/model_swap_time.tsv), script [`scripts/hardware/wechselzeit.sh`](../scripts/hardware/wechselzeit.sh).
+
+| Model | File | From NVMe | From RAM | Saved |
+|---|---:|---:|---:|---:|
+| Qwen3.5-9B (chat) | 5.2 GB | 5.6 s | **2.3 s** | 3.3 s |
+| Gemma-4-12B (vision) | 6.6 GB | 6.7 s | **3.2 s** | 3.5 s |
+| Qwen3-Coder-30B-A3B (coding) | 17.2 GB | 13.0 s | **5.7 s** | 7.3 s |
+
+**A swap from RAM takes less than half the time.** What remains is the upload to the card and initialisation. The three together are 29 GB: with 16 GB of host memory the coding model alone did not fit into the page cache and came from NVMe on every swap; with 64 GB all three stay resident side by side.
+

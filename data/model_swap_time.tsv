@@ -1,0 +1,7 @@
+datum	modell	groesse_gb	zustand	sekunden_bis_bereit	cache_gb_vorher
+2026-09-27	qwen3.5-9b	5.2	kalt	5.588803772	0
+2026-09-27	qwen3.5-9b	5.2	warm	2.337331559	5
+2026-09-27	gemma-4-12b-it	6.6	kalt	6.738883443	0
+2026-09-27	gemma-4-12b-it	6.6	warm	3.169765616	7
+2026-09-27	qwen3-coder-30b-a3b	17.2	kalt	13.049204463	0
+2026-09-27	qwen3-coder-30b-a3b	17.2	warm	5.726148616	17
