@@ -144,3 +144,19 @@ The production runtime loads models on demand and evicts others. The wait a user
 
 **A swap from RAM takes less than half the time.** What remains is the upload to the card and initialisation. The three together are 29 GB: with 16 GB of host memory the coding model alone did not fit into the page cache and came from NVMe on every swap; with 64 GB all three stay resident side by side.
 
+### The tier curve again, on 64 GB (2026-09-28)
+
+Same models, same steps, same build (b10273) as the curve at the top of this page. Data: [`data/testbench/tierkurve_v18.tsv`](../data/testbench/tierkurve_v18.tsv).
+
+| `qwen3-30b-a3b`, layers on CPU | 16 GB: prefill / generation | 64 GB: prefill / generation |
+|---:|---:|---:|
+| 0 | 2 246 / 191.8 | 3 115 / 194.9 |
+| 4 | 858 / 94.5 | 964 / 92.1 |
+| 16 | 268 / 42.5 | 349 / 41.8 |
+| 32 | 142 / 27.3 | 198 / 27.1 |
+| 48 | 104 / 19.7 | 141 / 19.9 |
+
+**Generation is unchanged at every step** — within 2 % on both models. More host memory does not make an offloaded layer cheaper: the cost is the CPU doing the work in sequence, not a shortage of room. The finding above stands as it was.
+
+**Prefill rose by about 40 % — including at 0 layers, where host memory plays no part.** The first curve predates the driver step to Mesa 26.2.2 (System A v1.7), so most of that rise belongs to the stack, not to the memory; what share is the memory cannot be separated from these two curves.
+

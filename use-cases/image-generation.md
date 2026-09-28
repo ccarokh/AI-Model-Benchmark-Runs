@@ -105,6 +105,20 @@ tokens in FLUX's schematic; `--psm 6` reads six from the same file. The tool now
 five segmentation modes and keeps the best — otherwise the table would have reported
 "no text present" for an image that has text.
 
+## A sixth model: Qwen-Image-2.1 (2026-09-28)
+
+Measured on System A v1.8 (64 GB host memory), PyTorch 2.9.1 + ROCm 6.4 with diffusers in bf16 — not stable-diffusion.cpp, which does not support it. **Licence: Qwen Research License — private use and research only; not for the commercial track.** It is here for the private one (Home Assistant). Same eight tasks, same prompts, seed 42, 1024 × 1024, the model's own default steps. Data: [`image_generation_qwen_image.tsv`](../data/image_generation_qwen_image.tsv), script [`scripts/image/qwen_image_bench.py`](../scripts/image/qwen_image_bench.py).
+
+| | Qwen-Image-2.1 |
+|---|---|
+| Size | 33 GB in bf16 (text encoder 17.5, transformer 14.2, VAE 1.4) — does not fit the card; components move from host memory one at a time |
+| Time / image | **108.8 s** (steady state; the first image of a run 155 s) — between SD 3.5 Medium (69.5) and Chroma1-HD (147.7) |
+| Peak VRAM | 19 491 MiB (79 %) |
+
+**Task 02, fifteen seeds, same OCR and edit distance as above:** exact **3 / 15 = 20 %**, within one character **6 / 15 = 40 %**, median **2**, range 0 – 11. That places it between FLUX.1-schnell (13 % / 47 %, median 3) and Chroma1-HD (40 % / 73 %, median 1) — it lands the string sometimes, not reliably, and it does not beat Chroma at the one task text rendering was supposed to decide.
+
+**Task 09, new — a transparent icon.** Prompt: a flat washing-machine icon for a smart-home dashboard *on a transparent background, RGBA with alpha channel*. The output carries a real alpha channel: the icon is opaque, the background transparent, with a clean silhouette and soft edge (alpha 0–255). None of the other five models can produce that at all; with them it takes a separate background-removal step.
+
 ## What the operator judged
 
 The rest cannot be automated. Each image was rated pass/fail by the operator, with a
