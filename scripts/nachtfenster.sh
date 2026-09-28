@@ -67,7 +67,7 @@ im_fenster(){
 
 pacht_nehmen(){
   t=$(cat "$PACHT_SCHLUESSEL" 2>/dev/null) || { sag "kein Pacht-Token"; return 1; }
-  a=$(curl -s -m 15 -X POST "$RUNTIME/_manager/lease" \
+  a=$(curl -s -m 240 -X POST "$RUNTIME/_manager/lease" \
         -H "x-lease-token: $t" -H "Content-Type: application/json" \
         -d '{"holder":"nachtfenster"}' 2>/dev/null)
   PACHT_ID=$(printf '%s' "$a" | sed -n 's/.*"lease_id":"\([^"]*\)".*/\1/p')
