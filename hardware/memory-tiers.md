@@ -160,3 +160,17 @@ Same models, same steps, same build (b10273) as the curve at the top of this pag
 
 **Prefill rose by about 40 % — including at 0 layers, where host memory plays no part.** The first curve predates the driver step to Mesa 26.2.2 (System A v1.7), so most of that rise belongs to the stack, not to the memory; what share is the memory cannot be separated from these two curves.
 
+### Cores or memory? (2026-09-28)
+
+Qwen3-Coder-Next with every expert in host memory, `llama-bench -t 1,2,4,8,16` on the 8-core / 16-thread i9-9900K. Data: [`data/testbench/cpu_threads_offload.tsv`](../data/testbench/cpu_threads_offload.tsv), script [`scripts/hardware/threads_offload.sh`](../scripts/hardware/threads_offload.sh).
+
+| Threads | Prefill | Generation | step |
+|---:|---:|---:|---:|
+| 1 | 18.0 | 5.9 | |
+| 2 | 34.5 | 10.9 | × 1.86 |
+| 4 | 45.7 | 16.0 | × 1.46 |
+| **8** | **56.0** | **17.5** | × 1.10 |
+| 16 | 45.8 | 11.6 | × 0.66 |
+
+**The offloaded experts run on all cores, but the gain flattens from four cores on: the memory, not the cores, is what the eight threads wait on.** With hyperthreads it gets worse, not better — two threads share one core and the same memory path. llama.cpp's default of one thread per physical core is the right setting. For a faster host tier this points at memory bandwidth — a higher memory clock — rather than at CPU clock.
+

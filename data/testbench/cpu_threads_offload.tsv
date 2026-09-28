@@ -1,0 +1,6 @@
+date	model	build	ncmoe	threads	pp512	tg64
+2026-09-28	qwen3-coder-next Q4_K_M	master	99	1	17.99	5.88
+2026-09-28	qwen3-coder-next Q4_K_M	master	99	2	34.46	10.91
+2026-09-28	qwen3-coder-next Q4_K_M	master	99	4	45.72	15.96
+2026-09-28	qwen3-coder-next Q4_K_M	master	99	8	55.98	17.50
+2026-09-28	qwen3-coder-next Q4_K_M	master	99	16	45.76	11.58
