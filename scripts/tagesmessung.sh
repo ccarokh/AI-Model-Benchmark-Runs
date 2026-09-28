@@ -7,7 +7,10 @@ set -u
 Z=${ZIEL:-root@192.168.40.192}; R=http://${Z#*@}:8080; L=${L:-/root/nacht/tagesmessung.log}
 t=$(cat /etc/bench/lease.token) || { echo "kein Pacht-Token"; exit 1; }
 sag(){ echo "[$(date '+%d.%m. %H:%M:%S')] $*" >> $L; }
-a=$(curl -s -m 15 -X POST "$R/_manager/lease" -H "x-lease-token: $t" -H "Content-Type: application/json" -d '{"holder":"tagesmessung"}')
+# The runtime may first have to drain live requests and unload a model before it
+# grants; it allows itself 210 s for that. A 15 s client timeout gave up on a
+# grant that was on its way (28.09., daytime traffic) -- wait longer than it does.
+a=$(curl -s -m 240 -X POST "$R/_manager/lease" -H "x-lease-token: $t" -H "Content-Type: application/json" -d '{"holder":"tagesmessung"}')
 id=$(printf '%s' "$a" | sed -n 's/.*"lease_id":"\([^"]*\)".*/\1/p')
 [ -z "$id" ] && { sag "Pacht verweigert: $(printf '%s' "$a" | cut -c1-160)"; exit 1; }
 sag "Pacht $id gehalten -- $BEFEHL"
