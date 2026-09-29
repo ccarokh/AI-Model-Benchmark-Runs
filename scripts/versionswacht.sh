@@ -98,7 +98,7 @@ for eintrag in $KANDIDATEN; do
       grund=$(grep -aiE "error|failed|unknown|unsupported" "$fehler" | head -1 | cut -c1-120 | tr '\t' ' ')
       rm -f "$fehler"
       printf "%s\t%s\t%s\t%s\t%s\t\t\tKEINE_MESSUNG: %s\n" "$HEUTE" "$b" "$v" "$arch" "$name" "${grund:-ohne Meldung}" >> "$OUT"
-      echo "  $name auf $v: KEINE MESSUNG -- ${grund:-ohne Meldung}"; continue
+      echo "  [$(date +%H:%M)] $name auf $v: KEINE MESSUNG -- ${grund:-ohne Meldung}"; continue
     fi
     rm -f "$fehler"
     read -r pp tg <<< "$(printf '%s' "$j" | python3 -c "
@@ -117,7 +117,7 @@ print('%.2f %.2f' % (w.get('pp',0), w.get('tg',0)))")"
           -p "List the first ten prime numbers." < /dev/null 2>/dev/null \
         | sha256sum | cut -c1-16)
     printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" "$HEUTE" "$b" "$v" "$arch" "$name" "$pp" "$tg" "$h" >> "$OUT"
-    echo "  $name auf $v: pp=$pp tg=$tg hash=$h"
+    echo "  [$(date +%H:%M)] $name auf $v: pp=$pp tg=$tg hash=$h"
   done
 done
 # --- Die Karten zusammen, nicht nur einzeln ---------------------------------
