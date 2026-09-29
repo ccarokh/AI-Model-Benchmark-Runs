@@ -125,7 +125,7 @@ System A [v1.8](../systems/system-a.md#history): the same card, host memory rais
 
 | Model | File | Build | Prefill pp512 | **Generation tg128** |
 |---|---:|---|---:|---:|
-| Qwen3.8-Flash-Next UD-IQ1_S | 72.5 GB | master `95887577a` | 14.7 | **12.9** |
+| Qwen3.8-Flash-Next UD-IQ1_S | 72.5 GB | master `95887577a` / `680a03628` | 14.7 / 14.5 | **12.9 / 13.0** |
 | Qwen3-Coder-Next Q4_K_M | 48.4 GB | v0.2.0 / b10273 / master | 64.7 / 66.2 / 65.7 | **18.7 / 19.1 / 18.9** |
 
 Before the upgrade Flash-Next could only be started by streaming from NVMe: **2.3 t/s** generation, 0.5 t/s prefill. From host memory it is **5.6× faster** and lands where the bandwidth estimate put it (~13 t/s: 6B active parameters at ~1.5 bit per weight, read from 51 GB/s). Qwen3-Coder-Next had been refused by the size guard outright.

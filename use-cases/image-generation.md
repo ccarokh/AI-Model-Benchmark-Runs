@@ -112,7 +112,7 @@ Measured on System A v1.8 (64 GB host memory), PyTorch 2.9.1 + ROCm 6.4 with dif
 | | Qwen-Image-2.1 |
 |---|---|
 | Size | 33 GB in bf16 (text encoder 17.5, transformer 14.2, VAE 1.4) — does not fit the card; components move from host memory one at a time |
-| Time / image | **108.8 s** (steady state; the first image of a run 155 s) — between SD 3.5 Medium (69.5) and Chroma1-HD (147.7) |
+| Time / image | **108.8 s** (steady state; the first image of a run 155 s) — between SD 3.5 Medium (69.5) and Chroma1-HD (147.7); a second full run on the next night averaged within 1 % of the first |
 | Peak VRAM | 19 491 MiB (79 %) |
 
 **Task 02, fifteen seeds, same OCR and edit distance as above:** exact **3 / 15 = 20 %**, within one character **6 / 15 = 40 %**, median **2**, range 0 – 11. That places it between FLUX.1-schnell (13 % / 47 %, median 3) and Chroma1-HD (40 % / 73 %, median 1) — it lands the string sometimes, not reliably, and it does not beat Chroma at the one task text rendering was supposed to decide.
