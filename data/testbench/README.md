@@ -31,3 +31,9 @@ across both. Those figures are one to two times below the same model pinned to t
 card. They are measurements of a machine, not of a card.
 
 Produced by [`run_all.py`](../../scripts/testbench/run_all.py).
+
+## `versionswacht.tsv` — nightly version watch
+
+One row per night × build × model: prompt and generation rate from `llama-bench -p 512 -n 128`, and a hash of a fixed greedy completion (seed 1234, `temp 0`, 96 tokens, "List the first ten prime numbers.") meant to show a change in behaviour that the speed does not. Produced by [`scripts/versionswacht.sh`](../../scripts/versionswacht.sh).
+
+**The `hash` column is only a behaviour fingerprint from 2026-09-30 on.** Before that the completion was taken with `llama-cli`, which in current builds waits in conversation mode for input and was ended by the timeout; the hash covered whatever had been printed by then and differed from night to night on the same build. The speed columns are unaffected. From 2026-09-30 the completion uses `llama-completion`, as the drift check always did, and the hash is stable across runs and — where the builds agree — across builds.

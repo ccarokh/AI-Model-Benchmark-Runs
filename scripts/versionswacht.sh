@@ -106,14 +106,22 @@ import json,sys
 d=json.load(sys.stdin); w={}
 for e in d: w['pp' if e['n_prompt'] else 'tg']=e['avg_ts']
 print('%.2f %.2f' % (w.get('pp',0), w.get('tg',0)))")"
-    # Behaviour, not just speed. Fixed seed, greedy, one fresh process.
-    # Exactly the invocation the drift check has used successfully for weeks.
-    # `-k 10`: llama-cli survived TERM for nine hours in a futex wait after the
-    # runtime had been OOM-killed under it, holding 7.8 GB of VRAM. KILL follows.
-    # The decisive part is `< /dev/null`: without a stdin stream llama-cli waits
-    # for input instead of exiting, and -no-cnv alone does not change that.
-    h=$(timeout -k 10 $(( frist / 2 )) $b/bin/llama-cli -m "$g" -ngl 99 -sm none -mg 0 $FLAGS \
-          --seed 1234 --temp 0 -n 96 --ctx-size 4096 \
+    # Behaviour, not just speed. Fixed seed, greedy, one fresh process -- the same
+    # invocation as the drift check, which is where this was solved first:
+    # llama-completion, not llama-cli. Current llama-cli defaults to conversation
+    # mode for instruct models, waits for input that never comes and only ends
+    # at the timeout -- 7.5 min per row, 5.5 h per night, and a hash of whatever
+    # it had printed when it was killed, which differed every night on the same
+    # build. Flags come from the build's own --help, because -no-cnv is valid in
+    # one build and refused by the next.
+    bin=$b/bin/llama-completion; [ -x "$bin" ] || bin=$b/bin/llama-cli
+    hilfe=$("$bin" --help 2>&1)
+    cflags="--simple-io --no-warmup"
+    printf '%s' "$hilfe" | grep -q -- "-no-cnv"             && cflags="$cflags -no-cnv"
+    printf '%s' "$hilfe" | grep -q -- "--single-turn"       && cflags="$cflags -st"
+    printf '%s' "$hilfe" | grep -q -- "--no-display-prompt" && cflags="$cflags --no-display-prompt"
+    h=$(timeout -k 10 $(( frist / 2 )) "$bin" -m "$g" -ngl 99 -sm none -mg 0 $FLAGS \
+          --seed 1234 --temp 0 -n 96 --ctx-size 4096 $cflags \
           -p "List the first ten prime numbers." < /dev/null 2>/dev/null \
         | sha256sum | cut -c1-16)
     printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" "$HEUTE" "$b" "$v" "$arch" "$name" "$pp" "$tg" "$h" >> "$OUT"
