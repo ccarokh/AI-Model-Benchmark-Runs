@@ -186,16 +186,16 @@ Qwen3.8-27B ships one MTP layer in its GGUF (`nextn_predict_layers = 1`); llama.
 | Qwen3.8-27B Q4_K_M | Generation | | Drafts accepted |
 |---|---:|---:|---:|
 | on the card, no MTP | 38.6 t/s | | |
-| MTP, 1 ahead | 63.9 t/s | +65 % | 96 % |
+| MTP, 1 ahead | 63.9 t/s | +65 % | 95 % |
 | **MTP, 2 ahead** | **80.4 t/s** | **+108 %** | 90 % |
-| MTP, 3 ahead | 89.5 t/s | +132 % | 86 % |
+| MTP, 3 ahead | 89.5 t/s | +132 % | 84 % |
 | 13 of 65 layers in host memory, no MTP | 7.5 t/s | | |
-| 13 of 65 layers in host memory, MTP 2 ahead | 17.1 t/s | × 2.3 | 90 % |
-| production build v0.2.0, MTP 2 ahead | 79.6 t/s (from 37.6) | +112 % | 90 % |
-| sampling at temperature 0.7, MTP 2 ahead | 74.7 t/s (from 38.0) | +97 % | 85 % |
-| **4 requests at once, 4 slots, aggregate** | **67 t/s (from 91)** | **−27 %** | 87 % |
+| 13 of 65 layers in host memory, MTP 2 ahead | 17.1 t/s | × 2.3 | 91 % |
+| production build v0.2.0, MTP 2 ahead | 79.6 t/s (from 37.6) | +112 % | 89 % |
+| sampling at temperature 0.7, MTP 2 ahead | 74.7 t/s (from 38.0) | +97 % | 80 % |
+| **4 requests at once, 4 slots, aggregate** | **67 t/s (from 91)** | **−27 %** | 78 % |
 
-**For one request at a time it doubles generation on the card** — in the production build and with ordinary sampling too. **Under parallel load it costs**: four slots already keep the card busy, and rejected drafts are pure extra work. **Prose drafts worse than code**: the one German explanatory prompt (in the parallel arm) accepted 52 % against ~90 % for code, so the gain for chat is smaller than the code figures. **It does not rescue a dense model in host memory**: with a fifth of the layers there, generation still falls by 81 %, and MTP brings back a factor of 2.3 of it, not the whole. Greedy speculation is meant to be exact; 3 of 15 outputs differed from their base arm, and so did one offloaded arm *without* MTP — a different batch shape changes the arithmetic, not MTP the text.
+**For one request at a time it doubles generation on the card** — in the production build and with ordinary sampling too. **Under parallel load it costs**: four slots already keep the card busy, and rejected drafts are pure extra work. **Prose drafts worse than code**: the one German explanatory prompt (in the parallel arm) accepted 52 % against ~90 % for code (drafts accepted are summed over all prompts of an arm), so the gain for chat is smaller than the code figures. **It does not rescue a dense model in host memory**: with a fifth of the layers there, generation still falls by 81 %, and MTP brings back a factor of 2.3 of it, not the whole. Greedy speculation is meant to be exact; 3 of 15 outputs differed from their base arm, and so did one offloaded arm *without* MTP — a different batch shape changes the arithmetic, not MTP the text.
 
 ### On-demand reading of large tensors
 
