@@ -1,0 +1,39 @@
+date	build	arm	ngl	slots	parallel	sampling	draft_n_max	prompt	tg_tps	predicted_n	draft_n	draft_accepted	text_sha
+2026-10-04	master 836d57176	base	99	1	1	greedy	0	0	38.6	512			472907eb4b12
+2026-10-04	master 836d57176	base	99	1	1	greedy	0	1	38.74	512			9232163d4620
+2026-10-04	master 836d57176	base	99	1	1	greedy	0	2	38.6	417			ce8bcbf4628a
+2026-10-04	master 836d57176	mtp1	99	1	1	greedy	1	0	64.45	512	260	251	472907eb4b12
+2026-10-04	master 836d57176	mtp1	99	1	1	greedy	1	1	63.76	512	263	248	9232163d4620
+2026-10-04	master 836d57176	mtp1	99	1	1	greedy	1	2	63.48	417	214	203	ce8bcbf4628a
+2026-10-04	master 836d57176	mtp2	99	1	1	greedy	2	0	82.35	512	356	333	c1e79bf28ae1
+2026-10-04	master 836d57176	mtp2	99	1	1	greedy	2	1	79.64	512	369	326	9232163d4620
+2026-10-04	master 836d57176	mtp2	99	1	1	greedy	2	2	79.11	417	306	263	ce8bcbf4628a
+2026-10-04	master 836d57176	mtp3	99	1	1	greedy	3	0	94.46	512	415	372	472907eb4b12
+2026-10-04	master 836d57176	mtp3	99	1	1	greedy	3	1	90.56	512	430	367	9232163d4620
+2026-10-04	master 836d57176	mtp3	99	1	1	greedy	3	2	83.35	417	384	288	ce8bcbf4628a
+2026-10-04	master 836d57176	offload-base	52	1	1	greedy	0	0	7.45	512			c1e79bf28ae1
+2026-10-04	master 836d57176	offload-base	52	1	1	greedy	0	1	7.47	512			9232163d4620
+2026-10-04	master 836d57176	offload-base	52	1	1	greedy	0	2	7.47	417			ce8bcbf4628a
+2026-10-04	master 836d57176	offload-mtp2	52	1	1	greedy	2	0	17.57	512	352	334	472907eb4b12
+2026-10-04	master 836d57176	offload-mtp2	52	1	1	greedy	2	1	16.9	512	367	327	9232163d4620
+2026-10-04	master 836d57176	offload-mtp2	52	1	1	greedy	2	2	16.77	512	369	326	4da232e14eee
+2026-10-04	v0.2.0 (production)	prod-base	99	1	1	greedy	0	0	37.56	512			-
+2026-10-04	v0.2.0 (production)	prod-base	99	1	1	greedy	0	1	37.52	512			-
+2026-10-04	v0.2.0 (production)	prod-base	99	1	1	greedy	0	2	37.85	417			-
+2026-10-04	v0.2.0 (production)	prod-mtp2	99	1	1	greedy	2	0	81.26	512	356	333	-
+2026-10-04	v0.2.0 (production)	prod-mtp2	99	1	1	greedy	2	1	79.94	512	369	326	-
+2026-10-04	v0.2.0 (production)	prod-mtp2	99	1	1	greedy	2	2	77.71	512	379	321	-
+2026-10-04	master 836d57176	par4-base	99	4	4	greedy	0	0	24.9	512			-
+2026-10-04	master 836d57176	par4-base	99	4	4	greedy	0	1	24.89	512			-
+2026-10-04	master 836d57176	par4-base	99	4	4	greedy	0	2	27.87	417			-
+2026-10-04	master 836d57176	par4-base	99	4	4	greedy	0	3	24.9	512			-
+2026-10-04	master 836d57176	par4-mtp2	99	4	4	greedy	2	0	20.25	512	356	333	-
+2026-10-04	master 836d57176	par4-mtp2	99	4	4	greedy	2	1	19.84	512	369	326	-
+2026-10-04	master 836d57176	par4-mtp2	99	4	4	greedy	2	2	18.24	417	304	264	-
+2026-10-04	master 836d57176	par4-mtp2	99	4	4	greedy	2	3	17.9	492	482	250	-
+2026-10-04	master 836d57176	temp-base	99	1	1	t0.7/p0.8/k20	0	0	37.82	512			-
+2026-10-04	master 836d57176	temp-base	99	1	1	t0.7/p0.8/k20	0	1	38.13	512			-
+2026-10-04	master 836d57176	temp-base	99	1	1	t0.7/p0.8/k20	0	2	38.11	512			-
+2026-10-04	master 836d57176	temp-mtp2	99	1	1	t0.7/p0.8/k20	2	0	79.75	512	365	328	-
+2026-10-04	master 836d57176	temp-mtp2	99	1	1	t0.7/p0.8/k20	2	1	75.91	512	382	319	-
+2026-10-04	master 836d57176	temp-mtp2	99	1	1	t0.7/p0.8/k20	2	2	68.53	512	428	297	-

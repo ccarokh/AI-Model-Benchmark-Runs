@@ -174,3 +174,51 @@ Qwen3-Coder-Next with every expert in host memory, `llama-bench -t 1,2,4,8,16` o
 
 **The offloaded experts run on all cores, but the gain flattens from four cores on: the memory, not the cores, is what the eight threads wait on.** With hyperthreads it gets worse, not better — two threads share one core and the same memory path. llama.cpp's default of one thread per physical core is the right setting. For a faster host tier this points at memory bandwidth — a higher memory clock — rather than at CPU clock.
 
+
+## Three levers against the host tier (2026-10-04)
+
+Everything above treats one number as fixed: per generated token, the active weights are read once, so the slowest tier sets the pace. Three things in or near llama.cpp claim to bend that. Each was measured on this host, under the card lease, every arm in a fresh `llama-server` process. Data: [`data/testbench/mtp_qwen38_27b.tsv`](../data/testbench/mtp_qwen38_27b.tsv), [`data/testbench/flashnext_host_levers.tsv`](../data/testbench/flashnext_host_levers.tsv); scripts [`mtp_test.py`](../scripts/hardware/mtp_test.py), [`mtp_test2.py`](../scripts/hardware/mtp_test2.py), [`flashnext_test.py`](../scripts/hardware/flashnext_test.py). The card sits on PCIe 3.0 x8 (`LnkSta` 8 GT/s, x8 — downgraded from x16), which matters for anything that moves weights to it at run time.
+
+### Multi-token prediction: one weight read, several tokens
+
+Qwen3.8-27B ships one MTP layer in its GGUF (`nextn_predict_layers = 1`); llama.cpp verifies the drafted tokens in one pass (`--spec-type draft-mtp --spec-draft-n-max N`). Three code prompts, 512 tokens each, thinking off.
+
+| Qwen3.8-27B Q4_K_M | Generation | | Drafts accepted |
+|---|---:|---:|---:|
+| on the card, no MTP | 38.6 t/s | | |
+| MTP, 1 ahead | 63.9 t/s | +65 % | 96 % |
+| **MTP, 2 ahead** | **80.4 t/s** | **+108 %** | 90 % |
+| MTP, 3 ahead | 89.5 t/s | +132 % | 86 % |
+| 13 of 65 layers in host memory, no MTP | 7.5 t/s | | |
+| 13 of 65 layers in host memory, MTP 2 ahead | 17.1 t/s | × 2.3 | 90 % |
+| production build v0.2.0, MTP 2 ahead | 79.6 t/s (from 37.6) | +112 % | 90 % |
+| sampling at temperature 0.7, MTP 2 ahead | 74.7 t/s (from 38.0) | +97 % | 85 % |
+| **4 requests at once, 4 slots, aggregate** | **67 t/s (from 91)** | **−27 %** | 87 % |
+
+**For one request at a time it doubles generation on the card** — in the production build and with ordinary sampling too. **Under parallel load it costs**: four slots already keep the card busy, and rejected drafts are pure extra work. **Prose drafts worse than code**: the one German explanatory prompt (in the parallel arm) accepted 52 % against ~90 % for code, so the gain for chat is smaller than the code figures. **It does not rescue a dense model in host memory**: with a fifth of the layers there, generation still falls by 81 %, and MTP brings back a factor of 2.3 of it, not the whole. Greedy speculation is meant to be exact; 3 of 15 outputs differed from their base arm, and so did one offloaded arm *without* MTP — a different batch shape changes the arithmetic, not MTP the text.
+
+### On-demand reading of large tensors
+
+Since 27.08. master reads tensors above 4 GiB on demand rather than keeping them resident (`--lazy-mode`, default `auto`); the n-gram table of Qwen3.8-Flash-Next is flagged for it. Flash-Next UD-IQ1_S, every expert in host memory (`-ncmoe 99`):
+
+| `--lazy-mode` | Load | Resident memory | Generation |
+|---|---:|---:|---:|
+| auto (default) | **13 s** | **34–38 GiB** | 13.5 t/s |
+| off | 32 s | 50 GiB | 14.1 t/s |
+
+**13 GiB less resident and 19 s faster to load, for about 4 % of generation** — at the edge of the spread. The loader's "lazy read enabled" line did not appear in any log, so that the difference comes from this mechanism is inferred, not shown; the difference itself is measured. The default is the right one here: the freed memory is what a larger quantisation needs.
+
+### A GPU cache for host-resident experts
+
+[PR #27861](https://github.com/ggml-org/llama.cpp/pull/27861) (draft, not merged, built at `bccbacdb8`) keeps recently used experts of host-resident layers in VRAM (`--moe-expert-cache N` slots per layer); misses are computed on the CPU, so nothing waits on the PCIe link. It acts in decode only and is bypassed by MTP. Same model and setting as above.
+
+| Slots per layer | Generation | | VRAM |
+|---:|---:|---:|---:|
+| 0 | 13.3 t/s | | 4.4 GB |
+| 16 | 12.9 t/s | −3 % | 5.7 GB |
+| 32 | 14.0 t/s | +5 % | 6.9 GB |
+| 64 | 15.8 t/s | +18 % | 9.3 GB |
+| 128 | 19.5 t/s | +46 % | 14.0 GB |
+| **192** | **24.7 t/s** | **+86 %** | **18.8 GB** |
+
+**Nearly double, and the curve has not flattened when the card runs out.** The routing has no fixed hot set — the PR's own measurement found a top-32 list learned on half a workload covering ~10 % of the other half — but strong locality in time, and that is what an LRU cache uses. It changes the conclusion above for MoE: host memory at 51 GB/s is still not a tier to run from, but **the card can hold the part of it that is in use right now**. A draft PR is a measurement tool, not something to run production on.
