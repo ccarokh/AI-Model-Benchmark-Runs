@@ -51,7 +51,8 @@ Interpreted in [coding](../use-cases/coding.md).
 | slug | format | pass1 | pass2 | wellformed | malformed | sec_per_case | total_cases |
 |---|---|---|---|---|---|---|---|
 | qwen3.8-27b-slot32k | diff | PARTIAL | PARTIAL | - | - | 1110 | 61_of_225 |
-| qwen3.8-27b-nothink-slot32k | diff | PARTIAL | PARTIAL | - | - | 1140 | 38_of_225 |
+| qwen3.8-27b-nothink-slot32k | diff | 25.8 | 68.9 | 99.1 | 2 | 740_median_(mean_7001_incl_retry_sleeps) | 225 |
+| qwen3.8-27b-nothink-slot32k-master | diff | 28.0 | 66.7 | 100.0 | 0 | 678_median | 225 |
 
 **[`coding_swebench.tsv`](../data/coding_swebench.tsv)** — SWE-bench Verified
 

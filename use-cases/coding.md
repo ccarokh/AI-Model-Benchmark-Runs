@@ -93,8 +93,8 @@ attempts and still posted the highest well-formed rate. Its true score is unknow
 and higher. **Verbose models were systematically penalized**; read the mid-field
 ordering with that in mind.
 
-The three `-slot32k` rows below were re-runs with a larger context. Their pass
-rates are valid; their `s/case` values are **not** — they were run above the f16
+The `-slot32k` rows below were re-runs with a larger context. Their pass
+rates are valid; the `s/case` values marked ⚠️ are **not** — those runs were above the f16
 cache ceiling and measure PCIe latency, not the model. See
 [METHODOLOGY.md](../METHODOLOGY.md#a-context-size-without-a-cache-type-is-not-a-specification).
 
@@ -103,7 +103,15 @@ cache ceiling and measure PCIe latency, not the model. See
 | Qwen3.6-27B | 38.2 | 74.2 | 797.5 ⚠️ |
 | Qwen3.6-35B-A3B | 28.9 | 62.7 | 311.3 ⚠️ |
 | ornith-35b | 28.4 | 61.8 | 220.2 ⚠️ |
+| ornith-1.5-35b | 24.9 | 54.2 | 361.0 |
 | Qwen3-Coder-30B-A3B | 12.9 | 32.0 | 94.0 |
+
+**Ornith 1.5 is not an upgrade** (04.10.2026). Same 32k slot, same thinking default as
+the 1.0 run, q8_0 cache: **54.2 % against 61.8 %**. Paired on the same 225 tasks, 43 are
+solved only by 1.0 and 26 only by 1.5 — exact McNemar p = 0.053, a drop that narrowly
+misses the 5 % line. The safe statement is *not better*, the likely one *worse*. It also
+writes 24 % more (1.79 M against 1.44 M completion tokens). Its `s/case` is valid, the 1.0
+figure is not, so the two times are not compared.
 
 Giving the models room to write triples the pass rate across the board. Whatever
 else these numbers say, **the 8192-token slot was the dominant limitation of the

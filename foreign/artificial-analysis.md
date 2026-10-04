@@ -2,6 +2,8 @@
 
 **Cited, not run.** Their numbers come from their site; ours come from this repository. Nothing below is a claim that the two are equivalent — the column headers say who measured what.
 
+**Index version.** Every index value on this page was read on 05.09.2026, before version 4.3.2. By 04.10.2026 the index had been rebuilt on a different evaluation set (v4.3.2: AA-Briefcase, GDPval-AA v2.1, AutomationBench-AA, Terminal-Bench 4.0, SciCode, Humanity's Last Exam, GDP.pdf, CritPt, AA-Omniscience, AA-LCR), and Qwen3.8 27B (xhigh) moved from 41 to 34. The values below belong to the earlier version and do not compare with the current chart; the comparisons *within* this page are unaffected, because each was read on one day from one version.
+
 | | Artificial Analysis | Here |
 |---|---|---|
 | Object measured | a hosted **endpoint** | a **file on a card we own** |
@@ -26,7 +28,7 @@ They list **Qwen3.8 27B (xhigh)**; we ran `effort-xhigh` on the same model. Same
 | | Artificial Analysis | Here |
 |---|---|---|
 | Generation | **44 t/s** (DeepInfra) | **38.4–39.1 t/s** — RX 7900 XTX, Q4_K_M, Vulkan, single stream |
-| Quality | Intelligence Index **42** (English, 10 evaluations) | **0.9267** belebele `deu_Latn`, xhigh |
+| Quality | Intelligence Index **41** (English, 10 evaluations; a first reading the same day noted 42) | **0.9267** belebele `deu_Latn`, xhigh |
 | Price per 1M tokens | **$0.40** net → **~44 ct** gross | **16.9 ct** blended · **59.8 ct** generation only |
 
 **A consumer card at Q4_K_M reaches 87–89 % of a hosted datacenter endpoint** for a single user with no batching. That comparison exists nowhere else, because nobody measures both sides.

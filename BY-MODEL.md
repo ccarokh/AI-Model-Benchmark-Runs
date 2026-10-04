@@ -49,6 +49,7 @@ reasoning model the gap reaches 70 points.
 | [Nemotron-3-Nano-30B-A3B](#the-nemotron-pair) | **aborted** | | | |
 | [Qwen3.5-27B](models/qwen3.5-27b.md) | | **49.3 %** | | |
 | [ornith-35b](models/ornith-35b.md) | | 43.1 % · 61.8 % @32k | 31.0 % (9/29) | |
+| [ornith-1.5-35b](models/ornith-1.5-35b.md) | | 54.2 % @32k | | successor — not an upgrade (paired p = 0.053) |
 | [Qwen3-Coder-30B-A3B](models/qwen3-coder-30b-a3b.md) | | 22.7 % | 13.6 % (11/81) | 40.5 s/case — fastest |
 | [Qwen3.6-35B-A3B](#qwen36-35b-a3b-and-qwopus36-35b-a3b-v1) | | 22.7 % · 62.7 % @32k | 27.6 % (8/29) | base for Qwopus |
 | [Qwopus3.6-35B-A3B-v1](#qwen36-35b-a3b-and-qwopus36-35b-a3b-v1) | | **36.0 %** @32k | 27.6 % (8/29) | fine-tune — 26.7 pts below its base |
