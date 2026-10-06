@@ -137,4 +137,4 @@ Eight short dog clips from Wikimedia Commons, all public domain or CC BY / CC BY
 
 **Video is expensive and grows with the clip.** About 1 900 prompt tokens per second of footage: the 60-second clip needs 112k tokens and 7.6 minutes on Qwen against 35 seconds from frames, and anything past ~17 seconds does not fit a 32k context at all — the first run failed there with HTTP 400 on three clips. Eight frames cost a fixed 2–5k tokens.
 
-**Read the scores as one rater's.** I judged all 32 answers against the key facts written before the run, not blind to model or mode; the per-answer verdicts and named errors are in the scores file so they can be checked. One prompt, eight clips, one run each.
+**Read the scores as one rater's.** All 32 answers were judged by one rater (an AI assistant, not one of the two models tested) against the key facts written before the run, not blind to model or mode; the per-answer verdicts and named errors are in the scores file so they can be checked. One prompt, eight clips, one run each.
