@@ -119,3 +119,22 @@ not because one description settles the slot.
 direction**: generating legible text in an image failed on every model tested, and
 reading text out of one produces confident fabrication. Text in images is the weak axis
 in both directions.
+
+## Video (2026-10-06)
+
+Eight short dog clips from Wikimedia Commons, all public domain or CC BY / CC BY-SA, so clips, prompts and answers are published: [`data/video/clips.tsv`](../data/video/clips.tsv) (source, author, licence, SHA1 and the three key facts each answer is judged against), answers in [`understanding_answers.jsonl`](../data/video/understanding_answers.jsonl), timings in [`understanding_runs.tsv`](../data/video/understanding_runs.tsv), scores in [`understanding_scores.tsv`](../data/video/understanding_scores.tsv). Two ways in, same German prompt ("describe what happens, step by step"): the clip itself as a `video_url` part (llama.cpp master; it samples the frames), or eight frames sampled evenly by us. Greedy, thinking off, RX 7900 XTX.
+
+| | Score (24 = all key facts) | Answers with an error | Time, all 8 clips | Prompt tokens, median |
+|---|---:|---:|---:|---:|
+| Gemma-4-12B, 8 frames | 18 | 6 | 66 s | 2 100 |
+| Gemma-4-12B, video | 17 | 6 | 446 s | 27 377 |
+| Qwen3.8-27B, 8 frames | 21 | 4 | 189 s | 4 689 |
+| **Qwen3.8-27B, video** | **23.5** | 4 | 1 180 s | 31 453 |
+
+**The model matters more than the way in.** Qwen3.8-27B is ahead in both modes; Gemma-4-12B misses the frisbee in both, sees one dog where the slalom has four, and reads the first-aid exercise as bite work.
+
+**Video helps the larger model only, and where motion is the point.** Qwen with the whole clip recognises that the camera is mounted on the stick and goes underwater with it, and that the military clip is about first aid — both missed from eight frames. Gemma gains nothing from the clip and invents more (a banner text that is not there, a tunnel in the slalom).
+
+**Video is expensive and grows with the clip.** About 1 900 prompt tokens per second of footage: the 60-second clip needs 112k tokens and 7.6 minutes on Qwen against 35 seconds from frames, and anything past ~17 seconds does not fit a 32k context at all — the first run failed there with HTTP 400 on three clips. Eight frames cost a fixed 2–5k tokens.
+
+**Read the scores as one rater's.** I judged all 32 answers against the key facts written before the run, not blind to model or mode; the per-answer verdicts and named errors are in the scores file so they can be checked. One prompt, eight clips, one run each.

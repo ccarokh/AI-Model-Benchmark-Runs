@@ -1,0 +1,39 @@
+date	model	clip	mode	seconds	prompt_tokens	completion_tokens	vram_peak_mib	status
+2026-10-04	gemma-4-12b-it	01_agility_slalom	video	25.0	16680	460	8368	ok
+2026-10-04	gemma-4-12b-it	01_agility_slalom	frames	8.1	1524	442	8368	ok
+2026-10-04	gemma-4-12b-it	02_agility_parcours	video	33.9	17556	412	8368	ok
+2026-10-04	gemma-4-12b-it	02_agility_parcours	frames	8.6	804	511	8368	ok
+2026-10-04	gemma-4-12b-it	03_frisbee	video	15.0	4914	465	8368	ok
+2026-10-04	gemma-4-12b-it	03_frisbee	frames	7.3	756	417	8368	ok
+2026-10-04	gemma-4-12b-it	04_stock_fluss	video	4.0			8368	fehler
+2026-10-04	gemma-4-12b-it	04_stock_fluss	frames	9.5	2100	526	8380	ok
+2026-10-04	gemma-4-12b-it	05_hund_zaun	video	32.4	25342	484	8408	ok
+2026-10-04	gemma-4-12b-it	05_hund_zaun	frames	7.6	2100	353	8404	ok
+2026-10-04	gemma-4-12b-it	06_leine_stadt	video	33.1	27377	423	8404	ok
+2026-10-04	gemma-4-12b-it	06_leine_stadt	frames	7.8	2100	371	8404	ok
+2026-10-04	gemma-4-12b-it	07_schaeferhund_kauen	video	3.4			8404	fehler
+2026-10-04	gemma-4-12b-it	07_schaeferhund_kauen	frames	6.6	2100	326	8404	ok
+2026-10-04	gemma-4-12b-it	08_diensthund_sanitaet	video	4.0			8404	fehler
+2026-10-04	gemma-4-12b-it	08_diensthund_sanitaet	frames	10.1	2100	566	8404	ok
+2026-10-04	qwen3.8-27b	01_agility_slalom	video	47.7	19251	436	18966	ok
+2026-10-04	qwen3.8-27b	01_agility_slalom	frames	19.6	3393	477	18966	ok
+2026-10-04	qwen3.8-27b	02_agility_parcours	video	71.8	21255	1024	18978	ok
+2026-10-04	qwen3.8-27b	02_agility_parcours	frames	18.3	1841	520	18978	ok
+2026-10-04	qwen3.8-27b	03_frisbee	video	28.6	5373	629	18978	ok
+2026-10-04	qwen3.8-27b	03_frisbee	frames	17.3	1521	515	18978	ok
+2026-10-04	qwen3.8-27b	04_stock_fluss	video	3.8			18978	fehler
+2026-10-04	qwen3.8-27b	04_stock_fluss	frames	29.1	4689	785	18982	ok
+2026-10-04	qwen3.8-27b	05_hund_zaun	video	70.4	29609	559	18982	ok
+2026-10-04	qwen3.8-27b	05_hund_zaun	frames	28.8	4689	728	18982	ok
+2026-10-04	qwen3.8-27b	06_leine_stadt	video	72.2	31453	496	18982	ok
+2026-10-04	qwen3.8-27b	06_leine_stadt	frames	25.7	4689	613	18982	ok
+2026-10-04	qwen3.8-27b	07_schaeferhund_kauen	video	3.3			18982	fehler
+2026-10-04	qwen3.8-27b	07_schaeferhund_kauen	frames	14.9	4689	266	18982	ok
+2026-10-04	qwen3.8-27b	08_diensthund_sanitaet	video	3.9			18982	fehler
+2026-10-04	qwen3.8-27b	08_diensthund_sanitaet	frames	35.3	4689	1012	18982	ok
+2026-10-05	gemma-4-12b-it	04_stock_fluss	video	89.4	64047	500	10021	ok
+2026-10-05	gemma-4-12b-it	07_schaeferhund_kauen	video	56.5	42278	429	10022	ok
+2026-10-05	gemma-4-12b-it	08_diensthund_sanitaet	video	160.8	97868	549	10022	ok
+2026-10-05	qwen3.8-27b	04_stock_fluss	video	273.6	72983	872	24336	ok
+2026-10-05	qwen3.8-27b	07_schaeferhund_kauen	video	159.2	46143	648	24338	ok
+2026-10-05	qwen3.8-27b	08_diensthund_sanitaet	video	456.3	111747	835	24338	ok

@@ -1,0 +1,33 @@
+clip	model	mode	fact_a	fact_b	fact_c	score	errors
+01_agility_slalom	gemma-4-12b-it	frames	0.5	1	1	2.5	calls the weave poles hurdles
+01_agility_slalom	gemma-4-12b-it	video	0.5	0	1	1.5	one dog only; invents a tunnel and jumps
+01_agility_slalom	qwen3.8-27b	frames	1	1	1	3	-
+01_agility_slalom	qwen3.8-27b	video	1	1	1	3	-
+02_agility_parcours	gemma-4-12b-it	frames	0.5	1	0	1.5	invents dog walk and tyre jumps; overlay text not read
+02_agility_parcours	gemma-4-12b-it	video	1	1	0.5	2.5	overlay date misread (06-28-24, "28 June 2014")
+02_agility_parcours	qwen3.8-27b	frames	1	0.5	1	2.5	dog runs under the A-frame instead of over it
+02_agility_parcours	qwen3.8-27b	video	1	0.5	1	2.5	falls into a repetition loop listing yellow jumps until max_tokens; no tunnel or A-frame
+03_frisbee	gemma-4-12b-it	frames	1	0	1	2	no frisbee; calls it an obedience exercise
+03_frisbee	gemma-4-12b-it	video	1	0	1	2	no frisbee; invents "The Kennel Club" banner text
+03_frisbee	qwen3.8-27b	frames	1	1	1	3	-
+03_frisbee	qwen3.8-27b	video	1	1	1	3	disc colour blue instead of purple
+04_stock_fluss	gemma-4-12b-it	frames	0	1	1	2	does not see that the camera is on the stick
+04_stock_fluss	gemma-4-12b-it	video	0	0.5	1	1.5	no river; "worm's-eye view" instead of camera on the stick
+04_stock_fluss	qwen3.8-27b	frames	0	0.5	1	1.5	puts the camera on the dog; dog catches the stick in flight instead of in the water
+04_stock_fluss	qwen3.8-27b	video	1	1	1	3	-
+05_hund_zaun	gemma-4-12b-it	frames	1	0	1	2	slow exploring instead of running and turning
+05_hund_zaun	gemma-4-12b-it	video	1	1	1	3	invents the dog lying down at the start
+05_hund_zaun	qwen3.8-27b	frames	1	0.5	1	2.5	invents the dog lying down and pushing through the bars
+05_hund_zaun	qwen3.8-27b	video	1	1	1	3	breed given as West Highland Terrier
+06_leine_stadt	gemma-4-12b-it	frames	1	1	1	3	-
+06_leine_stadt	gemma-4-12b-it	video	1	1	1	3	-
+06_leine_stadt	qwen3.8-27b	frames	1	1	1	3	-
+06_leine_stadt	qwen3.8-27b	video	1	1	1	3	-
+07_schaeferhund_kauen	gemma-4-12b-it	frames	1	1	1	3	-
+07_schaeferhund_kauen	gemma-4-12b-it	video	1	1	1	3	-
+07_schaeferhund_kauen	qwen3.8-27b	frames	1	1	1	3	-
+07_schaeferhund_kauen	qwen3.8-27b	video	1	1	1	3	-
+08_diensthund_sanitaet	gemma-4-12b-it	frames	1	0	1	2	reads the training as a bite-work attack; first aid missed
+08_diensthund_sanitaet	gemma-4-12b-it	video	0.5	0	0	0.5	bite-work exercise only; no first aid, no interviews
+08_diensthund_sanitaet	qwen3.8-27b	frames	1	0.5	1	2.5	dog dummy taken for a dog being petted; first aid only implied
+08_diensthund_sanitaet	qwen3.8-27b	video	1	1	1	3	dog dummy taken for a real dog
