@@ -1,0 +1,19 @@
+build	model	split	test	avg_ts	stddev_ts	path
+0923	9b	-sm tensor -ts 3/1	tg128	69.78	0.47	-
+0923	9b	-sm tensor -ts 3/1	pp512	2058.13	11.39	-
+0923	27b	-sm tensor -ts 3/1	tg128	29.18	0.43	-
+0923	27b	-sm tensor -ts 3/1	pp512	725.62	2.73	-
+0923	qwen3.5-9b	-sm tensor -ts 3/1	idle_cpu_percent_60s	99.9	-	
+1005	9b	-sm tensor -ts 3/1	tg128	43.06	0.12	-
+1005	9b	-sm tensor -ts 3/1	pp512	811.57	3.52	-
+1005	27b	-sm tensor -ts 3/1	tg128	19.43	0.10	-
+1005	27b	-sm tensor -ts 3/1	pp512	302.29	0.08	-
+1005	qwen3.5-9b	-sm tensor -ts 3/1	idle_cpu_percent_60s	0.3	-	shared semaphore all-reduce unavailable; using generic all-reduce
+master	9b	-sm tensor -ts 3/1	tg128	42.76	0.10	-
+master	9b	-sm tensor -ts 3/1	pp512	810.78	1.07	-
+master	27b	-sm tensor -ts 3/1	tg128	19.39	0.11	-
+master	27b	-sm tensor -ts 3/1	pp512	301.06	0.17	-
+master	9b	-sm layer -ts 3/1	tg128	68.04	0.15	-
+master	9b	-sm layer -ts 3/1	pp512	2029.15	23.28	-
+master	27b	-sm layer -ts 3/1	tg128	24.24	0.11	-
+master	27b	-sm layer -ts 3/1	pp512	670.46	0.68	-

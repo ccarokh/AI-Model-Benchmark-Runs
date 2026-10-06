@@ -222,6 +222,22 @@ UUID, so a host thread bridges the timeline semaphores.
   the meta backend") — #22197, exactly the part of the PR left out here. `-c 2048` and
   `llama-bench` are unaffected.
 
+## The PR without its proxy (2026-10-05)
+
+The maintainers asked for a minimal first merge: "remove the CPU fallback and the tree reduce for now, add a warning if the shared semaphore path isn't working and disable the feature. We can look into fallbacks later." Their objection to the proxy: "it will spin for the entire duration of the meta device's existence." Commit `46b21b3b4` (05.10.) does exactly that. Measured on the same mixed-vendor pair against the state before it (`29395e39b`, 23.09., proxy still in) and master `7049ff0cb`, `llama-bench -fa 1 -r 3`, split 3/1. Data: [`data/vulkan_tensor_split/round6/round6.tsv`](../data/vulkan_tensor_split/round6/round6.tsv), script [`round6.sh`](../data/vulkan_tensor_split/round6.sh).
+
+| t/s | PR 23.09. (proxy) | PR 05.10. (no proxy) | master, tensor | master, layer |
+|---|---:|---:|---:|---:|
+| Qwen3.5-9B tg128 | **69.8** | 43.1 | 42.8 | 68.0 |
+| Qwen3.5-9B pp512 | **2058** | 812 | 811 | 2029 |
+| Qwen3.6-27B tg128 | **29.2** | 19.4 | 19.4 | 24.2 |
+| Qwen3.6-27B pp512 | **726** | 302 | 301 | 670 |
+| idle `llama-server`, CPU over 60 s (100 % = one core) | **99.9 %** | 0.3 % | | |
+
+**On a pair without shared semaphores the minimal version is master.** Every figure of the 05.10. state matches master's generic all-reduce to within 1 %: the feature switches itself off, as intended. The 23.09. state reproduces the September result (27B 29.2 against 30.0 then, still ahead of layer split at 24.2).
+
+**The objection is measured, and it is right.** With the proxy, an idle server burns one full core for as long as the model is loaded, whether or not anything is generated. A fallback that keeps the 50 % at 27B without that cost would need the proxy to sleep between all-reduces — the thread hop that already costs most of the remaining ~83 µs per all-reduce.
+
 ## Method notes
 
 - `GGML_VK_PERF_LOGGER` is unusable for this question: it fences every graph (which is
