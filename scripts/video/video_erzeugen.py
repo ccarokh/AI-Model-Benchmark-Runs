@@ -7,6 +7,9 @@ card together; components move from host memory one at a time (64 GB host).
 Time per clip, VRAM peak and the clip itself; whether it is any good is judged
 by looking.
 
+On ROCm, run with TORCH_ROCM_AOTRITON_ENABLE_EXPERIMENTAL=1: without flash attention the
+attention of one step wants 66.5 GiB in one piece.
+
 Usage: video_erzeugen.py [--smoke]
 """
 import csv, os, sys, threading, time
@@ -42,6 +45,9 @@ def main():
     neu = not os.path.exists(TSV); f = open(TSV, "a", newline=""); w = csv.writer(f, delimiter="\t")
     if neu: w.writerow(["date", "model", "task", "mode", "seconds", "vram_peak_mib", "frames", "file"])
     vae = AutoencoderKLWan.from_pretrained(MODEL, subfolder="vae", torch_dtype=torch.float32)
+    # Decoding 121 frames at 1280x704 in one piece wants 11.6 GiB on top of the model (05./06.10.: OOM after
+    # 21 min of diffusion). Tiled decoding works through the frame in pieces.
+    vae.enable_tiling()
     jobs = [("t2v", k, p) for k, p in T2V.items()] + [("i2v", "04_schaeferhund_i2v", I2V_PROMPT)]
     if smoke: jobs = jobs[:1]
     pipe = None
