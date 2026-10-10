@@ -1,6 +1,6 @@
 # Every model here reads German worse than English, and the gap is not the dataset's
 
-**Ten models, four languages, the same 150 questions.** Belebele ships each language as its own file in its own row order, so the set is sorted by `(link, question_number)` — a key present in all 900 items of every language — and verified to select an identical question sequence in all four. What moves between columns is the language, nothing else.
+**Eleven models, four languages, the same 150 questions.** Belebele ships each language as its own file in its own row order, so the set is sorted by `(link, question_number)` — a key present in all 900 items of every language — and verified to select an identical question sequence in all four. What moves between columns is the language, nothing else.
 
 | Model | DE | EN | FR | ES | EN − DE |
 |---|---:|---:|---:|---:|---:|
@@ -8,6 +8,7 @@
 | ornith-35b | 0.9533 | **0.9600** | 0.9533 | 0.9533 | 0.7 |
 | qwen3.5-35b-a3b | 0.9467 | **0.9533** | 0.9533 | 0.9400 | 0.7 |
 | ornith-1.5-9b | 0.9400 | 0.9533 | **0.9600** | 0.9133 | 1.3 |
+| kolibri-1 | 0.9400 | **0.9667** | 0.9467 | 0.9333 | 2.7 |
 | nemotron-3.5-lightning-30b-a3b | 0.9267 | **0.9400** | 0.9133 | 0.9067 | 1.3 |
 | ornith-1.5-35b | 0.9133 | **0.9600** | 0.9533 | 0.9333 | 4.7 |
 | ornith-9b | 0.9133 | **0.9533** | 0.9333 | 0.9067 | 4.0 |
@@ -15,11 +16,11 @@
 | qwen3.5-9b | 0.8933 | **0.9467** | 0.8800 | 0.9000 | **5.3** |
 | ling-3.0-tiny | 0.8333 | **0.9133** | 0.8533 | 0.8667 | **8.0** |
 
-Free generation, thinking off, card pinned. Full table in [`data/chat_belebele_multilingual.tsv`](../data/chat_belebele_multilingual.tsv).
+Free generation, thinking off, card pinned. Kolibri-1 (Aleph Alpha, added 10.10.2026) is the community Q4_K_M conversion on a llama.cpp patched for its `kolibri1` architecture, every expert in host memory — the place of the experts changes speed, not answers. Full table in [`data/chat_belebele_multilingual.tsv`](../data/chat_belebele_multilingual.tsv).
 
 ## German is never the best column, and that part is unsurprising
 
-Nine of the ten are best in English. The tenth, Ornith-1.5-9B (added 04.10.2026 with its predecessor and the 35B), is best in French by one question of 150 — inside the noise, and its English is still above its German.
+Ten of the eleven are best in English. The eleventh, Ornith-1.5-9B (added 04.10.2026 with its predecessor and the 35B), is best in French by one question of 150 — inside the noise, and its English is still above its German.
 
 What is worth the measurement is the second column from the right. **The penalty for German ranges from 0.7 points to 8.0** — on identical questions, identical prompts, identical hardware.
 

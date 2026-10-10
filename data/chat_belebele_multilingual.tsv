@@ -87,3 +87,11 @@ ornith-1.5-35b	fra_Latn	fra_Latn	logprob	150	139	0.9267	150	41.7
 ornith-1.5-35b	fra_Latn	fra_Latn	generate	150	143	0.9533	17282	182.1
 ornith-1.5-35b	spa_Latn	spa_Latn	logprob	150	137	0.9133	150	42.2
 ornith-1.5-35b	spa_Latn	spa_Latn	generate	150	140	0.9333	27189	263.3
+kolibri-1	deu_Latn	deu_Latn	logprob	150	140	0.9333	150	941.1
+kolibri-1	deu_Latn	deu_Latn	generate	150	141	0.94	11053	1483.1
+kolibri-1	eng_Latn	eng_Latn	logprob	150	143	0.9533	150	1012.4
+kolibri-1	eng_Latn	eng_Latn	generate	150	145	0.9667	10608	1529.6
+kolibri-1	fra_Latn	fra_Latn	logprob	150	138	0.92	150	1085.4
+kolibri-1	fra_Latn	fra_Latn	generate	150	142	0.9467	14265	1771.5
+kolibri-1	spa_Latn	spa_Latn	logprob	150	133	0.8867	150	1078.1
+kolibri-1	spa_Latn	spa_Latn	generate	150	140	0.9333	19687	2011.4
