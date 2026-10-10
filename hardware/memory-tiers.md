@@ -222,3 +222,20 @@ Since 27.08. master reads tensors above 4 GiB on demand rather than keeping them
 | **192** | **24.7 t/s** | **+86 %** | **18.8 GB** |
 
 **Nearly double, and the curve has not flattened when the card runs out.** The routing has no fixed hot set — the PR's own measurement found a top-32 list learned on half a workload covering ~10 % of the other half — but strong locality in time, and that is what an LRU cache uses. It changes the conclusion above for MoE: host memory at 51 GB/s is still not a tier to run from, but **the card can hold the part of it that is in use right now**. A draft PR is a measurement tool, not something to run production on.
+
+## A dedicated engine: Strata (2026-10-10)
+
+[Strata](https://github.com/Niko1221/Strata) (MIT, `fb58e0d`, 08.10.) is an inference engine built for one model, Qwen3.8-Flash-Next, and the source of the "94 tokens/s on a 12 GB card" claims. Its setup compiles a HIP engine for gfx1100 from source and brings its own quantisation (`GSQ-RCO Q2_0`, 62 GB); it keeps the most-used experts on the card, all of them in host memory, computes the rest on the CPU and reads the n-gram table from the SSD. Measured exactly like the llama.cpp arms above: the same three prompts, 512 tokens each, greedy, thinking off, a fresh server per arm, timings in llama.cpp's names from Strata's own `/v1/status`. Data: [`data/testbench/strata_flashnext.tsv`](../data/testbench/strata_flashnext.tsv), script [`strata_test.py`](../scripts/hardware/strata_test.py).
+
+| Flash-Next, RX 7900 XTX + 64 GB DDR4 | Generation | Drafts accepted |
+|---|---:|---:|
+| llama.cpp, UD-IQ1_S, every expert in host memory | 13.5 t/s | |
+| llama.cpp, UD-Q2_K_XL, 32 layers' experts in host memory | 17.1 t/s | |
+| llama.cpp + GPU expert cache (PR #27861), UD-IQ1_S, 192 slots | 24.7 t/s | |
+| **Strata Q2_0, no speculation** | **59.5 t/s** | |
+| Strata Q2_0, prompt-lookup drafts only | 61.4 t/s | 37 % |
+| **Strata Q2_0, MTP drafts (setup's default)** | **100.8 t/s** | 79 % |
+
+**Without any speculation Strata is 3.5× llama.cpp on the same card, the same host memory and a quantisation of the same size.** The headline figures are not a trick of drafting: drafting adds a further 1.7×, about what the project states. The engine, not the hardware, was what held this model back here — which revises the conclusion of the section on a GPU expert cache: on host memory at 51 GB/s a 125B MoE runs at reading speed, not batch speed, if the engine is built for it.
+
+**What the comparison does and does not hold equal.** Card, host memory, prompts, settings and quantisation size are the same; the files are not (Strata's `GSQ-RCO Q2_0` against Unsloth's UD quants), and Strata fills the card (24.1 GB) where the llama.cpp arm left 2–3 GB free. Prompt speeds are not compared: the three prompts are 30–50 tokens. Strata found no hipBLASLt tuning table for this ROCm version, which affects prompt processing, not generation. Quality of the quantisation and correctness of the outputs were not measured here; one run per arm.
