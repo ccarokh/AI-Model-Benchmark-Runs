@@ -122,6 +122,20 @@ cap, Qwen3.6-27B extrapolates to **~713 s per case against the 374.5 in the tabl
 the truncation was not only costing it accuracy, it was **making it look twice as
 fast as it is**. Anyone judging from the first run had it at half its real cost.
 
+### Nemotron 3.5 Lightning does not work with aider's diff format — no coding score yet (2026-10-10)
+
+**This is not a coding result.** The full 225-task run (32k slot, thinking on, `diff` edit format) ended at 20.9 %, but in **107 of 225 tasks** aider could not apply at least one of its replies: **350 malformed replies**, against 3 in 3 tasks for Qwen3.6-35B-A3B in the same setup. A task that fails because the edit never reached the file says nothing about the code in it. Data: [`data/coding_polyglot_format_failures.tsv`](../data/coding_polyglot_format_failures.tsv).
+
+What the replies get wrong, from the chat histories:
+
+- **The filename goes into prose** ("First, `bank_account.h` - replacing the empty class …") instead of alone on the line before the fence. aider answers "Bad/missing filename" in 48 tasks.
+- **The fence copies aider's own example.** aider's instructions show SEARCH/REPLACE blocks in ```` ```python ```` fences. Lightning labels C++ code `python` 223 times and `cpp` 81 times; Qwen3.6-35B-A3B labels it `cpp` 173 times and `python` never.
+- **Correction does not stick.** After aider's error message it answers "You're right, I need to fix the formatting" and repeats the same mistake.
+
+Among the 118 tasks without any format error it solved 31 (26 %), which points to weak coding as well — but that subset is not random, so it is a hint, not a score.
+
+**Open, and being measured:** the same run with aider's `whole` edit format (the model returns whole files, no block syntax), queued behind Nemotron 3 Nano. Not yet separated either: whether thinking causes the format drift — the run had it on.
+
 ---
 
 ## Part 2 — SWE-bench
