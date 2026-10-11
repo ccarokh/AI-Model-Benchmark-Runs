@@ -238,4 +238,13 @@ Since 27.08. master reads tensors above 4 GiB on demand rather than keeping them
 
 **Without any speculation Strata is 3.5× llama.cpp on the same card, the same host memory and a quantisation of the same size.** The headline figures are not a trick of drafting: drafting adds a further 1.7×, about what the project states. The engine, not the hardware, was what held this model back here — which revises the conclusion of the section on a GPU expert cache: on host memory at 51 GB/s a 125B MoE runs at reading speed, not batch speed, if the engine is built for it.
 
-**What the comparison does and does not hold equal.** Card, host memory, prompts, settings and quantisation size are the same; the files are not (Strata's `GSQ-RCO Q2_0` against Unsloth's UD quants), and Strata fills the card (24.1 GB) where the llama.cpp arm left 2–3 GB free. Prompt speeds are not compared: the three prompts are 30–50 tokens. Strata found no hipBLASLt tuning table for this ROCm version, which affects prompt processing, not generation. Quality of the quantisation and correctness of the outputs were not measured here; one run per arm.
+**What the comparison does and does not hold equal.** Card, host memory, prompts, settings and quantisation size are the same; the files are not (Strata's `GSQ-RCO Q2_0` against Unsloth's UD quants), and Strata fills the card (24.1 GB) where the llama.cpp arm left 2–3 GB free. Prompt speeds are not compared: the three prompts are 30–50 tokens. Strata found no hipBLASLt tuning table for this ROCm version, which affects prompt processing, not generation. One run per arm.
+
+**The answers hold up (measured 11.10.).** Speed is worth nothing if the answers are wrong, so both engines answered the same 150 Belebele questions in four languages, free generation, thinking off, the same script as every model in the [language gap](../findings/language-gap.md) — Strata with setup's configuration, MTP drafting included:
+
+| Qwen3.8-Flash-Next | DE | EN | FR | ES | all 600 | wall time |
+|---|---:|---:|---:|---:|---:|---:|
+| llama.cpp, UD-Q2_K_XL | 0.9733 | 0.9667 | 0.9667 | 0.9533 | **579** | 205 min |
+| Strata, Q2_0 | 0.9467 | 0.9600 | 0.9600 | 0.9400 | **571** | 29 min |
+
+Strata is lower in every language, by 1 to 4 questions of 150 — 8 of 600 in all. At this sample size that is inside the noise (two-proportion z ≈ 1.2); the run kept no per-question answers, so no paired test. What it supports: Strata's speed is not bought with a visible loss of quality. What it does not: that the two are equal — and a difference, if there is one, cannot be pinned on the engine, because the quantisation files differ too. Strata answered shorter (156 tokens per answer against 285) and finished the set 7× faster in wall time, 4.7× per token. Data in [`data/chat_belebele_multilingual.tsv`](../data/chat_belebele_multilingual.tsv).

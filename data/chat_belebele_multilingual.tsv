@@ -95,3 +95,15 @@ kolibri-1	fra_Latn	fra_Latn	logprob	150	138	0.92	150	1085.4
 kolibri-1	fra_Latn	fra_Latn	generate	150	142	0.9467	14265	1771.5
 kolibri-1	spa_Latn	spa_Latn	logprob	150	133	0.8867	150	1078.1
 kolibri-1	spa_Latn	spa_Latn	generate	150	140	0.9333	19687	2011.4
+qwen3.8-flash-next-q2	deu_Latn	deu_Latn	logprob	150	144	0.96	150	963.7
+qwen3.8-flash-next-q2	deu_Latn	deu_Latn	generate	150	146	0.9733	42669	3416.4
+qwen3.8-flash-next-q2	eng_Latn	eng_Latn	logprob	150	145	0.9667	150	836.3
+qwen3.8-flash-next-q2	eng_Latn	eng_Latn	generate	150	145	0.9667	31004	2693.2
+qwen3.8-flash-next-q2	fra_Latn	fra_Latn	logprob	150	142	0.9467	150	875.7
+qwen3.8-flash-next-q2	fra_Latn	fra_Latn	generate	150	145	0.9667	35390	2998.6
+qwen3.8-flash-next-q2	spa_Latn	spa_Latn	logprob	150	140	0.9333	150	866.7
+qwen3.8-flash-next-q2	spa_Latn	spa_Latn	generate	150	143	0.9533	38423	3172.3
+qwen3.8-flash-next-strata-q2_0	deu_Latn	deu_Latn	generate	150	142	0.9467	23382	433.4
+qwen3.8-flash-next-strata-q2_0	eng_Latn	eng_Latn	generate	150	144	0.96	24712	393.5
+qwen3.8-flash-next-strata-q2_0	fra_Latn	fra_Latn	generate	150	144	0.96	22148	419.4
+qwen3.8-flash-next-strata-q2_0	spa_Latn	spa_Latn	generate	150	141	0.94	26863	472.9
