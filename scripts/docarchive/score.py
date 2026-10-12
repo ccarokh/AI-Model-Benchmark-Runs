@@ -10,8 +10,11 @@ Every answer has to end in a block
 or `ERGEBNIS: NICHT IM ARCHIV`. Two readings of every answer:
 
   strict   only the block counts; no block = format failure
-  lenient  the whole answer is searched -- separates "could not follow the
-           format" from "did not find it", the lesson of the aider runs
+  lenient  as strict when there is a block; without one the whole answer is
+           searched -- separates "could not follow the format" from "did not
+           find it", the lesson of the aider runs. (Searching the whole answer
+           even when a block exists counts items the model names in its
+           reasoning only to exclude them.)
 
 reconcile  solved = exactly the expected items named (none missing, none extra)
            and, where a total is asked, the total right to the cent.
@@ -93,7 +96,7 @@ def main():
         text = a.get("answer") or ""
         b = block(text)
         strict = score_one(q, b) if b else {"solved": False, "recall": 0.0, "precision": 0.0}
-        lenient = score_one(q, text)
+        lenient = strict if b else score_one(q, text)
         r["n"] += 1
         r[q["kind"] + "_n"] += 1
         r[q["kind"] + "_strict"] += strict["solved"]
@@ -103,19 +106,20 @@ def main():
         r["seconds"] += a.get("seconds", 0)
         r["completion_tokens"] += a.get("completion_tokens") or 0
         r["tool_calls"] += a.get("tool_calls") or 0
+        r["step_limit"] += bool(a.get("step_limit"))
         if q["kind"] == "reconcile":
             r["recall_sum"] += strict.get("recall", 0.0)
             r["precision_sum"] += strict.get("precision", 0.0)
         rows.append([*key, q["id"], q["kind"], int(strict["solved"]), int(lenient["solved"]), int(b is None),
                      f"{strict.get('recall', ''):.2f}" if "recall" in strict else "", a.get("seconds", ""), a.get("completion_tokens", "")])
     head = ["model", "path", "thinking", "n", "reconcile_solved", "reconcile_n", "reconcile_lenient", "item_recall", "item_precision",
-            "lookup_solved", "lookup_n", "absent_solved", "absent_n", "format_failures", "errors", "seconds", "completion_tokens", "tool_calls"]
+            "lookup_solved", "lookup_n", "absent_solved", "absent_n", "format_failures", "errors", "step_limit", "seconds", "completion_tokens", "tool_calls"]
     out = ["\t".join(head)]
     for key, r in runs.items():
         rn = r["reconcile_n"] or 1
         out.append("\t".join(map(str, [*key, r["n"], r["reconcile_strict"], r["reconcile_n"], r["reconcile_lenient"],
                                        f"{r['recall_sum'] / rn:.3f}", f"{r['precision_sum'] / rn:.3f}", r["lookup_strict"], r["lookup_n"],
-                                       r["absent_strict"], r["absent_n"], r["format_failures"], r["errors"], round(r["seconds"]),
+                                       r["absent_strict"], r["absent_n"], r["format_failures"], r["errors"], r["step_limit"], round(r["seconds"]),
                                        r["completion_tokens"], r["tool_calls"]])))
     print("\n".join(out))
     if arg("--tsv-runs"):

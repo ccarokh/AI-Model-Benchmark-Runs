@@ -114,7 +114,7 @@ def main():
     for q in qs:
         if q["id"] in done:
             continue
-        t0, usage, calls, err, answer = time.time(), {"prompt_tokens": 0, "completion_tokens": 0}, 0, None, ""
+        t0, usage, calls, err, answer, steps = time.time(), {"prompt_tokens": 0, "completion_tokens": 0}, 0, None, "", 0
         try:
             if a.path == "context":
                 msgs = [{"role": "system", "content": SYSTEM + "\n\nDas Archiv:\n\n" + full}, {"role": "user", "content": q["question"]}]
@@ -125,11 +125,14 @@ def main():
                 msgs = [{"role": "system", "content": SYSTEM + "\n\nDu kommst über die Werkzeuge suche, liste und lies an die Dokumente. Hole dir alles, was du brauchst, bevor du antwortest."},
                         {"role": "user", "content": q["question"]}]
             for step in range(a.max_steps if a.path == "agent" else 1):
+                steps = step + 1
+                if a.path == "agent" and step == a.max_steps - 1:
+                    # out of rounds: no tools on the last call, and say so -- tool_choice "none" alone
+                    # was ignored, the model kept writing tool calls as text and never answered
+                    msgs.append({"role": "user", "content": "Die Werkzeugrunden sind aufgebraucht. Antworte jetzt mit dem, was du gefunden hast, und schließe mit dem ERGEBNIS-Block ab."})
                 body = dict(base, messages=msgs)
-                if a.path == "agent":
+                if a.path == "agent" and step < a.max_steps - 1:
                     body["tools"] = TOOLS
-                    if step == a.max_steps - 1:
-                        body["tool_choice"] = "none"
                 r = post(a.url + "/v1/chat/completions", body)
                 for k in usage:
                     usage[k] += (r.get("usage") or {}).get(k, 0)
@@ -150,7 +153,8 @@ def main():
             body = e.read().decode(errors="replace")[:300] if hasattr(e, "read") else ""
             err = (str(e) + " " + body)[:500]
         row = {"model": a.model, "path": a.path, "thinking": a.thinking, "qid": q["id"], "answer": answer, "seconds": round(time.time() - t0, 1),
-               "prompt_tokens": usage["prompt_tokens"], "completion_tokens": usage["completion_tokens"], "tool_calls": calls, "error": err,
+               "prompt_tokens": usage["prompt_tokens"], "completion_tokens": usage["completion_tokens"], "tool_calls": calls, "steps": steps,
+               "step_limit": a.path == "agent" and steps == a.max_steps, "error": err,
                "date": time.strftime("%F")}
         with open(a.out, "a") as f:
             f.write(json.dumps(row, ensure_ascii=False) + "\n")

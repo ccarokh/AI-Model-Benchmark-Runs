@@ -1,0 +1,4 @@
+model	path	thinking	n	reconcile_solved	reconcile_n	reconcile_lenient	item_recall	item_precision	lookup_solved	lookup_n	absent_solved	absent_n	format_failures	errors	step_limit	seconds	completion_tokens	tool_calls
+qwen3.8-27b	retrieval	off	50	6	25	6	0.474	0.570	17	19	6	6	0	0	0	710	19880	0
+qwen3.8-27b	context	off	50	23	25	23	0.977	1.000	19	19	6	6	0	0	0	1188	31889	0
+qwen3.8-27b	agent	off	50	19	25	19	0.867	0.860	19	19	6	6	2	2	6	2722	45452	464

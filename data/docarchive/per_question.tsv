@@ -1,0 +1,151 @@
+model	path	thinking	qid	kind	solved	solved_lenient	format_failure	item_recall	seconds	completion_tokens
+qwen3.8-27b	retrieval	off	abo-2024-06-30	reconcile	0	0	0	0.44	49.7	1755
+qwen3.8-27b	retrieval	off	abo-2024-12-31	reconcile	0	0	0	0.40	86.1	3063
+qwen3.8-27b	retrieval	off	abo-2025-06-30	reconcile	0	0	0	0.45	40.1	1329
+qwen3.8-27b	retrieval	off	abo-2025-12-31	reconcile	0	0	0	0.38	23.4	756
+qwen3.8-27b	retrieval	off	offen-2024-h1	reconcile	0	0	0	0.50	45.2	1529
+qwen3.8-27b	retrieval	off	offen-2024-h2	reconcile	0	0	0	0.50	27.5	894
+qwen3.8-27b	retrieval	off	offen-2025-h1	reconcile	0	0	0	1.00	44.1	1505
+qwen3.8-27b	retrieval	off	offen-2025-h2	reconcile	0	0	0	0.50	32.3	1064
+qwen3.8-27b	retrieval	off	arzt-katrin-2024	reconcile	0	0	0	0.00	9.2	228
+qwen3.8-27b	retrieval	off	arzt-katrin-2025	reconcile	0	0	0	0.67	12.8	370
+qwen3.8-27b	retrieval	off	arzt-mia-2024	reconcile	0	0	0	0.00	3.2	10
+qwen3.8-27b	retrieval	off	arzt-mia-2025	reconcile	0	0	0	0.00	3.2	10
+qwen3.8-27b	retrieval	off	arzt-jonas-2024	reconcile	0	0	0	0.00	3.2	10
+qwen3.8-27b	retrieval	off	arzt-jonas-2025	reconcile	0	0	0	0.00	3.2	10
+qwen3.8-27b	retrieval	off	angebot-1	reconcile	1	1	0	1.00	20.4	630
+qwen3.8-27b	retrieval	off	angebot-2	reconcile	1	1	0	1.00	26.1	832
+qwen3.8-27b	retrieval	off	angebot-3	reconcile	1	1	0	1.00	19.0	538
+qwen3.8-27b	retrieval	off	angebot-4	reconcile	1	1	0	1.00	24.0	759
+qwen3.8-27b	retrieval	off	kaution-fischer	reconcile	0	0	0	1.00	19.4	609
+qwen3.8-27b	retrieval	off	kaution-rossi	reconcile	1	1	0	1.00	22.0	674
+qwen3.8-27b	retrieval	off	kaution-hahn	reconcile	1	1	0	1.00	19.3	603
+qwen3.8-27b	retrieval	off	handwerker-w2-2024	reconcile	0	0	0	0.00	13.6	373
+qwen3.8-27b	retrieval	off	handwerker-w4-2024	reconcile	0	0	0	0.00	12.4	333
+qwen3.8-27b	retrieval	off	handwerker-w2-2025	reconcile	0	0	0	0.00	13.7	376
+qwen3.8-27b	retrieval	off	handwerker-w4-2025	reconcile	0	0	0	0.00	14.2	398
+qwen3.8-27b	retrieval	off	lookup-01	lookup	1	1	0		5.4	53
+qwen3.8-27b	retrieval	off	lookup-02	lookup	1	1	0		4.3	47
+qwen3.8-27b	retrieval	off	lookup-03	lookup	1	1	0		4.3	49
+qwen3.8-27b	retrieval	off	lookup-04	lookup	1	1	0		6.4	53
+qwen3.8-27b	retrieval	off	lookup-05	lookup	1	1	0		6.0	48
+qwen3.8-27b	retrieval	off	lookup-06	lookup	1	1	0		4.7	54
+qwen3.8-27b	retrieval	off	lookup-07	lookup	1	1	0		5.2	71
+qwen3.8-27b	retrieval	off	lookup-08	lookup	1	1	0		5.5	48
+qwen3.8-27b	retrieval	off	lookup-09	lookup	1	1	0		7.8	50
+qwen3.8-27b	retrieval	off	lookup-10	lookup	1	1	0		6.0	84
+qwen3.8-27b	retrieval	off	lookup-11	lookup	0	0	0		3.7	10
+qwen3.8-27b	retrieval	off	lookup-12	lookup	1	1	0		5.8	84
+qwen3.8-27b	retrieval	off	lookup-13	lookup	0	0	0		3.8	10
+qwen3.8-27b	retrieval	off	lookup-14	lookup	1	1	0		4.5	72
+qwen3.8-27b	retrieval	off	lookup-15	lookup	1	1	0		4.7	76
+qwen3.8-27b	retrieval	off	lookup-16	lookup	1	1	0		4.5	69
+qwen3.8-27b	retrieval	off	lookup-17	lookup	1	1	0		4.1	55
+qwen3.8-27b	retrieval	off	lookup-18	lookup	1	1	0		4.7	73
+qwen3.8-27b	retrieval	off	lookup-19	lookup	1	1	0		5.3	85
+qwen3.8-27b	retrieval	off	absent-01	absent	1	1	0		3.4	10
+qwen3.8-27b	retrieval	off	absent-02	absent	1	1	0		2.9	10
+qwen3.8-27b	retrieval	off	absent-03	absent	1	1	0		3.8	10
+qwen3.8-27b	retrieval	off	absent-04	absent	1	1	0		3.6	10
+qwen3.8-27b	retrieval	off	absent-05	absent	1	1	0		3.2	10
+qwen3.8-27b	retrieval	off	absent-06	absent	1	1	0		9.4	81
+qwen3.8-27b	context	off	abo-2024-06-30	reconcile	1	1	0	1.00	148.9	1504
+qwen3.8-27b	context	off	abo-2024-12-31	reconcile	1	1	0	1.00	64.4	1874
+qwen3.8-27b	context	off	abo-2025-06-30	reconcile	1	1	0	1.00	79.3	2361
+qwen3.8-27b	context	off	abo-2025-12-31	reconcile	1	1	0	1.00	95.9	2848
+qwen3.8-27b	context	off	offen-2024-h1	reconcile	1	1	0	1.00	99.7	2959
+qwen3.8-27b	context	off	offen-2024-h2	reconcile	1	1	0	1.00	77.4	2294
+qwen3.8-27b	context	off	offen-2025-h1	reconcile	1	1	0	1.00	70.8	2108
+qwen3.8-27b	context	off	offen-2025-h2	reconcile	1	1	0	1.00	59.5	1767
+qwen3.8-27b	context	off	arzt-katrin-2024	reconcile	1	1	0	1.00	54.2	1608
+qwen3.8-27b	context	off	arzt-katrin-2025	reconcile	1	1	0	1.00	61.7	1831
+qwen3.8-27b	context	off	arzt-mia-2024	reconcile	1	1	0	1.00	24.1	708
+qwen3.8-27b	context	off	arzt-mia-2025	reconcile	1	1	0	1.00	25.3	745
+qwen3.8-27b	context	off	arzt-jonas-2024	reconcile	1	1	0	1.00	19.9	582
+qwen3.8-27b	context	off	arzt-jonas-2025	reconcile	1	1	0	1.00	22.8	661
+qwen3.8-27b	context	off	angebot-1	reconcile	1	1	0	1.00	18.6	548
+qwen3.8-27b	context	off	angebot-2	reconcile	1	1	0	1.00	33.8	990
+qwen3.8-27b	context	off	angebot-3	reconcile	1	1	0	1.00	19.5	570
+qwen3.8-27b	context	off	angebot-4	reconcile	1	1	0	1.00	31.1	910
+qwen3.8-27b	context	off	kaution-fischer	reconcile	1	1	0	1.00	25.6	749
+qwen3.8-27b	context	off	kaution-rossi	reconcile	1	1	0	1.00	22.9	670
+qwen3.8-27b	context	off	kaution-hahn	reconcile	1	1	0	1.00	18.7	552
+qwen3.8-27b	context	off	handwerker-w2-2024	reconcile	0	0	0	0.75	22.5	658
+qwen3.8-27b	context	off	handwerker-w4-2024	reconcile	1	1	0	1.00	14.9	434
+qwen3.8-27b	context	off	handwerker-w2-2025	reconcile	1	1	0	1.00	8.9	253
+qwen3.8-27b	context	off	handwerker-w4-2025	reconcile	0	0	0	0.67	7.8	222
+qwen3.8-27b	context	off	lookup-01	lookup	1	1	0		2.5	64
+qwen3.8-27b	context	off	lookup-02	lookup	1	1	0		2.8	72
+qwen3.8-27b	context	off	lookup-03	lookup	1	1	0		2.3	59
+qwen3.8-27b	context	off	lookup-04	lookup	1	1	0		2.5	63
+qwen3.8-27b	context	off	lookup-05	lookup	1	1	0		2.3	59
+qwen3.8-27b	context	off	lookup-06	lookup	1	1	0		2.8	74
+qwen3.8-27b	context	off	lookup-07	lookup	1	1	0		2.8	71
+qwen3.8-27b	context	off	lookup-08	lookup	1	1	0		2.0	48
+qwen3.8-27b	context	off	lookup-09	lookup	1	1	0		2.1	50
+qwen3.8-27b	context	off	lookup-10	lookup	1	1	0		3.0	77
+qwen3.8-27b	context	off	lookup-11	lookup	1	1	0		3.1	81
+qwen3.8-27b	context	off	lookup-12	lookup	1	1	0		3.0	77
+qwen3.8-27b	context	off	lookup-13	lookup	1	1	0		3.0	78
+qwen3.8-27b	context	off	lookup-14	lookup	1	1	0		3.0	80
+qwen3.8-27b	context	off	lookup-15	lookup	1	1	0		3.5	95
+qwen3.8-27b	context	off	lookup-16	lookup	1	1	0		4.4	121
+qwen3.8-27b	context	off	lookup-17	lookup	1	1	0		2.2	55
+qwen3.8-27b	context	off	lookup-18	lookup	1	1	0		3.9	104
+qwen3.8-27b	context	off	lookup-19	lookup	1	1	0		3.2	85
+qwen3.8-27b	context	off	absent-01	absent	1	1	0		0.7	10
+qwen3.8-27b	context	off	absent-02	absent	1	1	0		0.8	10
+qwen3.8-27b	context	off	absent-03	absent	1	1	0		0.8	10
+qwen3.8-27b	context	off	absent-04	absent	1	1	0		0.7	10
+qwen3.8-27b	context	off	absent-05	absent	1	1	0		0.8	10
+qwen3.8-27b	context	off	absent-06	absent	1	1	0		1.1	20
+qwen3.8-27b	agent	off	abo-2024-06-30	reconcile	1	1	0	1.00	211.6	3134
+qwen3.8-27b	agent	off	abo-2024-12-31	reconcile	1	1	0	1.00	56.9	1318
+qwen3.8-27b	agent	off	abo-2025-06-30	reconcile	1	1	0	1.00	126.0	2530
+qwen3.8-27b	agent	off	abo-2025-12-31	reconcile	0	0	0	1.00	68.4	1465
+qwen3.8-27b	agent	off	offen-2024-h1	reconcile	0	0	1	0.00	134.8	4328
+qwen3.8-27b	agent	off	offen-2024-h2	reconcile	0	0	1	0.00	131.4	4328
+qwen3.8-27b	agent	off	offen-2025-h1	reconcile	1	1	0	1.00	102.4	2229
+qwen3.8-27b	agent	off	offen-2025-h2	reconcile	1	1	0	1.00	56.1	1338
+qwen3.8-27b	agent	off	arzt-katrin-2024	reconcile	1	1	0	1.00	53.1	1276
+qwen3.8-27b	agent	off	arzt-katrin-2025	reconcile	0	0	0	0.00	218.6	2054
+qwen3.8-27b	agent	off	arzt-mia-2024	reconcile	1	1	0	1.00	52.8	1045
+qwen3.8-27b	agent	off	arzt-mia-2025	reconcile	1	1	0	1.00	36.0	876
+qwen3.8-27b	agent	off	arzt-jonas-2024	reconcile	1	1	0	1.00	45.1	962
+qwen3.8-27b	agent	off	arzt-jonas-2025	reconcile	0	0	0	1.00	41.2	895
+qwen3.8-27b	agent	off	angebot-1	reconcile	1	1	0	1.00	22.1	556
+qwen3.8-27b	agent	off	angebot-2	reconcile	1	1	0	1.00	18.9	492
+qwen3.8-27b	agent	off	angebot-3	reconcile	1	1	0	1.00	21.6	500
+qwen3.8-27b	agent	off	angebot-4	reconcile	1	1	0	1.00	22.4	526
+qwen3.8-27b	agent	off	kaution-fischer	reconcile	1	1	0	1.00	160.7	2473
+qwen3.8-27b	agent	off	kaution-rossi	reconcile	1	1	0	1.00	29.4	684
+qwen3.8-27b	agent	off	kaution-hahn	reconcile	1	1	0	1.00	25.2	645
+qwen3.8-27b	agent	off	handwerker-w2-2024	reconcile	1	1	0	1.00	34.4	913
+qwen3.8-27b	agent	off	handwerker-w4-2024	reconcile	1	1	0	1.00	28.8	758
+qwen3.8-27b	agent	off	handwerker-w2-2025	reconcile	1	1	0	1.00	40.7	926
+qwen3.8-27b	agent	off	handwerker-w4-2025	reconcile	0	0	0	0.67	28.2	700
+qwen3.8-27b	agent	off	lookup-01	lookup	1	1	0		7.4	156
+qwen3.8-27b	agent	off	lookup-02	lookup	1	1	0		7.3	156
+qwen3.8-27b	agent	off	lookup-03	lookup	1	1	0		7.3	156
+qwen3.8-27b	agent	off	lookup-04	lookup	1	1	0		7.2	146
+qwen3.8-27b	agent	off	lookup-05	lookup	1	1	0		7.4	159
+qwen3.8-27b	agent	off	lookup-06	lookup	1	1	0		7.8	175
+qwen3.8-27b	agent	off	lookup-07	lookup	1	1	0		7.9	172
+qwen3.8-27b	agent	off	lookup-08	lookup	1	1	0		4.6	79
+qwen3.8-27b	agent	off	lookup-09	lookup	1	1	0		6.7	122
+qwen3.8-27b	agent	off	lookup-10	lookup	1	1	0		8.9	191
+qwen3.8-27b	agent	off	lookup-11	lookup	1	1	0		10.5	241
+qwen3.8-27b	agent	off	lookup-12	lookup	1	1	0		8.5	187
+qwen3.8-27b	agent	off	lookup-13	lookup	1	1	0		10.4	241
+qwen3.8-27b	agent	off	lookup-14	lookup	1	1	0		7.6	162
+qwen3.8-27b	agent	off	lookup-15	lookup	1	1	0		7.8	168
+qwen3.8-27b	agent	off	lookup-16	lookup	1	1	0		7.8	176
+qwen3.8-27b	agent	off	lookup-17	lookup	1	1	0		7.2	152
+qwen3.8-27b	agent	off	lookup-18	lookup	1	1	0		6.3	141
+qwen3.8-27b	agent	off	lookup-19	lookup	1	1	0		5.8	121
+qwen3.8-27b	agent	off	absent-01	absent	1	1	0		8.1	141
+qwen3.8-27b	agent	off	absent-02	absent	1	1	0		150.9	1140
+qwen3.8-27b	agent	off	absent-03	absent	1	1	0		11.9	174
+qwen3.8-27b	agent	off	absent-04	absent	1	1	0		198.9	1174
+qwen3.8-27b	agent	off	absent-05	absent	1	1	0		42.4	667
+qwen3.8-27b	agent	off	absent-06	absent	1	1	0		398.9	2104

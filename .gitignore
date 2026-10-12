@@ -4,3 +4,4 @@ scripts/coding/game/game/
 
 # installer ISO for a borrowed measurement node: personal infrastructure, kept out of this repository
 iso/
+__pycache__/

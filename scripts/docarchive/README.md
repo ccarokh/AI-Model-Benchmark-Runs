@@ -35,13 +35,15 @@ The reconcile questions, and the trap built into each family:
 |---|---|
 | `context` | every document in the prompt |
 | `retrieval` | the 8 documents most similar to the question (bge-m3), the way a RAG chat hands over excerpts |
-| `agent` | three tools — `suche` (semantic search), `liste` (filter by type and date), `lies` (read) — and up to 25 rounds to fetch what it needs |
+| `agent` | three tools — `suche` (semantic search), `liste` (filter by type and date), `lies` (read) — and up to 25 rounds to fetch what it needs; after the last round it is told to answer with what it has |
 
 Thinking on and off is the second variable. Greedy, one answer per question, a fresh server per model.
 
 ## Scoring — computed, never judged
 
 Every answer ends in a block `ERGEBNIS:` with one line per item and `SUMME:`, or `ERGEBNIS: NICHT IM ARCHIV`. [`score.py`](score.py) reads it two ways: **strict** (only the block counts; no block is a format failure) and **lenient** (the whole answer is searched) — so "could not follow the format" stays apart from "did not find it", the lesson of the aider runs. A reconcile question is solved when exactly the expected items are named and the total is right to the cent; item recall and precision are reported alongside. Scorer self-test: perfect answers 50/50, wrong answers 0/50.
+
+Results: [`use-cases/document-reconciliation.md`](../../use-cases/document-reconciliation.md).
 
 ## Running it
 
