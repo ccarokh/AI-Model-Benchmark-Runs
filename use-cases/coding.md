@@ -122,7 +122,7 @@ cap, Qwen3.6-27B extrapolates to **~713 s per case against the 374.5 in the tabl
 the truncation was not only costing it accuracy, it was **making it look twice as
 fast as it is**. Anyone judging from the first run had it at half its real cost.
 
-### Nemotron 3.5 Lightning does not work with aider's diff format — no coding score yet (2026-10-10)
+### Nemotron 3.5 Lightning and Nemotron 3 Nano do not work with aider's diff format — no coding score yet (2026-10-10)
 
 **This is not a coding result.** The full 225-task run (32k slot, thinking on, `diff` edit format) ended at 20.9 %, but in **107 of 225 tasks** aider could not apply at least one of its replies: **350 malformed replies**, against 3 in 3 tasks for Qwen3.6-35B-A3B in the same setup. A task that fails because the edit never reached the file says nothing about the code in it. Data: [`data/coding_polyglot_format_failures.tsv`](../data/coding_polyglot_format_failures.tsv).
 
@@ -134,7 +134,9 @@ What the replies get wrong, from the chat histories:
 
 Among the 118 tasks without any format error it solved 31 (26 %), which points to weak coding as well — but that subset is not random, so it is a hint, not a score.
 
-**Open, and being measured:** the same run with aider's `whole` edit format (the model returns whole files, no block syntax), queued behind Nemotron 3 Nano. Not yet separated either: whether thinking causes the format drift — the run had it on.
+**Nemotron 3 Nano fails the same way, by a different mistake (2026-10-12).** Same setup, full 225 tasks: **103 tasks with malformed replies** (234 in all) and 24 solved (10.7 %) — again not a coding score. Nano gets the filename right (1 task with "Bad/missing filename"); what breaks is the block itself: in **81 tasks the SEARCH part does not match the file** it claims to quote, in 32 the block lacks its `=======` divider. Lightning shows both too (59 and 22 tasks), Qwen3.6-35B-A3B 3 and 0. Its fences are mixed rather than copied (`python` 145 times, `cpp` 136 times on C++). Among its 122 tasks without format errors it solved 12. Two models of the same family failing aider's diff format in about half of all tasks makes it a family trait rather than one model's slip.
+
+**Open, and being measured:** Lightning with aider's `whole` edit format (the model returns whole files, no block syntax), and Lightning with thinking off — whether thinking causes the format drift. Nano gets the same follow-up only if `whole` turns out to separate format from coding.
 
 ---
 
