@@ -7,11 +7,13 @@
 #   e.g. lauf.sh gemma-4-e4b gemma-4-e4b "retrieval context agent" off
 # Env: BUILD (default /opt/llama-cpp), EXTRA (extra server args, e.g. -ncmoe 28),
 #      CTX (default 98304 -- the archive is ~41k tokens, the agent's tool results pile up beyond 64k;
-#      131072 does not fit a 27B next to its cache on 24 GB), K (retrieval depth, default 8)
+#      131072 does not fit a 27B next to its cache on 24 GB), K (retrieval depth, default 8),
+#      UNTIL (unix time: no new question after it, and no server start at all once it has passed)
 set -u
 M=/opt/llm-infra/models; E=$(cd "$(dirname "$0")" && pwd); A=${ARCHIVE:-$E/archive}
 BUILD=${BUILD:-/opt/llama-cpp}; OUT=${OUT:-/root/eval/docarchive_antworten.jsonl}
 name=$1; label=$2; paths=$3; think=$4; only=${5:-}
+[ -n "${UNTIL:-}" ] && [ "$(date +%s)" -gt "$UNTIL" ] && { echo "$label: Frist vorbei, nicht gestartet"; exit 0; }
 g=$(ls $M/$name/*.gguf | grep -v -e mmproj -e "mtp-" | head -1)
 [ -f "$g" ] || { echo "$name: keine Datei"; exit 1; }
 export LD_LIBRARY_PATH=$BUILD/lib
@@ -32,5 +34,5 @@ v=$(( $(cat /sys/class/drm/card1/device/mem_info_vram_used) / 1048576 ))
 echo "Grafikspeicher nach dem Laden: $v MiB"
 for p in $paths; do
   python3 $E/run.py --archive $A --url http://127.0.0.1:18300 --embed-url http://127.0.0.1:18301 --model "$label" \
-    --path $p --thinking $think --k ${K:-8} --out $OUT ${only:+--only $only}
+    --path $p --thinking $think --k ${K:-8} --out $OUT ${only:+--only $only} ${UNTIL:+--until $UNTIL}
 done

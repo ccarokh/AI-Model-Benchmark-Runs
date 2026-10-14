@@ -96,6 +96,7 @@ def main():
     ap.add_argument("--path", choices=["context", "retrieval", "agent"], required=True); ap.add_argument("--thinking", choices=["on", "off"], default="off")
     ap.add_argument("--embed-url"); ap.add_argument("--k", type=int, default=8); ap.add_argument("--out", default="answers.jsonl")
     ap.add_argument("--only"); ap.add_argument("--max-tokens", type=int); ap.add_argument("--max-steps", type=int, default=25)
+    ap.add_argument("--until", type=float, help="unix time after which no new question is started (the night window needs the card)")
     a = ap.parse_args()
     docs = [json.loads(l) for l in open(os.path.join(a.archive, "archive.jsonl"))]
     qs = [json.loads(l) for l in open(os.path.join(a.archive, "questions.jsonl"))]
@@ -114,6 +115,9 @@ def main():
     for q in qs:
         if q["id"] in done:
             continue
+        if a.until and time.time() > a.until:
+            print("FRIST erreicht -- keine neue Frage mehr", flush=True)
+            break
         t0, usage, calls, err, answer, steps = time.time(), {"prompt_tokens": 0, "completion_tokens": 0}, 0, None, "", 0
         try:
             if a.path == "context":
