@@ -1,19 +1,20 @@
 # Bandwidth against generation rate
 
 `bandbreite_vs_erzeugung.tsv` — the same file, the same command, the same llama.cpp build
-on four cards. The card is the variable; the driver is a second one and is named per row.
+on five cards. The card is the variable; the driver is a second one and is named per row. The fifth card, the RTX 2080 Ti, came later and ran on build `b10273` instead of `70adb1b` (see below why that does not move the numbers).
 
 ```
 llama-bench -m Llama-3.2-3B-Instruct-Q4_K_M.gguf -n 128 -p 512,4096 -pg 4096,128 -ngl 99 -r 20
 build 70adb1b · Vulkan
 ```
 
-## The four cards
+## The five cards
 
 | Card | Bandwidth | Generation `tg128` | Prefill `pp4096` | Driver |
 |---|---:|---:|---:|---|
 | RX 7900 XTX | 960 GB/s | **251.23** ± 1.89 | 6 081 ± 11 | Mesa 26.1.5 (RADV) |
 | RTX 3080 | 760 GB/s | **218.90** ± 0.77 | 7 631 ± 54 | NVIDIA 610.57.04 |
+| RTX 2080 Ti | 616 GB/s | **191.32** ± 3.73 | 6 084 ± 800 | NVIDIA 615.78.08 |
 | RTX 4070 Super | 504 GB/s | **201.80** ± 0.25 | 10 723 ± 57 | NVIDIA 610.57.04 |
 | RTX 2070 | 448 GB/s | **126.29** ± 0.08 | 3 286 ± 11 | NVIDIA 610.43.03 |
 
@@ -25,21 +26,21 @@ Generation per GB/s of bandwidth:
 |---|---|---:|
 | RX 7900 XTX | RDNA 3 | 0.262 |
 | RTX 2070 | Turing | 0.282 |
+| RTX 2080 Ti | Turing | 0.311 |
 | RTX 3080 | Ampere | 0.288 |
 | **RTX 4070 Super** | **Ada** | **0.400** |
 
-**Three architectures across two vendors land within 10 % of each other. Ada extracts
-39 % more generation per unit of bandwidth than any of them.** That is the sharper version
+**Three architectures across two vendors land within 19 % of each other — within 10 % before the 2080 Ti joined. Ada extracts 29 % more generation per unit of bandwidth than the best of them, and 39 % more than the other three.** The 2080 Ti (added 17.10.2026) is the test the claim needed: a card with *more* bandwidth than the 4070 Super (616 against 504 GB/s) that generates *less* (191 against 202 t/s). Bandwidth alone would have ranked them the other way round. That is the sharper version
 of what the 3080-vs-4070-Super pair showed on its own: the rule of thumb "generation
 scales with memory bandwidth" is not wrong in general — it holds across RDNA 3, Turing and
 Ampere — it breaks on the newest NVIDIA generation, which is exactly the one a buyer would
 be choosing.
 
 Prefill is the same story only louder: per GB/s the 4070 Super does **21.3** tokens where
-the 3080 does 10.0, the 2070 7.3 and the XTX 6.3. On absolute prefill the 4070 Super beats
+the 3080 does 10.0, the 2080 Ti 9.9, the 2070 7.3 and the XTX 6.3. On absolute prefill the 4070 Super beats
 a card with nearly twice its bandwidth by 76 %.
 
-The consequence for a purchase is unchanged and now rests on four points instead of two:
+The consequence for a purchase is unchanged and now rests on five points instead of two:
 **do not buy generation rate by the bandwidth figure across architectures.**
 
 ## The build is not a confounder
@@ -61,6 +62,8 @@ this repository can therefore be read next to these, and the drift check's premi
 a build has to be proven not to move the numbers before it is trusted — holds up when it
 is actually measured.
 
+**The fifth card ran on a later build.** The RTX 2080 Ti was measured on `b10273`, 2026-10-17, on a borrowed machine; the control above shows that 490 commits between `b10098` and `70adb1b` moved these figures by less than 1 %, and the nightly drift check has held `b10273` against later builds on the 7900 XTX with identical output and generation within about 2 %. Its `pp4096` spread (± 800, 13 %) is the same kind of wide first-prefill spread the XTX shows on `pp512`; generation is tight (± 3.73, 2 %).
+
 ## What is *not* identical, and matters
 
 **The driver.** The 3080 and the 4070 Super ran NVIDIA 610.57.04, the 2070 runs 610.43.03,
@@ -69,7 +72,7 @@ is the same for all four; the implementation underneath it is not. For the NVIDI
 the difference is one minor driver release; for the AMD card the comparison is
 card-plus-driver, and no measurement here separates the two.
 
-**The machine.** The 4070 Super sat in a Ryzen 5 5600X, the 3080 in a Ryzen 9 5950X, and
+**The machine.** The 4070 Super sat in a Ryzen 5 5600X, the 3080 in a Ryzen 9 5950X, the 2080 Ti in a Core i7-8700, and
 the two cards above in the measuring host. For a 3B model fully resident in VRAM this is
 not expected to matter — [PCIe carries almost nothing](../../hardware/multi-gpu.md#finding-1--pcie-carries-almost-nothing)
 — but it was not held constant and is therefore listed.
@@ -118,6 +121,7 @@ the reason `pp4096` rather than `pp512` is used for the comparisons above.
 | `rohdaten_4070super.json` | RTX 4070 Super |
 | `rohdaten_7900xtx.json` | RX 7900 XTX |
 | `rohdaten_2070.json` | RTX 2070 |
+| `rohdaten_2080ti.json` | RTX 2080 Ti (System D, build b10273) |
 
 The raw files are `llama-bench -o json` output, including the per-repetition samples.
 Collected by [`bandwidth_vs_generation.sh`](../../scripts/hardware/bandwidth_vs_generation.sh)

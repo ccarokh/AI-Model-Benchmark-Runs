@@ -43,6 +43,7 @@ document made that hard to see.
 | [System A](systems/system-a.md) | the primary test bench — almost every number here comes from it |
 | [System B](systems/system-b.md) | the development machine |
 | [System C](systems/system-c.md) | the RTX 4070 SUPER, and what a short window costs in comparability |
+| [System D](systems/system-d.md) | the RTX 2080 Ti, borrowed — more bandwidth than the 4070 SUPER, less generation |
 | [Which number came from where](systems/which-system.md) | per result series |
 | [llama.cpp builds](systems/llama-cpp-builds.md) | two builds run here, plus the standing drift check |
 | [Versions](systems/versions.md) | as read from the running systems, not from memory |
