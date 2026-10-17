@@ -2,3 +2,9 @@ model	path	thinking	n	reconcile_solved	reconcile_n	reconcile_lenient	item_recall
 qwen3.8-27b	retrieval	off	50	6	25	6	0.474	0.570	17	19	6	6	0	0	0	710	19880	0
 qwen3.8-27b	context	off	50	23	25	23	0.977	1.000	19	19	6	6	0	0	0	1188	31889	0
 qwen3.8-27b	agent	off	50	19	25	19	0.867	0.860	19	19	6	6	2	2	6	2722	45452	464
+qwen3.8-27b	retrieval	on	50	6	25	6	0.411	0.442	17	19	6	6	2	0	0	4408	149582	0
+qwen3.8-27b	context	on	50	20	25	20	0.880	0.860	19	19	6	6	3	0	0	5628	155623	0
+qwen3.8-27b	agent	on	50	23	25	23	0.920	0.920	19	19	6	6	2	0	0	5623	163418	352
+gemma-4-31b	retrieval	off	50	7	25	7	0.429	0.495	17	19	6	6	0	0	0	477	6686	0
+gemma-4-31b-kvq8	agent	off	50	13	25	13	0.755	0.800	19	19	6	6	0	0	0	1082	17873	183
+gemma-4-31b-kvq8	context	off	50	8	25	8	0.703	0.736	19	19	6	6	0	0	0	673	11034	0
