@@ -1,16 +1,55 @@
 # System D — RTX 2080 Ti, borrowed
 
+<!-- CAPTURED:BEGIN -->
 | | |
 |---|---|
-| **GPU** | NVIDIA GeForce RTX 2080 Ti, 11 GB GDDR6, 616 GB/s (TU102, Turing) |
-| **Driver** | NVIDIA 615.78.08 (open kernel module) |
+| **CPU** | Intel(R) Core(TM) i7-8700 CPU @ 3.20GHz |
+| **Threads** | 12 |
+| **System RAM (GB)** | 31 |
+| **Board — vendor** | Micro-Star International Co., Ltd. |
+| **Board — model** | Z370 PC PRO (MS-7B49) |
+| **BIOS** | 1.51 |
+| **BIOS date** | 09/27/2018 |
+| **Microcode (running)** | 0x9a |
+| **Microcode replaced at boot, from** | *not determined* |
+| **OS** | Arch Linux |
+| **Kernel** | 7.2.10-arch1-1 |
+| **Python** | Python 3.14.8 |
+| **Root filesystem** | /dev/sdb2 |
+| **Root device** | Samsung SSD 860 EVO 500GB 465.8G sata |
+| **Vulkan reports** | NVIDIA GeForce RTX 2080 Ti |
+| **Vulkan API** | 1.4.351 |
+| **VRAM in use at capture** | 11 MiB |
+
+**GPUs**
+
+| GPU | VRAM | Driver | Power limit |
+|---|---|---|---|
+| NVIDIA GeForce RTX 2080 Ti | 11264 MiB | 615.78.08 | 260.00 W |
+
+**PCIe**
+
+| Device | Card to switch | Switch to CPU |
+|---|---|---|
+| NVIDIA Corporation TU102 [GeForce RTX 2080 Ti Re | Speed 8GT/s, Width x16 | no switch |
+
+**llama.cpp**
+
+| Path | Build | Backend |
+|---|---|---|
+| `/opt/llama-cpp` | b10273 | vulkan |
+
+*Captured 2026-10-18T01:52:22+00:00 by [`scripts/systems/erfassen.sh`](../scripts/systems/erfassen.sh) — read off the machine, not written by hand. `VRAM in use` and the PCIe link are momentary values: link speed drops at idle, and on a desktop machine the session holds VRAM.*
+<!-- CAPTURED:END -->
+
+Not readable by the capture script, from the card's own report and the owner:
+
+| | |
+|---|---|
+| **GPU** | 11 GB GDDR6 at 14 Gbit/s on 352 bit: 616 GB/s (TU102, Turing); NVIDIA open kernel module |
 | **Power limit** | 260 W default, 325 W maximum |
-| **PCIe** | Gen 3 ×16 |
-| **CPU** | Intel Core i7-8700, 12 threads |
-| **System RAM** | 32 GB DDR4-2666 |
-| **Board** | MSI Z370 PC PRO (MS-7B49) |
-| **OS** | Arch Linux, kernel 7.2.10 — installed from the benchmark stick onto a disk the owner set aside |
-| **llama.cpp** | `b10273` (`a6aa6f545`), Vulkan |
+| **System RAM** | 32 GB DDR4, 2666 MT/s according to the owner (not read from the machine) |
+| **OS** | installed from the benchmark stick onto a disk the owner set aside |
 
 A borrowed machine: the card sits in its owner's own desktop, and it is reached over a tunnel the machine itself dials out to — nothing on its network was opened. The installer image that put this system on its spare disk carries no secret and is reusable for the next borrowed card.
 
