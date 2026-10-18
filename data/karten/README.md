@@ -122,6 +122,8 @@ the reason `pp4096` rather than `pp512` is used for the comparisons above.
 | `rohdaten_7900xtx.json` | RX 7900 XTX |
 | `rohdaten_2070.json` | RTX 2070 |
 | `rohdaten_2080ti.json` | RTX 2080 Ti (System D, build b10273) |
+| `rohdaten_2080ti_vulkan_kernel-7.2.11.json` | the same card, Vulkan again after a kernel update (control: `tg128` 191.5 against 191.3) |
+| `rohdaten_2080ti_cuda.json` | the same card on CUDA, same build tag — compared in [backends](../../hardware/backends.md#on-turing-it-is-the-other-way-round-rtx-2080-ti-2026-10-18) |
 
 The raw files are `llama-bench -o json` output, including the per-repetition samples.
 Collected by [`bandwidth_vs_generation.sh`](../../scripts/hardware/bandwidth_vs_generation.sh)

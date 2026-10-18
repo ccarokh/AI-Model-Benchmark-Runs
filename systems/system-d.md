@@ -66,7 +66,7 @@ It is the point the [card comparison](../data/karten/README.md) was missing: **m
 
 ## What it measured
 
-The full test suite in two passes: the first with three models, the second with the RTX 4070 SUPER's model set, so both cards compare across every test. 1 879 result rows, nine models measured (Ling-3.0-tiny does not load on `b10273`; gpt-oss-20b does not fit) — [raw data](../data/testbench/system-d-rtx2080ti.tsv).
+The full test suite in three passes: the first with three models, the second with the RTX 4070 SUPER's model set, so both cards compare across every test, the third with a CUDA build next to the Vulkan one (v1.1). 3 414 result rows, nine models measured (Ling-3.0-tiny does not load on `b10273`; gpt-oss-20b does not fit) — [raw data](../data/testbench/system-d-rtx2080ti.tsv).
 
 | Finding | Value |
 |---|---|
@@ -76,6 +76,7 @@ The full test suite in two passes: the first with three models, the second with 
 | Most efficient at 160 W, for all eight models with a power curve, against 260 W stock | +21 % to +34 % tokens per watt-hour, for 16–21 % less generation |
 | 11 GB against 12 GB: one model class lower | gpt-oss-20b (12.1 GB file) does not load at all; DeepSeek-R1-14B holds 12 288 tokens of context at f16 here against 16 384 on the 4070 Super |
 | Every other model fits fully on the card | peak VRAM 2.3 GB (3B) to 8.6 GB (the 14B models) |
+| **CUDA against Vulkan: on Turing CUDA buys generation, not prefill** (v1.1) | generation +5 to +14 % from 9B upwards, prefill up to −20 % on the smaller models; CUDA sees 680 MiB less memory and holds up to 19 % less context — [backends](../hardware/backends.md#on-turing-it-is-the-other-way-round-rtx-2080-ti-2026-10-18) |
 
 The power optimum lands where the [4070 Super's did](../hardware/power.md#the-rtx-4070-super-has-its-own-optimum-and-it-is-the-same-for-every-model) — 140–160 W there, 160 W here — on a card with a 40 W higher default limit.
 
@@ -88,3 +89,4 @@ The build: `b10273` here, `70adb1b` for the other cards in the comparison; the c
 | Version | Period | State |
 |---|---|---|
 | **D v1.0** | from 2026-10-16 | Arch installed from the benchmark stick, llama.cpp `b10273` on Vulkan, driver 615.78.08; suite run 2026-10-17 with three models, 2026-10-18 with the RTX 4070 SUPER's model set |
+| **D v1.1** | from 2026-10-18 | system update (kernel 7.2.10 → 7.2.11, driver unchanged 615.78.08), CUDA 13.4 toolkit, llama.cpp `b10273` built with CUDA for sm_75 in `/opt/llama-cpp-cuda`; Vulkan control after the update unchanged (`tg128` 191.5 against 191.3) |

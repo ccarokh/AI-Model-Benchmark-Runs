@@ -40,7 +40,7 @@ Three ways in:
 | Power draw | [Power](hardware/power.md) | 7-point curve from 276 W down to 159 W — at half the core clock, generation still delivers 85 %. Idle costs more per year than throttling saves |
 | Second GPU | [Multi-GPU](hardware/multi-gpu.md) | Capacity, not speed: ~62 % of single-card generation. The bus sat at 0–5 % and doubling its width changed nothing |
 | **Memory tiers** | **[Memory tiers](hardware/memory-tiers.md)** | **Four of 48 layers in host memory and generation halves. Both predictions wrong: the cost adds along the chain instead of averaging, and prefill suffers more than generation, not less. More RAM lets a model load; it does not let it run** |
-| Backend | [Backends](hardware/backends.md) | Vulkan stays: ROCm is +11 % prefill, −11 % generation |
+| Backend | [Backends](hardware/backends.md) | Vulkan stays: ROCm is +11 % prefill, −11 % generation. CUDA on NVIDIA depends on the generation: on Ada +14–25 % prefill, on Turing +5–14 % generation and up to −20 % prefill — both pay in context |
 | **Foreign benchmarks** | **[foreign/](foreign/)** | Generation scales almost exactly with memory bandwidth. Ollama is llama.cpp underneath — and 25 % slower on identical hardware. **The same two models served in FP8 by a hosted endpoint score within noise of our Q4_K_M — FP8 buys nothing measurable.** **Against a public leaderboard, one model measured on both sides: a consumer card reaches 87–89 % of a hosted endpoint, and the cost comparison reverses depending on the input/output mix** |
 | **Method** | **[METHODOLOGY.md](METHODOLOGY.md)** | **The measurement mistakes, with the evidence that exposed each one** |
 

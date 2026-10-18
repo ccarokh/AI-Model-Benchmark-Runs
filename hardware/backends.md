@@ -129,6 +129,35 @@ The first version of this comparison ran on two models — and both of them were
 two that agree. It reported byte-identical output between backends, which is what
 [measuring a corner of the matrix](../scripts/testbench/README.md) buys you.
 
+### On Turing it is the other way round (RTX 2080 Ti, 2026-10-18)
+
+The same question on an older NVIDIA card, [System D](../systems/system-d.md): both backends built from `b10273`, the suite's reference workload (`-p 2048 -n 128`), same card, same session, eight models.
+
+| Model | Prefill V / C | Generation V / C |
+|---|---|---|
+| Llama-3.2-3B | **6 397** / 5 495 (−14 %) | 190.6 / 190.2 |
+| Llama-3.1-8B | **3 298** / 2 637 (−20 %) | 95.5 / 96.8 |
+| Qwen3.5-9B | **2 559** / 2 236 (−13 %) | 79.6 / **83.5** (+5 %) |
+| Gemma-4-12B Q4_K_M | **1 851** / 1 549 (−16 %) | 56.3 / **59.1** (+5 %) |
+| Gemma-4-12B QAT Q4_0 | 1 781 / 1 702 (−4 %) | 58.5 / **61.5** (+5 %) |
+| DeepSeek-R1-14B | 1 312 / 1 331 | 48.2 / **54.7** (+13 %) |
+| Qwen2.5-Coder-14B | 1 302 / 1 325 | 47.8 / **54.6** (+14 %) |
+
+**On Turing CUDA buys generation, not prefill — the opposite of Ada.** Prefill is level on the 14B models and up to 20 % *behind* on the smaller ones; generation is level on the small models and 5–14 % ahead from 9B upwards. The rule from the 4070 Super — "CUDA buys prefill and nothing else" — is a property of that architecture, not of the backend.
+
+The context cost is there too, smaller than on Ada but in the same direction. CUDA reports 10 832 MiB of usable memory where Vulkan sees 11 510:
+
+| Model | f16 V / C | q8_0 V / C |
+|---|---|---|
+| Qwen3.5-9B | **172 032** / 163 840 | **323 584** / 262 144 (−19 %) |
+| Gemma-4-12B QAT Q4_0 | **200 704** / 188 416 | **405 504** / 327 680 (−19 %) |
+| Llama-3.1-8B | 45 056 / 45 056 | **90 112** / 86 016 |
+| Qwen2.5-Coder-14B | **12 288** / 8 192 (−33 %) | 20 480 / 20 480 |
+
+The completion hash agrees on five of eight models and differs on three (Gemma-4-12B Q4_K_M, Llama-3.1-8B, Qwen2.5-Coder-14B) — the same kind of split as on Ada.
+
+**For this card Vulkan stays the default.** CUDA is worth it only where a 14B model's generation rate is the bottleneck — and on 11 GB the 14B models hold a single user with 8–12k of context, which is exactly where CUDA's missing 680 MiB hurt most. Raw data: [`system-d-rtx2080ti.tsv`](../data/testbench/system-d-rtx2080ti.tsv), card-comparison command in [`data/karten/`](../data/karten/README.md) (`rohdaten_2080ti_cuda.json`: `tg128` 194.6 against 191.5 on Vulkan, `pp4096` 5 417 against 6 056).
+
 ## What the matrix path is worth, and only where
 
 Vulkan reaches the matrix hardware through `coopmat2`; switching it off is the closest
