@@ -1,6 +1,6 @@
 {
   "rechnername": "system-d",
-  "erfasst_am": "2026-10-18T01:52:22+00:00",
+  "erfasst_am": "2026-10-18T01:57:59+00:00",
   "cpu": "Intel(R) Core(TM) i7-8700 CPU @ 3.20GHz",
   "cpu_faeden": "12",
   "ram_gb": "31",
@@ -15,6 +15,22 @@
   "python": "Python 3.14.8",
   "wurzel_geraet": "/dev/sdb2",
   "wurzel_traeger": "Samsung SSD 860 EVO 500GB 465.8G sata",
+  "ram_module": [
+    {
+      "slot": "ChannelA-DIMM1",
+      "groesse_mb": 16384,
+      "typ_teil": "CMK32GX4M2A2666C16",
+      "nenn_mt_s": 2667,
+      "konfiguriert_mt_s": 2667
+    },
+    {
+      "slot": "ChannelB-DIMM1",
+      "groesse_mb": 16384,
+      "typ_teil": "CMK32GX4M2A2666C16",
+      "nenn_mt_s": 2667,
+      "konfiguriert_mt_s": 2667
+    }
+  ],
   "karten": [
     {
       "name": "NVIDIA GeForce RTX 2080 Ti",

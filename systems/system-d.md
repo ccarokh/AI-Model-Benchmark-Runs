@@ -21,6 +21,13 @@
 | **Vulkan API** | 1.4.351 |
 | **VRAM in use at capture** | 11 MiB |
 
+**Memory modules** (SMBIOS type 17)
+
+| Slot | Size | Part | Rated | Configured |
+|---|---:|---|---:|---:|
+| ChannelA-DIMM1 | 16384 MB | CMK32GX4M2A2666C16 | 2667 MT/s | 2667 MT/s |
+| ChannelB-DIMM1 | 16384 MB | CMK32GX4M2A2666C16 | 2667 MT/s | 2667 MT/s |
+
 **GPUs**
 
 | GPU | VRAM | Driver | Power limit |
@@ -39,7 +46,7 @@
 |---|---|---|
 | `/opt/llama-cpp` | b10273 | vulkan |
 
-*Captured 2026-10-18T01:52:22+00:00 by [`scripts/systems/erfassen.sh`](../scripts/systems/erfassen.sh) — read off the machine, not written by hand. `VRAM in use` and the PCIe link are momentary values: link speed drops at idle, and on a desktop machine the session holds VRAM.*
+*Captured 2026-10-18T01:57:59+00:00 by [`scripts/systems/erfassen.sh`](../scripts/systems/erfassen.sh) — read off the machine, not written by hand. `VRAM in use` and the PCIe link are momentary values: link speed drops at idle, and on a desktop machine the session holds VRAM.*
 <!-- CAPTURED:END -->
 
 Not covered by the capture script, read separately:

@@ -32,6 +32,40 @@ w python           'python3 --version 2>&1 || python --version 2>&1'
 w wurzel_geraet    'findmnt -no SOURCE / | sed "s/\\[.*//"'
 w wurzel_traeger   'q=$(findmnt -no SOURCE / | sed "s/\\[.*//"); lsblk -dno MODEL,SIZE,TRAN "/dev/$(lsblk -no PKNAME "$q" | head -1)"'
 
+# --- memory modules ---------------------------------------------------------
+# Read from the raw SMBIOS table (type 17), not from dmidecode: the borrowed
+# System D had no dmidecode, and its RAM speed was first written down from what
+# the owner said. The table is on every machine. Needs root; unreadable is null,
+# not "no modules".
+printf '  "ram_module": %s,\n' "$(python3 - <<'PY' 2>/dev/null || echo null
+import json, struct
+t = open("/sys/firmware/dmi/tables/DMI", "rb").read()
+out, i = [], 0
+while i + 4 <= len(t) and t[i] != 127:
+    typ, ln = t[i], t[i + 1]
+    j = i + ln
+    while j + 1 < len(t) and not (t[j] == 0 and t[j + 1] == 0):
+        j += 1
+    strs = t[i + ln:j].split(b"\0")
+    s = lambda k: strs[k - 1].decode(errors="replace").strip() if 0 < k <= len(strs) else ""
+    if typ == 17 and ln > 0x0D:
+        f = t[i:i + ln]
+        size = struct.unpack_from("<H", f, 0x0C)[0]
+        if size not in (0, 0xFFFF):
+            if size == 0x7FFF and ln >= 0x20:
+                mb = struct.unpack_from("<I", f, 0x1C)[0]
+            elif size & 0x8000:
+                mb = (size & 0x7FFF) // 1024
+            else:
+                mb = size
+            out.append({"slot": s(f[0x10]), "groesse_mb": mb, "typ_teil": s(f[0x1A]) if ln > 0x1A else "",
+                        "nenn_mt_s": struct.unpack_from("<H", f, 0x15)[0] if ln >= 0x17 else None,
+                        "konfiguriert_mt_s": struct.unpack_from("<H", f, 0x20)[0] if ln >= 0x22 else None})
+    i = j + 2
+print(json.dumps(out, ensure_ascii=False))
+PY
+)"
+
 # --- GPUs -----------------------------------------------------------------
 printf '  "karten": [\n'
 erste=1

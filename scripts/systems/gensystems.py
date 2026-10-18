@@ -35,6 +35,13 @@ def block(d):
     z = ["| | |", "|---|---|"]
     for schluessel, name in FELDER:
         z.append(f"| **{name}** | {zelle(d.get(schluessel))} |")
+    rm = d.get("ram_module")
+    if rm:
+        z += ["", "**Memory modules** (SMBIOS type 17)", "",
+              "| Slot | Size | Part | Rated | Configured |", "|---|---:|---|---:|---:|"]
+        for e in rm:
+            z.append(f"| {zelle(e.get('slot'))} | {zelle(e.get('groesse_mb'))} MB | {zelle(e.get('typ_teil'))} | "
+                     f"{zelle(e.get('nenn_mt_s'))} MT/s | {zelle(e.get('konfiguriert_mt_s'))} MT/s |")
     k = d.get("karten") or []
     if k:
         z += ["", "**GPUs**", "", "| GPU | VRAM | Driver | Power limit |", "|---|---|---|---|"]

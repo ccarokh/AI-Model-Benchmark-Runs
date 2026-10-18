@@ -1,35 +1,89 @@
 {
   "rechnername": "LLMWorkerHost",
-  "erfasst_am": "2026-08-23T04:52:16+02:00",
+  "erfasst_am": "2026-10-18T03:58:01+02:00",
   "cpu": "Intel(R) Core(TM) i9-9900K CPU @ 3.60GHz",
   "cpu_faeden": "16",
-  "ram_gb": "15",
+  "ram_gb": "62",
   "board": "Micro-Star International Co., Ltd.",
   "board_modell": "MEG Z390 GODLIKE (MS-7B10)",
   "bios": "1.D0",
   "bios_datum": "11/01/2022",
   "mikrocode": "0xf8",
-  "mikrocode_start": "0x000000f0",
+  "mikrocode_start": null,
   "os": "Arch Linux",
-  "kernel": "7.1.5-arch1-2",
-  "python": "Python 3.14.6",
-  "wurzel_geraet": "/dev/nvme1n1p2",
+  "kernel": "7.2.2-arch1-1",
+  "python": "Python 3.14.7",
+  "wurzel_geraet": "/dev/nvme0n1p2",
   "wurzel_traeger": "CT1000P1SSD8 931.5G nvme",
+  "ram_module": [
+    {
+      "slot": "ChannelA-DIMM1",
+      "groesse_mb": 32768,
+      "typ_teil": "CT32G4DFD832A.C16FF",
+      "nenn_mt_s": 3200,
+      "konfiguriert_mt_s": 3200
+    },
+    {
+      "slot": "ChannelB-DIMM1",
+      "groesse_mb": 32768,
+      "typ_teil": "CT32G4DFD832A.C16FF",
+      "nenn_mt_s": 3200,
+      "konfiguriert_mt_s": 3200
+    }
+  ],
   "karten": [
-    {"name": "NVIDIA GeForce RTX 2070", "vram": "8192 MiB", "treiber": "610.43.03", "leistungsgrenze": "225.00 W", "hersteller": "NVIDIA"},
-    {"name": " Advanced Micro Devices, Inc. [AMD/ATI] Navi 31 [Radeon RX 7900 XT/7900 XTX/7900 GRE/7900M] (rev c8)", "vram": "24560 MiB", "treiber": null, "leistungsgrenze": null, "hersteller": "AMD"}
+    {
+      "name": "NVIDIA GeForce RTX 2070",
+      "vram": "8192 MiB",
+      "treiber": "610.57.04",
+      "leistungsgrenze": "225.00 W",
+      "hersteller": "NVIDIA"
+    },
+    {
+      "name": " Advanced Micro Devices, Inc. [AMD/ATI] Navi 31 [Radeon RX 7900 XT/7900 XTX/7900 GRE/7900M] (rev c8)",
+      "vram": "24560 MiB",
+      "treiber": null,
+      "leistungsgrenze": null,
+      "hersteller": "AMD"
+    }
   ],
   "vulkan_geraet": "AMD Radeon RX 7900 XTX (RADV NAVI31)",
   "vulkan_api": "1.4.354",
   "pcie": [
-    {"geraet": "03:00.0", "name": "Advanced Micro Devices, Inc. [AMD/ATI] Navi 31 [", "karte_zur_bruecke": "Speed 16GT/s, Width x16", "bruecke_zur_cpu": "Speed 8GT/s (downgraded), Width x8 (downgraded)"},
-    {"geraet": "04:00.0", "name": "NVIDIA Corporation TU106 [GeForce RTX 2070 Rev. ", "karte_zur_bruecke": "Speed 8GT/s, Width x8 (downgraded)", "bruecke_zur_cpu": "no switch"}
+    {
+      "geraet": "03:00.0",
+      "name": "Advanced Micro Devices, Inc. [AMD/ATI] Navi 31 [",
+      "karte_zur_bruecke": "Speed 16GT/s, Width x16",
+      "bruecke_zur_cpu": "Speed 8GT/s (downgraded), Width x8 (downgraded)"
+    },
+    {
+      "geraet": "04:00.0",
+      "name": "NVIDIA Corporation TU106 [GeForce RTX 2070 Rev. ",
+      "karte_zur_bruecke": "Speed 8GT/s, Width x8 (downgraded)",
+      "bruecke_zur_cpu": "no switch"
+    }
   ],
-  "vram_leerlauf": "4 MiB",
+  "vram_leerlauf": "942 MiB",
   "llama_cpp": [
-    {"pfad": "/opt/llama-cpp", "stand": "v0.2.0", "backend": "vulkan"},
-    {"pfad": "/opt/llama-cpp-nb", "stand": "b10273", "backend": "vulkan"},
-    {"pfad": "/opt/llama-cpp-v0.2.0", "stand": "bb4caa7", "backend": "vulkan"},
-    {"pfad": "/opt/llama-cpp-rocm", "stand": "unknown", "backend": "rocm"}
+    {
+      "pfad": "/opt/llama-cpp",
+      "stand": "v0.2.0",
+      "backend": "vulkan"
+    },
+    {
+      "pfad": "/opt/llama-cpp-nb",
+      "stand": "b10273",
+      "backend": "vulkan"
+    },
+    {
+      "pfad": "/opt/llama-cpp-v0.2.0",
+      "stand": "bb4caa7",
+      "backend": "vulkan"
+    },
+    {
+      "pfad": "/opt/llama-cpp-rocm",
+      "stand": "unknown",
+      "backend": "rocm"
+    }
   ]
 }

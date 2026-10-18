@@ -5,27 +5,34 @@
 |---|---|
 | **CPU** | Intel(R) Core(TM) i9-9900K CPU @ 3.60GHz |
 | **Threads** | 16 |
-| **System RAM (GB)** | 15 |
+| **System RAM (GB)** | 62 |
 | **Board — vendor** | Micro-Star International Co., Ltd. |
 | **Board — model** | MEG Z390 GODLIKE (MS-7B10) |
 | **BIOS** | 1.D0 |
 | **BIOS date** | 11/01/2022 |
 | **Microcode (running)** | 0xf8 |
-| **Microcode replaced at boot, from** | 0x000000f0 |
+| **Microcode replaced at boot, from** | *not determined* |
 | **OS** | Arch Linux |
-| **Kernel** | 7.2.2-arch1-1 (v1.7; 7.1.5-arch1-2 until 2026-09-13) |
-| **Python** | Python 3.14.6 |
-| **Root filesystem** | /dev/nvme1n1p2 |
+| **Kernel** | 7.2.2-arch1-1 |
+| **Python** | Python 3.14.7 |
+| **Root filesystem** | /dev/nvme0n1p2 |
 | **Root device** | CT1000P1SSD8 931.5G nvme |
 | **Vulkan reports** | AMD Radeon RX 7900 XTX (RADV NAVI31) |
 | **Vulkan API** | 1.4.354 |
-| **VRAM in use at capture** | 4 MiB |
+| **VRAM in use at capture** | 942 MiB |
+
+**Memory modules** (SMBIOS type 17)
+
+| Slot | Size | Part | Rated | Configured |
+|---|---:|---|---:|---:|
+| ChannelA-DIMM1 | 32768 MB | CT32G4DFD832A.C16FF | 3200 MT/s | 3200 MT/s |
+| ChannelB-DIMM1 | 32768 MB | CT32G4DFD832A.C16FF | 3200 MT/s | 3200 MT/s |
 
 **GPUs**
 
 | GPU | VRAM | Driver | Power limit |
 |---|---|---|---|
-| NVIDIA GeForce RTX 2070 | 8192 MiB | 610.57.04 (v1.7; 610.43.03 before) | 225.00 W |
+| NVIDIA GeForce RTX 2070 | 8192 MiB | 610.57.04 | 225.00 W |
 |  Advanced Micro Devices, Inc. [AMD/ATI] Navi 31 [Radeon RX 7900 XT/7900 XTX/7900 GRE/7900M] (rev c8) | 24560 MiB | *not determined* | *not determined* |
 
 **PCIe**
@@ -44,7 +51,7 @@
 | `/opt/llama-cpp-v0.2.0` | bb4caa7 | vulkan |
 | `/opt/llama-cpp-rocm` | unknown | rocm |
 
-*Captured 2026-08-23T04:52:16+02:00 by [`scripts/systems/erfassen.sh`](../scripts/systems/erfassen.sh) — read off the machine, not written by hand. `VRAM in use` and the PCIe link are momentary values: link speed drops at idle, and on a desktop machine the session holds VRAM.*
+*Captured 2026-10-18T03:58:01+02:00 by [`scripts/systems/erfassen.sh`](../scripts/systems/erfassen.sh) — read off the machine, not written by hand. `VRAM in use` and the PCIe link are momentary values: link speed drops at idle, and on a desktop machine the session holds VRAM.*
 <!-- CAPTURED:END -->
 
 Everything from the coding series onwards ran here.
