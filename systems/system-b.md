@@ -21,6 +21,15 @@
 | **Vulkan API** | 1.4.341 |
 | **VRAM in use at capture** | 2332 MiB |
 
+**Memory modules** (SMBIOS type 17)
+
+| Slot | Size | Part | Rated | Configured |
+|---|---:|---|---:|---:|
+| P0 CHANNEL A, DIMM 1 | 16384 MB | CMW32GX4M2D3600C18 | 3600 MT/s | 3600 MT/s |
+| P0 CHANNEL B, DIMM 1 | 16384 MB | CMW32GX4M2D3600C18 | 3600 MT/s | 3600 MT/s |
+
+*Modules from dmidecode 3.7, 2026-10-18 (root on this machine; the rest of this file is from 2026-08-23).*
+
 **GPUs**
 
 | GPU | VRAM | Driver | Power limit |

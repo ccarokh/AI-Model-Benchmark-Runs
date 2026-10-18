@@ -42,6 +42,8 @@ def block(d):
         for e in rm:
             z.append(f"| {zelle(e.get('slot'))} | {zelle(e.get('groesse_mb'))} MB | {zelle(e.get('typ_teil'))} | "
                      f"{zelle(e.get('nenn_mt_s'))} MT/s | {zelle(e.get('konfiguriert_mt_s'))} MT/s |")
+        if d.get("ram_module_quelle"):
+            z += ["", f"*Modules from {d['ram_module_quelle']}.*"]
     k = d.get("karten") or []
     if k:
         z += ["", "**GPUs**", "", "| GPU | VRAM | Driver | Power limit |", "|---|---|---|---|"]

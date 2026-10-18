@@ -16,15 +16,47 @@
   "wurzel_geraet": "/dev/nvme1n1p2",
   "wurzel_traeger": "Seagate FireCuda 530 ZP2000GM30013  1,8T nvme",
   "karten": [
-    {"name": "NVIDIA GeForce RTX 3080", "vram": "10240 MiB", "treiber": "610.57.04", "leistungsgrenze": "370.00 W", "hersteller": "NVIDIA"}
+    {
+      "name": "NVIDIA GeForce RTX 3080",
+      "vram": "10240 MiB",
+      "treiber": "610.57.04",
+      "leistungsgrenze": "370.00 W",
+      "hersteller": "NVIDIA"
+    }
   ],
   "vulkan_geraet": "NVIDIA GeForce RTX 3080",
   "vulkan_api": "1.4.341",
   "pcie": [
-    {"geraet": "2d:00.0", "name": "NVIDIA Corporation GA102 [GeForce RTX 3080 Lite ", "karte_zur_bruecke": "Speed 16GT/s, Width x16", "bruecke_zur_cpu": "no switch"}
+    {
+      "geraet": "2d:00.0",
+      "name": "NVIDIA Corporation GA102 [GeForce RTX 3080 Lite ",
+      "karte_zur_bruecke": "Speed 16GT/s, Width x16",
+      "bruecke_zur_cpu": "no switch"
+    }
   ],
   "vram_leerlauf": "2332 MiB",
   "llama_cpp": [
-    {"pfad": "/opt/llama-cpp", "stand": "9614 (ebc10770ac)", "backend": "vulkan+cuda"}
-  ]
+    {
+      "pfad": "/opt/llama-cpp",
+      "stand": "9614 (ebc10770ac)",
+      "backend": "vulkan+cuda"
+    }
+  ],
+  "ram_module": [
+    {
+      "slot": "P0 CHANNEL A, DIMM 1",
+      "groesse_mb": 16384,
+      "typ_teil": "CMW32GX4M2D3600C18",
+      "nenn_mt_s": 3600,
+      "konfiguriert_mt_s": 3600
+    },
+    {
+      "slot": "P0 CHANNEL B, DIMM 1",
+      "groesse_mb": 16384,
+      "typ_teil": "CMW32GX4M2D3600C18",
+      "nenn_mt_s": 3600,
+      "konfiguriert_mt_s": 3600
+    }
+  ],
+  "ram_module_quelle": "dmidecode 3.7, 2026-10-18 (root on this machine; the rest of this file is from 2026-08-23)"
 }
