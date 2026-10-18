@@ -42,13 +42,13 @@
 *Captured 2026-10-18T01:52:22+00:00 by [`scripts/systems/erfassen.sh`](../scripts/systems/erfassen.sh) — read off the machine, not written by hand. `VRAM in use` and the PCIe link are momentary values: link speed drops at idle, and on a desktop machine the session holds VRAM.*
 <!-- CAPTURED:END -->
 
-Not readable by the capture script, from the card's own report and the owner:
+Not covered by the capture script, read separately:
 
 | | |
 |---|---|
 | **GPU** | 11 GB GDDR6 at 14 Gbit/s on 352 bit: 616 GB/s (TU102, Turing); NVIDIA open kernel module |
 | **Power limit** | 260 W default, 325 W maximum |
-| **System RAM** | 32 GB DDR4, 2666 MT/s according to the owner (not read from the machine) |
+| **System RAM** | 2 × 16 GB DDR4 (Corsair CMK32GX4M2A2666C16), one module per channel, rated and configured at 2667 MT/s — read from the raw SMBIOS table (`/sys/firmware/dmi/tables/DMI`, type 17), since dmidecode is not installed there |
 | **OS** | installed from the benchmark stick onto a disk the owner set aside |
 
 A borrowed machine: the card sits in its owner's own desktop, and it is reached over a tunnel the machine itself dials out to — nothing on its network was opened. The installer image that put this system on its spare disk carries no secret and is reusable for the next borrowed card.
