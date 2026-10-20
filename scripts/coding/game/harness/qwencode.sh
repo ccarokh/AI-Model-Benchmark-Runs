@@ -4,7 +4,7 @@ agent_vorbereiten() { mkdir -p "$ziel/qwenheim"; chown 1000:1000 "$ziel/qwenheim
 
 agent_ausfuehren() {
   # --yolo: no questions back. Harmless, because the container is disposable.
-  timeout "$zeitlimit" docker run --rm \
+  timeout "$zeitlimit" docker run --rm --init \
     -v "$ziel/arbeit":/arbeit -v "$ziel/qwenheim":/home/pruef/.qwen \
     -e OPENAI_API_KEY=egal -e OPENAI_BASE_URL="http://$MESS:$PORT/v1" \
     -e OPENAI_MODEL="$model" \

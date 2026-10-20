@@ -16,7 +16,7 @@ J
 
 agent_ausfuehren() {
   # GOOSE_MODE=auto: no questions back.
-  timeout "$zeitlimit" docker run --rm \
+  timeout "$zeitlimit" docker run --rm --init \
     -v "$ziel/gooseheim":/home/pruef \
     -v "$ziel/arbeit":/arbeit \
     -e OPENAI_API_KEY=egal -e OPENAI_HOST="http://$MESS:$PORT" \

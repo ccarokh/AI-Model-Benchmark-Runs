@@ -4,6 +4,8 @@
 `ja` / `nein` / `untestbar` / empty. Empty means **not answered** and is a different thing
 from `nein`.
 
+Rated so far: the blind reference and the four Kolibri-1 runs of 20.10.2026 (aider, crush, goose, OpenCode; none playable, see [coding.md](../../use-cases/coding.md#kolibri-1-weak-in-every-test-deleted-2026-10-20)). The games of the September series are not rated yet.
+
 `baseline/` — the blind run that validated the task. Not a competitor and not a measuring
 point against the local models: foreign hardware, a different harness, unknown
 quantisation. It answers one question — **are the nineteen criteria satisfiable at the

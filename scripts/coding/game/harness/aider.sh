@@ -6,7 +6,7 @@ agent_vorbereiten() { mkdir -p "$ziel/arbeit"; }
 agent_ausfuehren() {
   # --no-git because the working directory is empty and not a repository.
   # --yes-always because nobody is there to answer questions.
-  timeout "$zeitlimit" docker run --rm \
+  timeout "$zeitlimit" docker run --rm --init \
     -v "$ziel/arbeit":/arbeit \
     -e OPENAI_API_BASE="http://$MESS:$PORT/v1" -e OPENAI_API_KEY=egal \
     pruefstand:2 aider \

@@ -136,7 +136,21 @@ Among the 118 tasks without any format error it solved 31 (26 %), which points t
 
 **Nemotron 3 Nano fails the same way, by a different mistake (2026-10-12).** Same setup, full 225 tasks: **103 tasks with malformed replies** (234 in all) and 24 solved (10.7 %) — again not a coding score. Nano gets the filename right (1 task with "Bad/missing filename"); what breaks is the block itself: in **81 tasks the SEARCH part does not match the file** it claims to quote, in 32 the block lacks its `=======` divider. Lightning shows both too (59 and 22 tasks), Qwen3.6-35B-A3B 3 and 0. Its fences are mixed rather than copied (`python` 145 times, `cpp` 136 times on C++). Among its 122 tasks without format errors it solved 12. Two models of the same family failing aider's diff format in about half of all tasks makes it a family trait rather than one model's slip.
 
-**Open, and being measured:** Lightning with aider's `whole` edit format (the model returns whole files, no block syntax), and Lightning with thinking off — whether thinking causes the format drift. Nano gets the same follow-up only if `whole` turns out to separate format from coding.
+**`whole` separates format from coding (2026-10-20).** Lightning with aider's `whole` edit format (the model returns whole files, no block syntax), otherwise the same setup, full 225 tasks: **6 tasks with malformed replies** instead of 107, and **pass@1 10.2 %, pass@2 28.0 %**. With the format out of the way this is a coding score, and it is weak — less than half of Qwen3.6-35B-A3B's 62.7 % at the same slot. **Still being measured:** Lightning with thinking off in `diff` format — whether thinking causes the format drift. Nano gets no follow-up: `whole` showed the family's problem is not only the format.
+
+### Kolibri-1: weak in every test, deleted (2026-10-20)
+
+Aleph Alpha's model, Q4_K_M at 45 GB: its architecture runs only in a patched llama.cpp build, and on the 24 GB card the experts of 28 layers stay on the CPU (`-ncmoe 28`, from the night probe). One server slot, because at four every request shared the CPU experts four ways and the 1800 s timeout decided the tasks instead of the model.
+
+| Test | Result |
+|---|---|
+| aider-polyglot, 32k slot, thinking on, `diff` | **pass@1 8.0 %, pass@2 20.0 %** (225 / 225). In **90 tasks the 32k slot ran full** — thinking filled it before an answer — and 67 tasks had malformed replies. Median 21.3 min per task, 91 h for the run |
+| the real project (Part 3's task, aider, 131 072 context) | cut off by the 2 h emergency stop. From about 25 minutes in it repeated one paragraph about rewriting a test — 85 times in the last hour. 14 files, 258 lines, `make test` never green. The independent acceptance check builds its image (233 MB, not root), but the service exits at start: `main.py` calls a `config.load()` that was never written |
+| agility game, four agents, judged by a person | **0 of 4 playable.** crush's and OpenCode's games open but cannot be played; aider's and goose's do not open (for goose the automatic pre-check had already seen an empty canvas). Raw ratings: [`data/agility-game/urteile.tsv`](../data/agility-game/urteile.tsv) |
+
+The real-project run is not a row in Part 3's table: Part 3 ran with the two broken setup details described there, this run with both fixed. In the game, **OpenCode ran 91 minutes against a 60-minute limit**: `timeout` stopped the docker client, but the agent inside the container runs as PID 1 and ignores the signal. Every harness now starts its container with `--init`; from the next run on the limit held. The same bug gave Qwen3.8-27B's OpenCode run 73 minutes on 04.09. The fifth agent, Qwen Code, is no result for any model: its first request alone is about 34 000 tokens, more than the 32k window, and it has stopped within seconds for every model in the series.
+
+Model and build were deleted from the GPU host after these runs.
 
 ---
 

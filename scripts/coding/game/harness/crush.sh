@@ -30,7 +30,7 @@ J
 agent_ausfuehren() {
   # Crush has no -y; its permissions live in the config
   # (permissions.allowed_tools), set above.
-  timeout "$zeitlimit" docker run --rm \
+  timeout "$zeitlimit" docker run --rm --init \
     -v "$ziel/crushheim":/home/pruef \
     -v "$ziel/arbeit":/arbeit \
     pruefstand:2 crush run -q "$(cat "$ziel/aufgabe.txt")" \

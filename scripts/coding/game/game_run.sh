@@ -36,6 +36,9 @@ LAUF=$(basename "$CONF"); LAUF=${LAUF%.conf}
 model=""; gguf=""; hf=""; quant=""; harness=""; beschreibung=""; runtime=""
 temp=0.2; maxtok=16384; ctx=32768; template=gguf; zeitlimit=3600; aufgabe=aufgabe.md
 tool_parser=""; denken=an; tokenizer=""; tokenizer_mode=""
+# build/extra (20.10.): a model whose architecture only a patched build knows (Kolibri-1), or one that
+# needs experts on the CPU to fit the card (-ncmoe N). Both land in lauf.json.
+build=/opt/llama-cpp-nb; extra=""
 while IFS= read -r zeile; do
   zeile=${zeile%%#*}
   [ -z "${zeile// }" ] && continue
@@ -43,7 +46,7 @@ while IFS= read -r zeile; do
   k=${zeile%%=*}; v=${zeile#*=}
   k=$(echo "$k" | tr -d '[:space:]'); v=$(echo "$v" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
   case "$k" in
-    model|gguf|hf|quant|harness|beschreibung|runtime|temp|maxtok|ctx|template|zeitlimit|aufgabe|tool_parser|denken|tokenizer|tokenizer_mode)
+    model|gguf|hf|quant|harness|beschreibung|runtime|temp|maxtok|ctx|template|zeitlimit|aufgabe|tool_parser|denken|tokenizer|tokenizer_mode|build|extra)
       printf -v "$k" '%s' "$v" ;;
     *) ende "Konfiguration: unbekannter Schluessel '$k'" ;;
   esac
@@ -114,15 +117,18 @@ cat > "$ziel/lauf.json" <<J
  "aufgabe": "$aufgabe", "aufgabe_id": "$aufgabe_id", "quant": "$quant",
  "tool_parser": "$tool_parser", "denken": "$denken",
  "tokenizer": "$tokenizer", "tokenizer_mode": "$tokenizer_mode", "gguf": "$gguf", "hf": "$hf",
- "messrechner": "$MESS"}
+ "build": "$build", "extra": "$extra", "messrechner": "$MESS"}
 J
 
 [ -f "$E/ergebnis.tsv" ] || printf 'lauf\tmodel\tbeschreibung\tharness\truntime\tquant\taufgabe_id\ttemperature\tmax_tokens\tctx\ttemplate\tzeitlimit\tabgebrochen\tsekunden\tdateien\tbytes\that_index\tausserhalb\tagenten_dateien\tsyntax_ok\tgeoeffnet\tlaufzeit_fehler\tkonsole_fehler\tfehlende_dateien\tcanvas_bemalt\tcanvas_or_svg\tjump_key\tduck_key\tscore\trestart\tspeedup\textern\n' > "$E/ergebnis.tsv"
 
 # --- Model server on the measuring machine ----------------------------------
+# Only the server this script started, by the PID it noted. `pgrep -x llama-server` also hit the
+# server llm-runtime keeps for live chat requests (found 20.10.).
 server_stop(){
-  ssh -n "$MESS" 'p=$(pgrep -x llama-server); [ -n "$p" ] && kill $p; sleep 5;
-                  p=$(pgrep -x llama-server); [ -n "$p" ] && kill -9 $p; true' >/dev/null 2>&1
+  ssh -n "$MESS" 'f=/root/eval/game_srv.pid; [ -f $f ] || exit 0; p=$(cat $f)
+                  [ "$(cat /proc/$p/comm 2>/dev/null)" = llama-server ] && kill $p; sleep 5
+                  [ "$(cat /proc/$p/comm 2>/dev/null)" = llama-server ] && kill -9 $p; rm -f $f; true' >/dev/null 2>&1
   [ "${runtime:-}" = vllm ] && ssh -n "$MESS" 'docker rm -f vllm-mess' >/dev/null 2>&1
   return 0
 }
@@ -151,7 +157,7 @@ case "$runtime" in
     # double-quoted string, and bare JSON falls apart into
     # {enable_thinking:false} on the way -- llama-server then refuses to start.
     [ "$denken" = aus ] && TPL="$TPL --chat-template-kwargs '{\"enable_thinking\":false}'"
-    ssh -n "$MESS" "export LD_LIBRARY_PATH=/opt/llama-cpp-nb/lib; setsid nohup /opt/llama-cpp-nb/bin/llama-server -m '$gguf' --host 0.0.0.0 --port $PORT -c $ctx -np 1 -ngl 99 -sm none -mg 0 $TPL > /root/eval/game_srv.log 2>&1 < /dev/null & echo ok" >/dev/null
+    ssh -n "$MESS" "export LD_LIBRARY_PATH=$build/lib; setsid nohup $build/bin/llama-server -m '$gguf' --host 0.0.0.0 --port $PORT -c $ctx -np 1 -ngl 99 -sm none -mg 0 $extra $TPL > /root/eval/game_srv.log 2>&1 < /dev/null & echo \$! > /root/eval/game_srv.pid" >/dev/null
     ;;
   vllm)
     # Tool calls from GGUF weights: the bundled text parser is not always

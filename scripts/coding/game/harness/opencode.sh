@@ -29,7 +29,7 @@ agent_ausfuehren() {
   # outside the working directory and tells the model "The user rejected
   # permission" -- which reads like "a human said no", not like "use a different
   # path". Two models stopped at that instead of trying differently.
-  timeout "$zeitlimit" docker run --rm \
+  timeout "$zeitlimit" docker run --rm --init \
     -v "$ziel/ocheim":/home/pruef \
     -v "$ziel/arbeit":/arbeit \
     pruefstand:2 opencode run --auto "$(cat "$ziel/aufgabe.txt")" \
