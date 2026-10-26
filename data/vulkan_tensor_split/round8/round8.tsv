@@ -1,0 +1,31 @@
+build	model	split	test	avg_ts	stddev_ts	cpu_percent	path
+1026	9b	-sm tensor -ts 3/1	tg128	97.76	0.85	159	-
+1026	9b	-sm tensor -ts 3/1	pp512	2155.54	12.13	91	-
+1026	27b	-sm tensor -ts 3/1	tg128	36.18	1.12	113	-
+1026	27b	-sm tensor -ts 3/1	pp512	758.16	1.10	89	-
+1026 GGML_VK_ALLREDUCE_SPIN_US=0	9b	-sm tensor -ts 3/1	tg128	85.79	0.34	108	-
+1026 GGML_VK_ALLREDUCE_SPIN_US=0	9b	-sm tensor -ts 3/1	pp512	2152.68	23.51	94	-
+1026 GGML_VK_ALLREDUCE_SPIN_US=0	27b	-sm tensor -ts 3/1	tg128	35.36	0.87	101	-
+1026 GGML_VK_ALLREDUCE_SPIN_US=0	27b	-sm tensor -ts 3/1	pp512	755.52	1.53	87	-
+1026	qwen3.5-9b	-sm tensor -ts 3/1	idle_cpu_percent_60s	0.3	-	-	ggml-vk-comm threads: 1; 
+1026 GGML_VK_ALLREDUCE_SPIN_US=0	qwen3.5-9b	-sm tensor -ts 3/1	idle_cpu_percent_60s	0.3	-	-	ggml-vk-comm threads: 1; 
+1026repeat	9b	-sm tensor -ts 3/1	tg128	96.64	0.70	158	-
+1026repeat	9b	-sm tensor -ts 3/1	pp512	2154.27	5.21	95	-
+1026repeat	27b	-sm tensor -ts 3/1	tg128	36.50	1.19	156	-
+1026repeat	27b	-sm tensor -ts 3/1	pp512	757.87	1.06	88	-
+1026repeat	9b	-sm layer -ts 3/1	tg128	69.96	0.04	56	-
+1026repeat	9b	-sm layer -ts 3/1	pp512	2101.69	31.60	69	-
+1026repeat	27b	-sm layer -ts 3/1	tg128	24.65	0.01	53	-
+1026repeat	27b	-sm layer -ts 3/1	pp512	694.74	0.32	64	-
+0923	9b	-sm tensor -ts 3/1	tg128	68.70	1.02	182	-
+0923	9b	-sm tensor -ts 3/1	pp512	2128.64	20.36	130	-
+0923	27b	-sm tensor -ts 3/1	tg128	29.50	0.44	179	-
+0923	27b	-sm tensor -ts 3/1	pp512	727.64	0.43	124	-
+1026master	9b	-sm tensor -ts 3/1	tg128	43.12	0.02	81	-
+1026master	9b	-sm tensor -ts 3/1	pp512	836.22	0.54	73	-
+1026master	27b	-sm tensor -ts 3/1	tg128	19.09	0.35	78	-
+1026master	27b	-sm tensor -ts 3/1	pp512	307.75	0.56	70	-
+1026master	9b	-sm layer -ts 3/1	tg128	69.43	0.24	59	-
+1026master	9b	-sm layer -ts 3/1	pp512	2108.61	26.15	69	-
+1026master	27b	-sm layer -ts 3/1	tg128	24.66	0.09	52	-
+1026master	27b	-sm layer -ts 3/1	pp512	693.09	0.43	64	-

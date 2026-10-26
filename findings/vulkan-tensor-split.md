@@ -10,6 +10,8 @@ single-card; giving it a quarter of the work makes it *faster* (43 t/s). Prefill
 worse: there the same path moves 16 MB per AllReduce at 2.8 GB/s and spends 99 % of the
 graph in the reduction.
 
+**Update 2026-10-26:** the rebuilt PR (host-memory all-reduce, `ecfee2ece`) makes tensor split the fastest split on this pair: 97.8 t/s at 9B and 36.2 at 27B, against 69.4 / 24.7 for layer split. An idle server costs 0.3 % of a core. See [the rebuilt PR](#the-rebuilt-pr-all-reduce-through-host-memory-2026-10-26).
+
 Measured 2026-09-11 on [System A](../systems/system-a.md): RX 7900 XTX + RTX 2070, both
 on CPU PCIe lanes, Vulkan (RADV 26.1.5 / NVIDIA 610.43), llama.cpp master `df03399b8`.
 Raw `llama-bench` JSON, the instrumented-build patch and the run scripts are in
@@ -237,6 +239,26 @@ The maintainers asked for a minimal first merge: "remove the CPU fallback and th
 **On a pair without shared semaphores the minimal version is master.** Every figure of the 05.10. state matches master's generic all-reduce to within 1 %: the feature switches itself off, as intended. The 23.09. state reproduces the September result (27B 29.2 against 30.0 then, still ahead of layer split at 24.2).
 
 **The objection is measured, and it is right.** With the proxy, an idle server burns one full core for as long as the model is loaded, whether or not anything is generated. A fallback that keeps the 50 % at 27B without that cost would need the proxy to sleep between all-reduces — the thread hop that already costs most of the remaining ~83 µs per all-reduce.
+
+## The rebuilt PR: all-reduce through host memory (2026-10-26)
+
+Between 23.10. and 24.10. the PR was rebuilt around shared host memory (`VK_EXT_external_memory_host`): each card writes its partial result into a host slot, the peers read it from there. Two ways to synchronise: `sync_fd` semaphores when every card runs Mesa, otherwise `host_bridge`, a host thread that releases each card once its peers are done. It spins for `GGML_VK_ALLREDUCE_SPIN_US` (default 200 µs) and then sleeps. RADV plus the NVIDIA driver is not all-Mesa, so this pair takes `host_bridge`. The thread (`ggml-vk-comm`) was present in every PR run, and the PR logged no fallback.
+
+Measured on the same pair (RADV 26.2.2, NVIDIA 610.57), PR head `ecfee2ece` against its merge base master `f5027fb21` (23.10.), with the 23.09. proxy state again in the same session. `llama-bench -fa 1 -r 3`, split 3/1. Data: [`data/vulkan_tensor_split/round8/round8.tsv`](../data/vulkan_tensor_split/round8/round8.tsv), scripts `round8*.sh`.
+
+| t/s | PR 24.10. | PR 24.10., spin 0 | PR 23.09. (proxy) | master, tensor | master, layer |
+|---|---:|---:|---:|---:|---:|
+| Qwen3.5-9B tg128 | **97.8** (repeat 96.6) | 85.8 | 68.7 | 43.1 | 69.4 |
+| Qwen3.5-9B pp512 | **2156** | 2153 | 2129 | 836 | 2109 |
+| Qwen3.6-27B tg128 | **36.2** (repeat 36.5) | 35.4 | 29.5 | 19.1 | 24.7 |
+| Qwen3.6-27B pp512 | **758** | 756 | 728 | 308 | 693 |
+| idle `llama-server`, CPU over 60 s (100 % = one core) | **0.3 %** | 0.3 % | 99.9 % (round 6) | | |
+
+**On this mixed-vendor pair, tensor split is now the fastest split, and it costs nothing at idle.** Token generation is 2.3× master's tensor split at 9B and 1.9× at 27B. It is 41 % and 47 % ahead of layer split, and 42 % and 23 % ahead of the old proxy. Prefill matches the proxy, 2.6× master's tensor split. The bridge thread sleeps between requests: 0.3 % of a core at idle, the same as a server without it. The objection that removed the proxy on 05.10. does not apply to this path.
+
+The 200 µs spin is what keeps the small model fast: without it (`GGML_VK_ALLREDUCE_SPIN_US=0`) 9B drops to 85.8 t/s, 27B only to 35.4 t/s. During generation the whole `llama-bench` call used 159 % CPU (9B, PR) against 182 % (proxy) and 81 % (master tensor). That figure includes loading the model and is only a rough comparison between builds.
+
+The "repeat" values come from a scripting mistake: the first build of the "before" state took its merge base against `FETCH_HEAD`, which held the PR head, so it built the PR a second time. Those rows are labelled `1026repeat` in the TSV, while the raw log keeps the original label `1026base`. The real base was built afterwards and measured in round 8b.
 
 ## Method notes
 
