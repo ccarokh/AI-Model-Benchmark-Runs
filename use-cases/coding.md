@@ -152,6 +152,12 @@ The real-project run is not a row in Part 3's table: Part 3 ran with the two bro
 
 Model and build were deleted from the GPU host after these runs.
 
+### Ministral 3 14B: 4.0 %, deleted (2026-10-26)
+
+Mistral's dense 14B from December 2025 (Instruct-2512, official Q4_K_M GGUF, 8.2 GB, fits the card whole), in the same setup as the runs above: 32k slot, `diff`, four slots; the instruct model has no thinking mode. Full 225 tasks: **pass@1 1.8 %, pass@2 4.0 %**, 50 tasks with malformed replies (108 in all). C++ 0 of 26, the other languages 1 to 3 each. Median 98 s per task, 11 h for the run.
+
+The low number is the model, not the setup: its edits apply cleanly, but it guesses the function signature the tests call and keeps the guess when the second attempt shows it the compiler errors (all-your-base: it declares `convert(string, int, int)`, the tests call `convert(int, vector<unsigned int>, int)`). That puts it level with Mistral-Small-3.2-24B in the table above (4.0 %) and below Nemotron 3 Nano (10.7 %). The 8B sibling was not run. The model was deleted from the GPU host.
+
 ---
 
 ## Part 2 — SWE-bench
