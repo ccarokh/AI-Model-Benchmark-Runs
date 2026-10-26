@@ -175,7 +175,7 @@ case "$runtime" in
     ssh -n "$MESS" "docker rm -f vllm-mess >/dev/null 2>&1; setsid nohup docker run --name vllm-mess \
       --device=/dev/kfd --device=/dev/dri --group-add video \
       --security-opt seccomp=unconfined --shm-size 8g --ipc=host \
-      -v /opt/llm-infra/models:/opt/llm-infra/models:ro -p $PORT:8000 \
+      -v /opt/llm-infra/models:/opt/llm-infra/models:ro -v /srv/llm-models-slow:/srv/llm-models-slow:ro -p $PORT:8000 \
       rocm/vllm:latest vllm serve '$hf' \
         --served-model-name '$model' $TOK \
         --max-model-len $ctx --gpu-memory-utilization 0.85 \
