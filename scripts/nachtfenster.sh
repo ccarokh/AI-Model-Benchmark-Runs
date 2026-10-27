@@ -67,9 +67,13 @@ im_fenster(){
 
 pacht_nehmen(){
   t=$(cat "$PACHT_SCHLUESSEL" 2>/dev/null) || { sag "kein Pacht-Token"; return 1; }
+  # expected_until (runtime 1.14.0): the announced end, shown to other projects by the
+  # gateway's availability query. Information only -- the runtime does not end the lease there.
+  local bis; bis=$(date -d "today $ENDE_STD:00" +%s)
+  [ "$bis" -le "$(date +%s)" ] && bis=$(date -d "tomorrow $ENDE_STD:00" +%s)
   a=$(curl -s -m 240 -X POST "$RUNTIME/_manager/lease" \
         -H "x-lease-token: $t" -H "Content-Type: application/json" \
-        -d '{"holder":"nachtfenster"}' 2>/dev/null)
+        -d "{\"holder\":\"nachtfenster\",\"expected_until\":\"$(date -d @$bis --iso-8601=seconds)\"}" 2>/dev/null)
   PACHT_ID=$(printf '%s' "$a" | sed -n 's/.*"lease_id":"\([^"]*\)".*/\1/p')
   if [ -z "$PACHT_ID" ]; then
     # Only the first refusal is logged; the waiting loop calls this once a minute.

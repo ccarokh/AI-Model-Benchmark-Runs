@@ -47,6 +47,7 @@ jetzt=$(date +%s)
 ende=$(date -d "today $ENDE_STD:00" +%s)
 [ "$ende" -le "$jetzt" ] && ende=$(date -d "tomorrow $ENDE_STD:00" +%s)
 sek=$(( ende - jetzt - 600 ))
+export KW_BIS=$(date -d @$ende --iso-8601=seconds)   # announced lease end (kartenwacht)
 [ "$sek" -lt 1800 ] && { sag "Fenster zu kurz ($sek s) -- ausgelassen"; exit 0; }
 
 /root/coding-eval/orchestrate_resume.sh "$LAUF" "$Q38" "$PRO_SITZUNG" "$sek" >> $LOG 2>&1
